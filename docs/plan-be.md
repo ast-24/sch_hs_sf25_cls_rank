@@ -2,7 +2,7 @@
 
 ## 概要
 
-- 静的サーバ(Surface)
+- 静的サーバ(surface)
 - 静的サーバ(assets)
 - APIサーバ
 - DBサーバ
@@ -10,7 +10,7 @@
 
 ## 構成
 
-### 静的サーバ(Serface)
+### 静的サーバ(serface)
 
 HTML/CSS/JavaScriptの置き場所
 
@@ -19,7 +19,7 @@ Cloudflare Pagesの利用を検討
 
 こちらはブラウザと同じパスでアクセスされる
 
-#### 静的サーバ(assets)
+### 静的サーバ(assets)
 
 静的サーバのSPAが利用する静的コンテンツの置き場所
 
