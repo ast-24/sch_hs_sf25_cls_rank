@@ -1,0 +1,98 @@
+# エンドポイント定義書
+
+- `/ranking`: ランキング
+  - GET : ランキングを取得
+    - クエリパラメータ
+      - `type`: `today_total` | `round_max`
+    - レスポンス
+      - ボディ
+        - `ranking`: ランキングデータ
+          - `rank`: ランキング順位
+          - `user_id`: ユーザID
+          - `display_name`: 表示名(オプショナル)
+          - `score`: スコア
+- `/users`: ユーザ
+  - POST: ユーザを登録
+    - リクエスト
+      - ボディ
+        - `room`: ルームID
+        - `display_name`: 表示名(オプショナル)
+    - レスポンス
+      - ボディ
+        - `user_id`: ユーザID
+- `/users/:user_id`: ユーザ
+  - GET: スタッフ情報を取得
+    - レスポンス
+      - ボディ
+        - `display_name`: 表示名(オプショナル)
+  - PATCH: ユーザを更新
+    - ボディ
+      - `display_name`: 表示名(オプショナル)
+- `/users/:user_id/stat`: ユーザの統計
+  - GET: ユーザの統計を取得
+    - レスポンス
+      - ボディ
+        - `today_total`: 今日の累積
+          - `rank`: ランキング順位
+          - `score`: スコア
+        - `round`: 1周当たりのスコア
+          - `round_id`: ラウンドID
+            - `rank`: ランキング順位
+            - `score`: スコア
+- `/users/:user_id/results`: ユーザの結果
+  - GET: ユーザの結果を取得
+    - レスポンス
+      - ボディ
+        - `results`
+          - `round_id`: ラウンドID
+            - `q_id`: 質問ID
+              - `result`: 回答結果(正解/不正解)
+              - `timestamp`: 回答日時
+  - PATCH: ユーザの結果を更新
+    - リクエスト
+      - ボディ
+        - `results`
+          - `round_id`: ラウンドID
+            - `q_id`: 質問ID(自動挿入/削除)
+              - `result`: 回答結果(正解/不正解) Nullで削除
+- `/users/:user_id/rounds`: ラウンド
+  - GET: ラウンドの一覧を取得
+    - レスポンス
+      - ボディ
+        - `rounds`: ラウンドのリスト
+          - `round_id`: ラウンドID
+  - POST: ラウンドを開始
+    - レスポンス
+      - ボディ
+        - `round_id`: ラウンドID
+- `/users/:user_id/rounds/:round_id`: ラウンド
+  - GET: ラウンド情報を取得
+    - レスポンス
+      - ボディ
+        - `is_finished`: ラウンドが終了済みかどうか
+  - DELETE: ラウンドを終了
+- `/users/:user_id/rounds/:round_id/stat`: ラウンドの統計
+  - GET: ラウンドの統計を取得
+    - レスポンス
+      - ボディ
+        - `score`: ラウンドのスコア
+        - `rank`: ラウンドのランキング順位
+- `/users/:user_id/rounds/:round_id/results`: ラウンドの結果
+  - GET: ラウンドの結果を取得
+    - レスポンス
+      - ボディ
+        - `results`: ラウンドの結果のリスト
+          - `q_id`: 質問ID
+            - `result`: 回答結果(正解/不正解)
+            - `timestamp`: 回答日時
+  - PATCH: ラウンドの結果を更新
+    - リクエスト
+      - ボディ
+        - `results`: ラウンドの結果のリスト
+          - `q_id`: 質問ID(自動挿入/削除)
+            - `result`: 回答結果(正解/不正解) Nullで削除
+- `/users/:user_id/rounds/:round_id/q`: 問題
+  - POST: 回答結果を登録
+    - リクエスト
+      - ボディ
+        - `result`: 回答結果(正解/不正解)
