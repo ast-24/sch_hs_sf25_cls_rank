@@ -59,6 +59,7 @@ Cloudflare Workers KVやCloudflare D1を利用したいが整合性に問題が�
   - `id`: レコード参照用ID
   - `user_id`: ユーザID(レコード参照用ID)
   - `round_id`: ラウンドID
+  - `room_id`: ルームID
   - `is_finished`: ラウンドが終了したかどうか
   - `score`: スコア(キャッシュに近い)
 

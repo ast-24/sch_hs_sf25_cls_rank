@@ -19,7 +19,7 @@ CREATE TABLE users (
     created_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID(1-4)
+    room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID
     user_id             SMALLINT UNSIGNED NOT NULL,     -- ユーザID
     display_name        VARCHAR(255),                   -- 表示名(オプショナル)
     score_today_total   INT               NOT NULL DEFAULT 0, -- 今日の累積スコア(キャッシュ)
@@ -38,6 +38,7 @@ CREATE TABLE users_rounds (
 
     user_id             BIGINT            NOT NULL,      -- users.id への外部キー
     round_id            TINYINT UNSIGNED  NOT NULL,      -- ラウンドID
+    room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID
     is_finished         BOOLEAN           NOT NULL DEFAULT FALSE, -- ラウンド終了フラグ
     score               INT               NOT NULL DEFAULT 0,     -- スコア(キャッシュ)
 

@@ -1,9 +1,24 @@
 # エンドポイント定義書
 
+- `/state`: ランキングの更新/遷移要求のポーリング用
+  - GET: ポーリング
+    - レスポンス
+      - ボディ
+        - `ranking_last_updated_at`: ランキングの最終更新日時
+          - `today_total`: 今日の累積
+          - `round_max`: 1周当たりの最大スコア
+          - `latest_round`: 最新のラウンド情報(3ルーム出揃ったら)
+        - `transition_requested_to`: 遷移先として要求されたモード
+          - `mode`: `today_total&round_max` | `latest_round`
+  - PUT: 遷移要求
+    - リクエスト
+      - ボディ
+        - `mode`: 遷移先のモード
+          - `mode`: `today_total&round_max` | `latest_round`
 - `/ranking`: ランキング
   - GET : ランキングを取得
     - クエリパラメータ
-      - `type`: `today_total` | `round_max`
+      - `type`: `today_total` | `round_max` | `latest_round`
     - レスポンス
       - ボディ
         - `ranking`: ランキングデータ
