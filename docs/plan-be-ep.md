@@ -57,15 +57,15 @@
         - `results`
           - `round_id`: ラウンドID
             - `q_id`: 質問ID
-              - `result`: 回答結果(正解/不正解)
+              - `is_correct`: 回答結果(正解/不正解/パス(Null))
               - `timestamp`: 回答日時
   - PATCH: ユーザの結果を更新
     - リクエスト
       - ボディ
         - `results`
           - `round_id`: ラウンドID
-            - `q_id`: 質問ID(自動挿入/削除)
-              - `result`: 回答結果(正解/不正解) Nullで削除
+            - `q_id`: 質問ID(自動挿入/削除) 中身がNullなら削除
+              - `is_correct`: 回答結果(正解/不正解/パス(Null))
 - `/users/:user_id/rounds`: ラウンド
   - GET: ラウンドの一覧を取得
     - レスポンス
@@ -94,16 +94,16 @@
       - ボディ
         - `results`: ラウンドの結果のリスト
           - `q_id`: 質問ID
-            - `result`: 回答結果(正解/不正解)
+            - `is_correct`: 回答結果(正解/不正解/パス(Null))
             - `timestamp`: 回答日時
   - PATCH: ラウンドの結果を更新
     - リクエスト
       - ボディ
         - `results`: ラウンドの結果のリスト
-          - `q_id`: 質問ID(自動挿入/削除)
-            - `result`: 回答結果(正解/不正解) Nullで削除
+          - `q_id`: 質問ID(自動挿入/削除) Nullなら削除
+            - `is_correct`: 回答結果(正解/不正解/パス(Null))
 - `/users/:user_id/rounds/:round_id/q`: 問題
   - POST: 回答結果を登録
     - リクエスト
       - ボディ
-        - `result`: 回答結果(正解/不正解)
+        - `is_correct`: 回答結果(正解/不正解/パス(Null))

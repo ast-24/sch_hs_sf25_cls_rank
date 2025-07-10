@@ -24,8 +24,8 @@ CREATE TABLE users (
     display_name        VARCHAR(255),                   -- 表示名(オプショナル)
     score_today_total   INT               NOT NULL DEFAULT 0, -- 今日の累積スコア(キャッシュ)
 
-    UNIQUE INDEX idx__users__user_id (user_id),
-    INDEX idx__users__score_today_total (score_today_total)
+    UNIQUE INDEX idx__users__room_id__user_id (room_id, user_id),
+           INDEX idx__users__score_today_total (score_today_total)
 );
 
 -- ==========================================
@@ -45,6 +45,7 @@ CREATE TABLE users_rounds (
     FOREIGN KEY(user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
 
     UNIQUE INDEX idx__users_rounds__user_id__round_id (user_id, round_id),
+           INDEX idx__users_rounds__room_id (room_id),
            INDEX idx__users_rounds__score (score)
 );
 
@@ -58,11 +59,11 @@ CREATE TABLE users_rounds_answers (
 
     round_id            BIGINT            NOT NULL,      -- users_rounds.id への外部キー
     q_id                TINYINT UNSIGNED  NOT NULL,      -- 質問ID
-    is_correct          BOOLEAN           NOT NULL,      -- 回答結果 (正解: TRUE, 不正解: FALSE)
     timestamp           DATETIME          NOT NULL,      -- 回答日時
+    is_correct          BOOLEAN                          -- 回答が正解かどうか(パスはNULL)
 
     FOREIGN KEY(round_id) REFERENCES users_rounds(id) ON UPDATE CASCADE ON DELETE CASCADE,
 
-    INDEX idx__users_rounds_answers__round_id__q_id (round_id, q_id),
-    INDEX idx__users_rounds_answers__timestamp (timestamp)
+    UNIQUE INDEX idx__users_rounds_answers__round_id__q_id (round_id, q_id),
+           INDEX idx__users_rounds_answers__timestamp (timestamp)
 );

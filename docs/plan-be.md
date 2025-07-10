@@ -54,7 +54,8 @@ Cloudflare Workers KVやCloudflare D1を利用したいが整合性に問題が�
 
 - ユーザ
   - `id`: レコード参照用ID
-  - `user_id`: ユーザID
+  - `room_id`: ルームID
+  - `user_id`: ユーザID(ルームIDと合わせてユニーク)
   - `display_name`: 表示名 オプショナル
   - `score_today_total`: 今日の累積スコア(キャッシュに近い)
 
@@ -70,5 +71,5 @@ Cloudflare Workers KVやCloudflare D1を利用したいが整合性に問題が�
   - `id`: レコード参照用ID
   - `round_id`: ラウンドID(レコード参照用ID)
   - `q_id`: 質問ID
-  - `result`: 回答結果(正解/不正解)
   - `timestamp`: 回答日時
+  - `is_correct`: 回答結果(正解/不正解/パス)
