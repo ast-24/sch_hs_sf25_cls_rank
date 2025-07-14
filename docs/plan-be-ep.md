@@ -26,7 +26,7 @@
   - POST: ユーザを登録
     - リクエスト
       - ボディ
-        - `room`: ルームID
+        - `roomid`: ルームID
         - `display_name`: 表示名(オプショナル)
     - レスポンス
       - ボディ
@@ -72,7 +72,11 @@
       - ボディ
         - `rounds`: ラウンドのリスト
           - `round_id`: ラウンドID
+          - `room_id`: ルームID
   - POST: ラウンドを開始
+    - リクエスト
+      - ボディ
+        - `room_id`: ルームID
     - レスポンス
       - ボディ
         - `round_id`: ラウンドID
@@ -80,6 +84,7 @@
   - GET: ラウンド情報を取得
     - レスポンス
       - ボディ
+        - `room_id`: ルームID
         - `is_finished`: ラウンドが終了済みかどうか
   - DELETE: ラウンドを終了
 - `/users/:user_id/rounds/:round_id/stat`: ラウンドの統計

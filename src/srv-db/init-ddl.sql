@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS sch_sf25_cls_rank_main_db;
+USE sch_sf25_cls_rank_main_db;
 
 -- ==========================================
 -- sch_sf25_cls_rank_main_db 初期化用DDL (TiDB用)
@@ -7,9 +9,6 @@
 -- インデックス名: idx__{テーブル名}__{カラム名}[__{カラム名}...] の形式
 -- FOREIGN KEY名: 明示的に指定しない（自動生成に任せる）
 -- カラム順序: id, created_at, updated_at, その他関連カラム の順
-
-CREATE DATABASE IF NOT EXISTS sch_sf25_cls_rank_main_db;
-USE sch_sf25_cls_rank_main_db;
 
 -- ==========================================
 -- ユーザテーブル
@@ -60,7 +59,7 @@ CREATE TABLE users_rounds_answers (
     round_id            BIGINT            NOT NULL,      -- users_rounds.id への外部キー
     q_id                TINYINT UNSIGNED  NOT NULL,      -- 質問ID
     timestamp           DATETIME          NOT NULL,      -- 回答日時
-    is_correct          BOOLEAN                          -- 回答が正解かどうか(パスはNULL)
+    is_correct          BOOLEAN,                         -- 回答が正解かどうか(パスはNULL)
 
     FOREIGN KEY(round_id) REFERENCES users_rounds(id) ON UPDATE CASCADE ON DELETE CASCADE,
 

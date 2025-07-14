@@ -15,6 +15,6 @@
 	},
 	"dependencies": {
 		"@tidbcloud/serverless": "^0.2.0",
-		"itty-router": "^2.4.4"
+		"itty-router": "^5.0.18"
 	}
 }

@@ -18,6 +18,6 @@ export class TidbClient {
     async query(sql, params) {
         const res = await this.#conn.execute(sql, params)
         console.log("[DEBUG] SQL Query:", sql, "Params:", params, "Result:", res)
-        return res[0]
+        return res
     }
 }

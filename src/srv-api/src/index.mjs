@@ -1,13 +1,9 @@
 import { AutoRouter } from 'itty-router';
+import { handler_users_post } from './endpoints/users/post.mjs';
 
 const router = AutoRouter();
 
-/*
-router.get('/rooms', handler_rooms_get);
-router.get('/crowd', handler_crowd_get);
-router.get('/crowd/:room_id', handler_crowd_with_roomid_get);
-router.put('/crowd/:room_id', handler_crowd_with_roomid_put);
-*/
+router.post('/users', handler_users_post);
 
 export default {
 	async fetch(request, env, ctx) {
