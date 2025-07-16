@@ -4,6 +4,7 @@ import { handler_users_post } from './endpoints/users/post.mjs';
 const router = AutoRouter();
 
 router.post('/users', handler_users_post);
+router.options('*', () => new Response(null, { status: 204 }));
 
 export default {
 	async fetch(request, env, ctx) {
