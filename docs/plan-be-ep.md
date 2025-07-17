@@ -4,7 +4,7 @@
   - HEAD: ランキングの更新日時を取得
     - リクエスト
       - クエリパラメータ
-        - `type`: `all` | `today_total` | `round_max`
+        - `type`: `all` | `today_total` | `round` | `round_max` | `round_latest`
     - レスポンス
       - ヘッダ
         - `X-Last-Updated`
@@ -13,15 +13,18 @@
   - GET: ランキングを取得
     - リクエスト
       - クエリパラメータ
-        - `type`: `all` | `today_total` | `round_max`
+        - `type`: ランキング種別の配列
+          - `today_total`: ユーザ別の今日の累積スコア
+          - `round`: ユーザ&ラウンド別の1ラウンド当たりのスコア
+          - `round_max`: ユーザ別の最大ラウンドのスコア
+          - `round_latest`: ルーム別の最新ラウンドのスコア
     - レスポンス
       - ボディ
-        - `ranking`: ランキングデータ
-          - `:rank_type`: ランキングの種類(`today_total` | `round_max`)
-            - `rank`: ランキング順位
-              - `user_id`: ユーザID
-              - `display_name`: 表示名(オプショナル)
-              - `score`: スコア
+        - `:rank_type`: ランキングの種類(`type`と同じ) 中身は配列
+          - `user_id`: ユーザID
+          - `display_name`: 表示名(オプショナル)
+          - `room_id`: ルームID
+          - `score`: スコア
 - `/users`: ユーザ
   - POST: ユーザを登録
     - リクエスト
@@ -54,24 +57,21 @@
   - GET: ユーザの結果を取得
     - レスポンス
       - ボディ
-        - `results`
-          - `round_id`: ラウンドID
-            - `q_id`: 質問ID
-              - `is_correct`: 回答結果(正解/不正解/パス(Null))
-              - `timestamp`: 回答日時
+        - `round_id`: ラウンドID
+          - `q_id`: 質問ID
+            - `is_correct`: 回答結果(正解/不正解/パス(Null))
+            - `timestamp`: 回答日時
   - PATCH: ユーザの結果を更新
     - リクエスト
       - ボディ
-        - `results`
-          - `round_id`: ラウンドID
-            - `q_id`: 質問ID(自動挿入/削除) 中身がNullなら削除
-              - `is_correct`: 回答結果(正解/不正解/パス(Null))
+        - `round_id`: ラウンドID
+          - `q_id`: 質問ID(自動挿入/削除) 中身がNullなら削除
+            - `is_correct`: 回答結果(正解/不正解/パス(Null))
 - `/users/:user_id/rounds`: ラウンド
   - GET: ラウンドの一覧を取得
     - レスポンス
       - ボディ
-        - `rounds`: ラウンドのリスト
-          - `round_id`: ラウンドID
+        - `round_id`: ラウンドID
           - `room_id`: ルームID
   - POST: ラウンドを開始
     - リクエスト
@@ -97,16 +97,14 @@
   - GET: ラウンドの結果を取得
     - レスポンス
       - ボディ
-        - `results`: ラウンドの結果のリスト
-          - `q_id`: 質問ID
-            - `is_correct`: 回答結果(正解/不正解/パス(Null))
-            - `timestamp`: 回答日時
+        - `q_id`: 質問ID
+          - `is_correct`: 回答結果(正解/不正解/パス(Null))
+          - `timestamp`: 回答日時
   - PATCH: ラウンドの結果を更新
     - リクエスト
       - ボディ
-        - `results`: ラウンドの結果のリスト
-          - `q_id`: 質問ID(自動挿入/削除) Nullなら削除
-            - `is_correct`: 回答結果(正解/不正解/パス(Null))
+        - `q_id`: 質問ID(自動挿入/削除) Nullなら削除
+          - `is_correct`: 回答結果(正解/不正解/パス(Null))
 - `/users/:user_id/rounds/:round_id/q`: 問題
   - POST: 回答結果を登録
     - リクエスト

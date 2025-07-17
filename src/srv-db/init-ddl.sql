@@ -22,6 +22,7 @@ CREATE TABLE users (
     user_id             SMALLINT UNSIGNED NOT NULL,     -- ユーザID
     display_name        VARCHAR(255),                   -- 表示名(オプショナル)
     score_today_total   INT               NOT NULL DEFAULT 0, -- 今日の累積スコア(キャッシュ)
+    score_round_max     INT               NOT NULL DEFAULT 0, -- 今日の最大スコア(キャッシュ)
 
     UNIQUE INDEX idx__users__room_id__user_id (room_id, user_id),
            INDEX idx__users__score_today_total (score_today_total)
@@ -38,7 +39,7 @@ CREATE TABLE users_rounds (
     user_id             BIGINT            NOT NULL,      -- users.id への外部キー
     round_id            TINYINT UNSIGNED  NOT NULL,      -- ラウンドID
     room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID
-    is_finished         BOOLEAN           NOT NULL DEFAULT FALSE, -- ラウンド終了フラグ
+    finished_at         DATETIME,                        -- ラウンド終了日時(未終了はNULL)
     score               INT               NOT NULL DEFAULT 0,     -- スコア(キャッシュ)
 
     FOREIGN KEY(user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
