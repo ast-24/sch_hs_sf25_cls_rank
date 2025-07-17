@@ -50,6 +50,12 @@ Cloudflare Workers KVやCloudflare D1を利用したいが整合性に問題が�
 実際のスコア等はTiDBに保存し、  
 上位N(20くらい)件の最終更新はWorkers KVに保存するのがよいかもしれない
 
+スコアとして反映するのはfinishedのレコードのみとする  
+それに伴いWorkers KVへのキャッシュが可能になったため行う  
+(書き込み1000回/日を下回れる)
+
+バックエンドの時刻系はUTCで統一する
+
 #### データベース設計
 
 - ユーザ
@@ -58,13 +64,14 @@ Cloudflare Workers KVやCloudflare D1を利用したいが整合性に問題が�
   - `user_id`: ユーザID(ルームIDと合わせてユニーク)
   - `display_name`: 表示名 オプショナル
   - `score_today_total`: 今日の累積スコア(キャッシュに近い)
+  - `score_round_max`: ラウンドの最大スコア(キャッシュに近い)
 
 - ユーザラウンド
   - `id`: レコード参照用ID
   - `user_id`: ユーザID(レコード参照用ID)
   - `round_id`: ラウンドID
   - `room_id`: ルームID
-  - `is_finished`: ラウンドが終了したかどうか
+  - `finished_at`: ラウンドが終了した日時
   - `score`: スコア(キャッシュに近い)
 
 - ユーザラウンド回答結果

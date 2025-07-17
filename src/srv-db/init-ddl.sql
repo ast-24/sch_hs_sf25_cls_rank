@@ -18,13 +18,13 @@ CREATE TABLE users (
     created_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID
     user_id             SMALLINT UNSIGNED NOT NULL,     -- ユーザID
-    display_name        VARCHAR(255),                   -- 表示名(オプショナル)
+    room_id             TINYINT UNSIGNED  NOT NULL,     -- ルームID
+    display_name        VARCHAR(255),     NOT NULL,     -- 表示名
     score_today_total   INT               NOT NULL DEFAULT 0, -- 今日の累積スコア(キャッシュ)
     score_round_max     INT               NOT NULL DEFAULT 0, -- 今日の最大スコア(キャッシュ)
 
-    UNIQUE INDEX idx__users__room_id__user_id (room_id, user_id),
+    UNIQUE INDEX idx__users__user_id (user_id),
            INDEX idx__users__score_today_total (score_today_total)
 );
 

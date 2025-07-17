@@ -1,6 +1,5 @@
 
 import { TidbClient } from "../../../../cmn/tidb_cl.mjs";
-import { parseRoomUserId } from "../../../../cmn/useridconv.mjs";
 
 // >! 確認
 

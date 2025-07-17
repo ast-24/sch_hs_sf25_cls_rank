@@ -1,11 +1,14 @@
 import { TidbClient } from "../../cmn/tidb_cl.mjs";
-import { formatRoomUserId } from "../../cmn/useridconv.mjs";
 
 // >! 確認
 
 const LIMIT_TODAY_TOTAL = 50;
 const LIMIT_ROUND = 50;
 const LIMIT_ROUND_MAX = 50;
+
+// 対象はfinishedのみ
+
+// あと取得ロジックは分離する必要がある(tidb_score_update.mjsがwkv_score_update.mjsを呼ぶときに必要なため)
 
 export async function handler_ranking_get(request, env, ctx) {
     const url = new URL(request.url);

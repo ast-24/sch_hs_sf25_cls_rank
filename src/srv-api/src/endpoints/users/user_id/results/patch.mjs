@@ -1,6 +1,4 @@
 import { TidbClient } from "../../../../cmn/tidb_cl.mjs";
-import { parseRoomUserId } from "../../../../cmn/useridconv.mjs";
-import { updateUserScoreCache } from "../../../../cmn/score_cache.mjs";
 
 // >! 確認
 

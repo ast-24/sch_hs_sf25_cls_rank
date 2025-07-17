@@ -15,6 +15,12 @@
 			"pattern": "api-skijnjrank.ast24.dev",
 			"custom_domain": true
 		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "DB_CACHE",
+			"id": "1aaef3972b384c9ba39c518d01a82eab"
+		}
 	]
 	/**
 	 * Smart Placement

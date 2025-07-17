@@ -30,7 +30,9 @@
     - リクエスト
       - ボディ
         - `roomid`: ルームID
-        - `display_name`: 表示名(オプショナル)
+        - `display_name`: 表示名  
+          (オプショナル 省略で `User <user_id>` となる)  
+          20文字まで
     - レスポンス
       - ボディ
         - `user_id`: ユーザID
@@ -38,7 +40,7 @@
   - GET: スタッフ情報を取得
     - レスポンス
       - ボディ
-        - `display_name`: 表示名(オプショナル)
+        - `display_name`: 表示名
   - PATCH: ユーザを更新
     - ボディ
       - `display_name`: 表示名(オプショナル)
@@ -73,6 +75,7 @@
       - ボディ
         - `round_id`: ラウンドID
           - `room_id`: ルームID
+          - `finished_at`: ラウンド終了日時(未終了ならNull)
   - POST: ラウンドを開始
     - リクエスト
       - ボディ

@@ -1,18 +1,31 @@
 import { TidbClient } from "../../../../../cmn/tidb_cl.mjs";
-import { parseRoomUserId } from "../../../../../cmn/useridconv.mjs";
 
-export async function handler_users_user_id_rounds_round_id_get(request, env, ctx) {
-    let roomId, userId;
-    try {
-        ({ roomId, userId } = parseRoomUserId(request.user_id));
-    } catch (e) {
-        console.error("[ERROR]", e.message);
-        return new Response(e.message, { status: 400 });
-    }
+export async function handler_users_user_id_rounds_round_id_get(request, env) {
+    let userId, roundId;
+    {
+        userId = request.user_id;
+        if (!userId) {
+            return new Response('User ID is required', { status: 400 });
+        }
+        userId = parseInt(userId);
+        if (isNaN(userId)) {
+            return new Response('Invalid User ID', { status: 400 });
+        }
+        if (typeof userId !== 'number' || userId <= 0 || !Number.isInteger(userId)) {
+            return new Response('Invalid User ID', { status: 400 });
+        }
 
-    const roundId = parseInt(request.round_id);
-    if (!roundId || isNaN(roundId)) {
-        return new Response('Valid round_id is required', { status: 400 });
+        roundId = request.round_id;
+        if (!roundId) {
+            return new Response('Round ID is required', { status: 400 });
+        }
+        roundId = parseInt(roundId);
+        if (isNaN(roundId)) {
+            return new Response('Invalid Round ID', { status: 400 });
+        }
+        if (typeof roundId !== 'number' || roundId <= 0 || !Number.isInteger(roundId)) {
+            return new Response('Invalid Round ID', { status: 400 });
+        }
     }
 
     let tidbCl;
@@ -24,14 +37,13 @@ export async function handler_users_user_id_rounds_round_id_get(request, env, ct
     }
 
     try {
-        // users.id取得とラウンド情報取得をサブクエリでまとめて取得
         const roundRows = await tidbCl.query(`
             SELECT room_id, finished_at
             FROM users_rounds
             WHERE user_id = (
-                SELECT id FROM users WHERE room_id = ? AND user_id = ?
+                SELECT id FROM users WHERE user_id = ?
             ) AND round_id = ?`,
-            [roomId, userId, roundId]
+            [userId, roundId]
         );
         if (roundRows.length === 0) {
             return new Response('Round not found', { status: 404 });

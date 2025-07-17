@@ -5,6 +5,7 @@ export class TidbClient {
 
     constructor(env) {
         if (!env.TIDB_USERNAME || !env.TIDB_PASSWORD || !env.TIDB_HOST || !env.TIDB_DATABASE) {
+            console.error("[ERROR] Missing required environment variables for TidbClient")
             throw new Error('Missing required environment variables')
         }
         this.#conn = connect({
