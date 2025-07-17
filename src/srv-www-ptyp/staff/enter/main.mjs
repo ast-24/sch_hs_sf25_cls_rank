@@ -53,6 +53,16 @@ window.addEventListener('DOMContentLoaded', () => {
             window.location.href = url.toString();
         }
     });
+    // ユーザ新規作成
+    qs('btn-createuser')?.addEventListener('click', () => {
+        const roomId = getParam('room_id');
+        if (roomId) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('user_id', `${roomId}-0006`);
+            url.searchParams.delete('round_id');
+            window.location.href = url.toString();
+        }
+    });
     // ラウンド決定
     qs('btn-round')?.addEventListener('click', () => {
         const val = qs('roundselect').value;
