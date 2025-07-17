@@ -53,7 +53,7 @@ URL: `/staff/*`
 - `/staff/enter`: スタッフの結果入力用ページトップ 担当ルーム選択でシフト開始
 - `/staff/enter?room=:room_id`: 担当ルーム選択後 ユーザ識別子入力でユーザページへ
 - `/staff/enter/:user_id?room=:room_id`: ユーザページトップ ラウンド選択でラウンド開始
-- `/staff/enter/:user_id/round?room=:room_id`: ユーザごとの結果入力ページ(ラウンド)
+- `/staff/enter/:user_id/:round_id?room=:room_id`: ユーザごとの結果入力ページ(ラウンド)
 - `/staff/results`: 結果リストページ
 - `/staff/results/:user_id`: ユーザごとの結果表示/編集ページ
 
