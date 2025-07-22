@@ -1,38 +1,34 @@
-import {
-    getUserIdFromRequest
-} from "../../../../utils/validation.mjs";
-import {
-    createSuccessResponse
-} from "../../../../utils/response.mjs";
-import {
-    initializeDatabaseClient,
-    executeWithErrorHandling,
-    getUserById
-} from "../../../../utils/database.mjs";
+import { createTidbClient } from "../../../../cmn/tidb_cl.mjs";
+import { getUserIdFromReq } from "../../../../utils/parse_req.mjs";
 
 export async function handler_users_user_id_rounds_get(request, env) {
-    return await executeWithErrorHandling(async () => {
-        // パラメータバリデーション
-        const userId = getUserIdFromRequest(request);
-        if (userId instanceof Response) return userId;
+    const userId = getUserIdFromReq(request);
+    if (userId instanceof Response) {
+        return userId;
+    }
 
-        // データベースクライアント初期化
-        const tidbCl = initializeDatabaseClient(env);
-        if (tidbCl instanceof Response) return tidbCl;
+    const tidbCl = createTidbClient(env);
+    if (tidbCl instanceof Response) {
+        return tidbCl;
+    }
 
-        // ユーザー存在確認
-        const user = await getUserById(tidbCl, userId);
-        if (!user) {
-            throw new Error('User not found');
+    try {
+        const userRows = await tidbCl.query(`
+            SELECT id FROM users WHERE user_id = ?
+            `, [userId]
+        );
+        if (userRows.length === 0) {
+            return new Response('User not found', { status: 404 });
         }
+        const userDbId = userRows[0].id;
 
-        // ユーザーのラウンド一覧を取得
         const roundRows = await tidbCl.query(`
             SELECT ur.round_id, ur.room_id, ur.finished_at, ur.created_at
             FROM users_rounds ur
             WHERE ur.user_id = ?
-            ORDER BY ur.created_at ASC
-        `, [user.id]);
+            ORDER BY ur.created_at ASC`,
+            [userDbId]
+        );
 
         const rounds = {};
         for (const round of roundRows) {
@@ -43,6 +39,12 @@ export async function handler_users_user_id_rounds_get(request, env) {
             };
         }
 
-        return createSuccessResponse(rounds);
-    });
+        return new Response(JSON.stringify(rounds), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error("[ERROR]", error);
+        return new Response('Database Error', { status: 500 });
+    }
 }

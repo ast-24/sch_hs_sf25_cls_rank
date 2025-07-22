@@ -1,5 +1,6 @@
 import { AutoRouter } from 'itty-router';
-import { logger, errorTypes } from './lib/index.mjs';
+import { createInternalErrorResponse } from './utils/response.mjs';
+import { logHttpRequest, logHttpResponse, logError } from './utils/logger.mjs';
 
 const router = AutoRouter();
 
@@ -8,20 +9,24 @@ export default {
         const startTime = Date.now();
 
         try {
-            logger.info(`${request.method} ${request.url}`, null, env);
+            // リクエストログ出力
+            logHttpRequest(request.method, request.url, env);
 
             const response = await router.fetch(request, env, ctx);
 
+            // レスポンスログ出力
             const processingTime = Date.now() - startTime;
-            logger.http(request.method, request.url, response.status, processingTime, env);
+            logHttpResponse(response.status, processingTime, env);
 
             return response;
         } catch (error) {
-            logger.error("Unhandled error in main handler", error, env);
-            return errorTypes.internal();
+            logError("Unhandled error in main handler", error, env);
+            return createInternalErrorResponse(error);
         }
     },
-};// ================ Endpoints ================
+};
+
+// ================ Endpoints ================
 
 // Ranking endpoints
 import { handler_ranking_get } from './eps/ranking/get.mjs';

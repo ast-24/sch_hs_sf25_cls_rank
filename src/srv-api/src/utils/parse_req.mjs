@@ -1,6 +1,3 @@
-// このファイルは非推奨です。新しいバリデーションユーティリティを使用してください。
-// import { getUserIdFromRequest, getRoundIdFromRequest } from './validation.mjs';
-
 export function getUserIdFromReq(request) {
     let userId = request.params?.user_id;
     if (!userId) {

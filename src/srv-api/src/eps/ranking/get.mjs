@@ -1,68 +1,68 @@
-import {
-    validateRankingTypes
-} from '../../utils/validation.mjs';
-import {
-    createSuccessResponse
-} from '../../utils/response.mjs';
-import {
-    initializeDatabaseClient,
-    executeWithErrorHandling
-} from '../../utils/database.mjs';
+import { createTidbClient } from '../../cmn/tidb_cl.mjs';
 import {
     RANKING_TODAY_TOTAL_COUNT_LIMIT,
     RANKING_ROUND_COUNT_LIMIT,
     RANKING_ROUND_MAX_COUNT_LIMIT
 } from '../../conf.mjs';
 
-/**
- * ランキングタイプに対応するテーブル名とクエリ設定
- */
-const RANKING_CONFIG = {
-    today_total: {
-        table: 'rankings_cache_today_total',
-        select: 'user_pub_id AS user_id, score, user_display_name',
-        limit: RANKING_TODAY_TOTAL_COUNT_LIMIT
-    },
-    round_max: {
-        table: 'rankings_cache_round_max',
-        select: 'user_pub_id AS user_id, score, user_display_name',
-        limit: RANKING_ROUND_MAX_COUNT_LIMIT
-    },
-    round: {
-        table: 'rankings_cache_round',
-        select: 'round_id, user_pub_id AS user_id, score, user_display_name',
-        limit: RANKING_ROUND_COUNT_LIMIT
-    },
-    round_latest: {
-        table: 'rankings_cache_round_latest',
-        select: 'room_id, round_id, user_pub_id AS user_id, score, user_display_name, finished_at',
-        limit: null
-    }
-};
-
 export async function handler_ranking_get(request, env) {
-    return await executeWithErrorHandling(async () => {
-        // データベースクライアント初期化
-        const tidbCl = initializeDatabaseClient(env);
-        if (tidbCl instanceof Response) return tidbCl;
+    const tidbCl = createTidbClient(env);
+    if (tidbCl instanceof Response) {
+        return tidbCl;
+    }
 
-        // クエリパラメータのバリデーション
+    const tableMap = {
+        today_total: 'rankings_cache_today_total',
+        round_max: 'rankings_cache_round_max',
+        round: 'rankings_cache_round',
+        round_latest: 'rankings_cache_round_latest'
+    };
+
+    let types;
+    {
         const url = new URL(request.url);
         const typeParam = url.searchParams.get('type');
-        const types = validateRankingTypes(typeParam);
-        if (types instanceof Response) return types;
+        if (!typeParam) {
+            return new Response('Missing type parameter', { status: 400 });
+        }
+        types = typeParam.split(',').map(t => t.trim()).filter(Boolean);
 
-        // 各ランキングタイプのデータを取得
+        const unknownTypes = types.filter(type => !(type in tableMap));
+        if (unknownTypes.length) {
+            return new Response(`Unknown ranking type(s): ${unknownTypes.join(',')}`, { status: 400 });
+        }
+    }
+
+    try {
         const result = {};
-        
         for (const type of types) {
-            const config = RANKING_CONFIG[type];
-            const limitClause = config.limit ? `LIMIT ${config.limit}` : '';
-            
-            const query = `SELECT ${config.select} FROM ${config.table} ORDER BY score DESC ${limitClause}`;
-            result[type] = await tidbCl.query(query);
+            const table = tableMap[type];
+            let selectCols = '';
+            let limit = '';
+            if (type === 'today_total') {
+                selectCols = 'user_pub_id AS user_id, score, user_display_name';
+                limit = `LIMIT ${RANKING_TODAY_TOTAL_COUNT_LIMIT}`;
+            } else if (type === 'round_max') {
+                selectCols = 'user_pub_id AS user_id, score, user_display_name';
+                limit = `LIMIT ${RANKING_ROUND_MAX_COUNT_LIMIT}`;
+            } else if (type === 'round') {
+                selectCols = 'round_id, user_pub_id AS user_id, score, user_display_name';
+                limit = `LIMIT ${RANKING_ROUND_COUNT_LIMIT}`;
+            } else if (type === 'round_latest') {
+                selectCols = 'room_id, round_id, user_pub_id AS user_id, score, user_display_name, finished_at';
+                limit = '';
+            }
+            result[type] = await tidbCl.query(
+                `SELECT ${selectCols} FROM ${table} ORDER BY score DESC ${limit}`
+            );
         }
 
-        return createSuccessResponse(result);
-    });
+        return new Response(JSON.stringify(result), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error("[ERROR]", error);
+        return new Response('Database Error', { status: 500 });
+    }
 }

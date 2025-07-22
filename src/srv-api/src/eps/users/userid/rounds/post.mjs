@@ -1,68 +1,76 @@
-import {
-    getUserIdFromRequest,
-    parseAndValidateJsonBody,
-    validateRoomId
-} from "../../../../utils/validation.mjs";
-import {
-    createSuccessResponse
-} from "../../../../utils/response.mjs";
-import {
-    initializeDatabaseClient,
-    executeWithErrorHandling,
-    executeInTransaction,
-    getUserById
-} from "../../../../utils/database.mjs";
+import { createTidbClient } from "../../../../cmn/tidb_cl.mjs";
+import { ROOM_ID_MAX, ROOM_ID_MIN } from "../../../../conf.mjs";
+import { getUserIdFromReq } from "../../../../utils/parse_req.mjs";
 
 export async function handler_users_user_id_rounds_post(request, env) {
-    return await executeWithErrorHandling(async () => {
-        // パラメータバリデーション
-        const userId = getUserIdFromRequest(request);
-        if (userId instanceof Response) return userId;
+    const userId = getUserIdFromReq(request);
+    if (userId instanceof Response) {
+        return userId;
+    }
 
-        // リクエストボディのバリデーション
-        const body = await parseAndValidateJsonBody(request);
-        if (body instanceof Response) return body;
+    let roomId;
+    {
+        const body = await request.json();
+        roomId = body.room_id;
+        if (!roomId) {
+            return new Response('Room ID is required', { status: 400 });
+        }
+        if (typeof roomId !== 'number' || roomId < 0 || !Number.isInteger(roomId)) {
+            return new Response('Invalid Room ID', { status: 400 });
+        }
+        if (roomId < ROOM_ID_MIN || ROOM_ID_MAX < roomId) {
+            return new Response(`Room ID must be between ${ROOM_ID_MIN} and ${ROOM_ID_MAX}`, { status: 400 });
+        }
+    }
 
-        const roomId = validateRoomId(body.room_id);
-        if (roomId instanceof Response) return roomId;
+    const tidbCl = createTidbClient(env);
+    if (tidbCl instanceof Response) {
+        return tidbCl;
+    }
 
-        // データベースクライアント初期化
-        const tidbCl = initializeDatabaseClient(env);
-        if (tidbCl instanceof Response) return tidbCl;
+    try {
+        const userRows = await tidbCl.query(`
+            SELECT id
+            FROM users
+            WHERE user_id = ?
+            `, [userId]
+        );
+        if (userRows.length === 0) {
+            return new Response('User not found', { status: 404 });
+        }
+        const userDbId = userRows[0].id;
 
-        // トランザクション内で処理実行
-        return await executeInTransaction(tidbCl, async (client) => {
-            // ユーザー存在確認
-            const user = await getUserById(client, userId);
-            if (!user) {
-                throw new Error('User not found');
-            }
+        // 未終了ラウンドがあればfinished_atを現在時刻で更新
+        await tidbCl.query(`
+            UPDATE users_rounds
+            SET finished_at = CURRENT_TIMESTAMP
+            WHERE user_id = ? AND finished_at IS NULL
+            `, [userDbId]
+        );
 
-            // 未終了ラウンドがあれば終了時刻を設定
-            await client.query(`
-                UPDATE users_rounds
-                SET finished_at = CURRENT_TIMESTAMP
-                WHERE user_id = ? AND finished_at IS NULL
-            `, [user.id]);
+        const maxRoundRows = await tidbCl.query(`
+            SELECT MAX(round_id) AS max_round_id
+            FROM users_rounds
+            WHERE user_id = ?`,
+            [userDbId]
+        );
+        const nextRoundId = (maxRoundRows[0]?.max_round_id ?? 0) + 1;
 
-            // 次のラウンドIDを取得
-            const maxRoundRows = await client.query(`
-                SELECT MAX(round_id) AS max_round_id
-                FROM users_rounds
-                WHERE user_id = ?
-            `, [user.id]);
-            
-            const nextRoundId = (maxRoundRows[0]?.max_round_id ?? 0) + 1;
+        // ラウンド開始
+        await tidbCl.query(`
+            INSERT INTO users_rounds (user_id, round_id, room_id)
+            VALUES (?, ?, ?)`,
+            [userDbId, nextRoundId, roomId]
+        );
 
-            // 新しいラウンドを作成
-            await client.query(`
-                INSERT INTO users_rounds (user_id, round_id, room_id)
-                VALUES (?, ?, ?)
-            `, [user.id, nextRoundId, roomId]);
-
-            return createSuccessResponse({
-                round_id: nextRoundId
-            });
+        return new Response(JSON.stringify({
+            round_id: nextRoundId
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
         });
-    });
+    } catch (error) {
+        console.error("[ERROR]", error);
+        return new Response('Database Error', { status: 500 });
+    }
 }

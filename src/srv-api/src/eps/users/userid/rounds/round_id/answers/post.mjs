@@ -1,61 +1,62 @@
-import {
-    getUserIdFromRequest,
-    getRoundIdFromRequest,
-    parseAndValidateJsonBody,
-    validateNullableBoolean
-} from "../../../../../../utils/validation.mjs";
-import {
-    createSuccessResponse,
-    createNotFoundResponse,
-    createConflictResponse
-} from "../../../../../../utils/response.mjs";
-import {
-    initializeDatabaseClient,
-    executeWithErrorHandling,
-    executeInTransaction,
-    getUserRoundByPublicId
-} from "../../../../../../utils/database.mjs";
+import { createTidbClient } from "../../../../../../cmn/tidb_cl.mjs";
+import { getUserIdFromReq, getRoundIdFromReq } from "../../../../../../utils/parse_req.mjs";
 
 export async function handler_users_user_id_rounds_round_id_answers_post(request, env) {
-    return await executeWithErrorHandling(async () => {
-        // パラメータバリデーション
-        const userId = getUserIdFromRequest(request);
-        if (userId instanceof Response) return userId;
+    const userId = getUserIdFromReq(request);
+    if (userId instanceof Response) {
+        return userId;
+    }
 
-        const roundId = getRoundIdFromRequest(request);
-        if (roundId instanceof Response) return roundId;
+    const roundId = getRoundIdFromReq(request);
+    if (roundId instanceof Response) {
+        return roundId;
+    }
 
-        // リクエストボディのバリデーション
-        const body = await parseAndValidateJsonBody(request);
-        if (body instanceof Response) return body;
+    const tidbCl = createTidbClient(env);
+    if (tidbCl instanceof Response) {
+        return tidbCl;
+    }
 
-        const isCorrect = validateNullableBoolean(body.is_correct, 'is_correct');
-        if (isCorrect instanceof Response) return isCorrect;
+    let isCorrect;
+    {
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            return new Response('Invalid JSON body', { status: 400 });
+        }
+        isCorrect = body.is_correct;
+        if (isCorrect !== null && isCorrect !== undefined && typeof isCorrect !== 'boolean') {
+            return new Response('is_correct must be a boolean or null', { status: 400 });
+        }
+    }
 
-        // データベースクライアント初期化
-        const tidbCl = initializeDatabaseClient(env);
-        if (tidbCl instanceof Response) return tidbCl;
+    try {
+        const roundRows = await tidbCl.query(`
+            SELECT ur.id, ur.finished_at
+            FROM users u
+            JOIN users_rounds ur ON u.id = ur.user_id
+            WHERE u.user_id = ? AND ur.round_id = ?
+            `, [userId, roundId]
+        );
+        if (!roundRows || roundRows.length === 0) {
+            return new Response('User or Round not found', { status: 404 });
+        }
+        if (roundRows[0].finished_at !== null) {
+            return new Response('Round already finished', { status: 409 });
+        }
 
-        // トランザクション内で処理実行
-        return await executeInTransaction(tidbCl, async (client) => {
-            // ユーザーラウンド情報取得・検証
-            const userRound = await getUserRoundByPublicId(client, userId, roundId);
-            if (!userRound) {
-                throw new Error('User or Round not found');
-            }
+        const roundDbId = roundRows[0].id;
+        await tidbCl.query(`
+            INSERT INTO users_rounds_answers (round_id, answer_id, is_correct, timestamp)
+            SELECT ?, COALESCE(MAX(answer_id), 0) + 1, ?, NOW()
+            FROM users_rounds_answers WHERE round_id = ?`,
+            [roundDbId, isCorrect, roundDbId]
+        );
 
-            if (userRound.finished_at !== null) {
-                return createConflictResponse('Round already finished');
-            }
-
-            // 回答の挿入
-            await client.query(`
-                INSERT INTO users_rounds_answers (round_id, answer_id, is_correct, timestamp)
-                SELECT ?, COALESCE(MAX(answer_id), 0) + 1, ?, NOW()
-                FROM users_rounds_answers WHERE round_id = ?
-            `, [userRound.id, isCorrect, userRound.id]);
-
-            return createSuccessResponse('ok');
-        });
-    });
+        return new Response('ok', { status: 200 });
+    } catch (error) {
+        console.error("[ERROR]", error);
+        return new Response('Database Error', { status: 500 });
+    }
 }
