@@ -1,0 +1,11 @@
+select *
+from users;
+
+select u.user_id, ur.*
+from users u
+join users_rounds ur on u.id = ur.user_id;
+
+select u.user_id, ur.round_id, ura.*
+from users_rounds_answers ura
+join users_rounds ur on ura.round_id = ur.id
+join users u on ur.user_id = u.id;
