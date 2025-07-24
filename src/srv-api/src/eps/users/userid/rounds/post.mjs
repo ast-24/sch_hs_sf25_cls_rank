@@ -1,34 +1,36 @@
-import { createTidbClient } from "../../../../cmn/tidb_cl.mjs";
-import { ROOM_ID_MAX, ROOM_ID_MIN } from "../../../../conf.mjs";
-import { getUserIdFromReq } from "../../../../utils/parse_req.mjs";
+import { TidbClient } from "../../../../cmn/db/tidb_client.mjs";
+import { MyValidationError } from "../../../../cmn/errors.mjs";
+import { getUserIdFromReq } from "../../../../cmn/req/get_user_id.mjs";
+import { MyJsonResp } from "../../../../cmn/resp.mjs";
 
-export async function handler_users_user_id_rounds_post(request, env) {
-    const userId = getUserIdFromReq(request);
-    if (userId instanceof Response) {
-        return userId;
-    }
-
+export default async function (request, env) {
     let roomId;
     {
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            throw new MyValidationError('Invalid JSON body');
+        }
         roomId = body.room_id;
         if (!roomId) {
-            return new Response('Room ID is required', { status: 400 });
+            throw new MyValidationError('Room ID is required');
         }
         if (typeof roomId !== 'number' || roomId < 0 || !Number.isInteger(roomId)) {
-            return new Response('Invalid Room ID', { status: 400 });
+            throw new MyValidationError('Invalid Room ID');
         }
         if (roomId < ROOM_ID_MIN || ROOM_ID_MAX < roomId) {
-            return new Response(`Room ID must be between ${ROOM_ID_MIN} and ${ROOM_ID_MAX}`, { status: 400 });
+            throw new MyValidationError(`Room ID must be between ${ROOM_ID_MIN} and ${ROOM_ID_MAX}`);
         }
     }
 
-    const tidbCl = createTidbClient(env);
-    if (tidbCl instanceof Response) {
-        return tidbCl;
-    }
+    const userId = getUserIdFromReq(request);
 
-    try {
+    const tidbCl = new TidbClient(env);
+
+    let nextRoundId;
+
+    await tidbCl.execInTx(async (tidbCl) => {
         const userRows = await tidbCl.query(`
             SELECT id
             FROM users
@@ -36,7 +38,7 @@ export async function handler_users_user_id_rounds_post(request, env) {
             `, [userId]
         );
         if (userRows.length === 0) {
-            return new Response('User not found', { status: 404 });
+            throw new MyNotFoundError('user');
         }
         const userDbId = userRows[0].id;
 
@@ -54,7 +56,7 @@ export async function handler_users_user_id_rounds_post(request, env) {
             WHERE user_id = ?`,
             [userDbId]
         );
-        const nextRoundId = (maxRoundRows[0]?.max_round_id ?? 0) + 1;
+        nextRoundId = (maxRoundRows[0]?.max_round_id ?? 0) + 1;
 
         // ラウンド開始
         await tidbCl.query(`
@@ -62,15 +64,9 @@ export async function handler_users_user_id_rounds_post(request, env) {
             VALUES (?, ?, ?)`,
             [userDbId, nextRoundId, roomId]
         );
+    });
 
-        return new Response(JSON.stringify({
-            round_id: nextRoundId
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (error) {
-        console.error("[ERROR]", error);
-        return new Response('Database Error', { status: 500 });
-    }
+    return new MyJsonResp({
+        round_id: nextRoundId
+    });
 }

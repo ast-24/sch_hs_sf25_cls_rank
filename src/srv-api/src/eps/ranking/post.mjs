@@ -1,24 +1,30 @@
-import { createTidbClient } from '../../cmn/tidb_cl.mjs';
-import { updateRankingCache } from '../../utils/ranking_cache.mjs';
+import { TidbClient } from '../../cmn/db/tidb_client.mjs';
+import { updateRanking } from '../../cmn/db/update_ranking_cache.mjs';
+import { MyValidationError } from '../../cmn/errors.mjs';
+import { MyJsonResp } from '../../cmn/resp.mjs';
 
-export async function handler_ranking_post(request, env) {
-    const tidbCl = createTidbClient(env);
-    if (tidbCl instanceof Response) {
-        return tidbCl;
-    }
+export default async function (request, env) {
+    const tidbCl = new TidbClient(env);
+
+    const tableMap = {
+        today_total: 'rankings_cache_today_total',
+        round_max: 'rankings_cache_round_max',
+        round: 'rankings_cache_round',
+        round_latest: 'rankings_cache_round_latest'
+    };
 
     let types;
     {
         const url = new URL(request.url);
         const typeParam = url.searchParams.get('type');
         if (!typeParam) {
-            return new Response('Missing type parameter', { status: 400 });
+            throw new MyValidationError('Missing type parameter');
         }
         types = typeParam.split(',').map(t => t.trim()).filter(Boolean);
-        const validTypes = ['today_total', 'round_max', 'round', 'round_latest'];
-        const unknownTypes = types.filter(type => !validTypes.includes(type));
+
+        const unknownTypes = types.filter(type => !(type in tableMap));
         if (unknownTypes.length) {
-            return new Response(`Unknown ranking type(s): ${unknownTypes.join(',')}`, { status: 400 });
+            throw new MyNotFoundError(`table(${unknownTypes.join(', ')})`);
         }
     }
 
@@ -29,14 +35,7 @@ export async function handler_ranking_post(request, env) {
         roundLatest: types.includes('round_latest')
     };
 
-    try {
-        await updateRankingCache(tidbCl, target);
-        return new Response(JSON.stringify({ updated: types }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (error) {
-        console.error('[ERROR]', error);
-        return new Response('Database Error', { status: 500 });
-    }
+    await updateRanking(tidbCl, target);
+
+    return new MyJsonResp();
 }

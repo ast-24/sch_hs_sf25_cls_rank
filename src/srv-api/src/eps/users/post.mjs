@@ -1,39 +1,37 @@
-import { createTidbClient } from "../../cmn/tidb_cl.mjs";
-import { ROOM_ID_MAX, ROOM_ID_MIN, USER_DISPLAY_NAME_MAX_LENGTH } from "../../conf.mjs";
+import { TidbClient } from "../../cmn/db/tidb_client.mjs";
+import { MyValidationError } from "../../cmn/errors.mjs";
+import { MyJsonResp } from "../../cmn/resp.mjs";
 
-export async function handler_users_post(request, env) {
+export default async function (request, env) {
     let roomId, displayName;
     {
         let body;
         try {
             body = await request.json();
         } catch (error) {
-            return new Response('Invalid JSON body', { status: 400 });
+            throw new MyValidationError('Invalid JSON body');
         }
         roomId = body.room_id;
         displayName = body.display_name;
         if (!roomId) {
-            return new Response('Room ID is required', { status: 400 });
+            throw new MyValidationError('Room ID is required');
         }
         if (typeof roomId !== 'number' || roomId < 0 || !Number.isInteger(roomId)) {
-            return new Response('Invalid Room ID', { status: 400 });
+            throw new MyValidationError('Invalid Room ID');
         }
-        if (roomId < ROOM_ID_MIN || ROOM_ID_MAX < roomId) {
-            return new Response(`Room ID must be between ${ROOM_ID_MIN} and ${ROOM_ID_MAX}`, { status: 400 });
+        if (roomId < CONF.VALIDATION_RULES.ROOM_ID.MIN || CONF.VALIDATION_RULES.ROOM_ID.MAX < roomId) {
+            throw new MyValidationError(`Room ID must be between ${CONF.VALIDATION_RULES.ROOM_ID.MIN} and ${CONF.VALIDATION_RULES.ROOM_ID.MAX}`);
         }
         if (displayName && typeof displayName !== 'string') {
-            return new Response(`Display Name must be a string`, { status: 400 });
+            throw new MyValidationError(`Display Name must be a string`);
         }
         displayName = displayName?.trim?.();
-        if (displayName && USER_DISPLAY_NAME_MAX_LENGTH < displayName.length) {
-            return new Response(`Display Name must be at most ${USER_DISPLAY_NAME_MAX_LENGTH} characters`, { status: 400 });
+        if (displayName && CONF.VALIDATION_RULES.USER_DISPLAY_NAME.MAX_LENGTH < displayName.length) {
+            throw new MyValidationError(`Display Name must be at most ${CONF.VALIDATION_RULES.USER_DISPLAY_NAME.MAX_LENGTH} characters`);
         }
     }
 
-    const tidbCl = createTidbClient(env);
-    if (tidbCl instanceof Response) {
-        return tidbCl;
-    }
+    const tidbCl = new TidbClient(env);
 
     // 1ルーム1スタッフだが念の為、衝突防止で3回トライ
     for (let i = 0; i < 3; i++) {
@@ -50,21 +48,16 @@ export async function handler_users_post(request, env) {
                 `, [nextUserId, roomId, displayName]
             );
 
-            return new Response(JSON.stringify({
+            return new MyJsonResp({
                 user_id: nextUserId,
                 user_name: displayName,
-            }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
             });
         } catch (error) {
-            console.error("[ERROR]", error);
             if (i == 2) {
-                console.error("[ERROR] Failed to register user after multiple attempts");
-                return new Response('Failed to register user', { status: 500 });
+                throw error;
             }
         }
     }
 
-    return new Response('Database Error', { status: 500 });
+    throw "UNREACHABLE";
 }

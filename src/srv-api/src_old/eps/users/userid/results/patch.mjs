@@ -104,49 +104,61 @@
 
  */
 
-import { TidbClient } from "../../../../cmn/db/tidb_client.mjs";
-import { updateUserResults } from "../../../../cmn/db/update_user_results.mjs";
-import { MyNotFoundError, MyValidationError } from "../../../../cmn/errors.mjs";
-import { getUserIdFromReq } from "../../../../cmn/req/get_user_id.mjs";
-import { MyJsonResp } from "../../../../cmn/resp.mjs";
+import { createTidbClient } from "../../../../cmn/tidb_cl.mjs";
+import { getUserIdFromReq } from "../../../../utils/parse_req.mjs";
+import { updateUserResults } from "../../../../utils/user_results.mjs";
 
-export default async function (request, env) {
+export async function handler_users_user_id_results_patch(request, env) {
+    const userId = getUserIdFromReq(request);
+    if (userId instanceof Response) {
+        return userId;
+    }
+
     let newResults;
-    {
-        let body;
-        try {
-            body = await request.json();
-        } catch (error) {
-            throw new MyValidationError('Invalid JSON body');
-        }
-        for (const round of Object.values(body)) {
+    try {
+        newResults = await request.json();
+        for (const round of Object.values(newResults)) {
             if (typeof round !== 'object') {
-                throw new MyValidationError('Invalid results format');
+                return new Response('Invalid results format', { status: 400 });
             }
             for (const answer of Object.values(round)) {
                 if ((typeof answer === 'object' && typeof answer?.isCorrect !== 'boolean') && answer !== null) {
-                    throw new MyValidationError('Invalid results format');
+                    return new Response('Invalid results format', { status: 400 });
                 }
             }
         }
+    } catch (error) {
+        return new Response('Invalid JSON body', { status: 400 });
     }
 
-    const userId = getUserIdFromReq(request);
+    const tidbCl = createTidbClient(env);
+    if (tidbCl instanceof Response) {
+        return tidbCl;
+    }
 
-    const tidbCl = new TidbClient(env);
+    try {
+        await tidbCl.txStart();
 
-    await tidbCl.execInTx(async (tidbCl) => {
-        const userRows = await tidbCl.query(`
-            SELECT id FROM users WHERE user_id = ?
-            `, [userId]
-        );
-        if (userRows.length === 0) {
-            throw new MyNotFoundError('user');
+        try {
+            const userRows = await tidbCl.query(`
+                    SELECT id FROM users WHERE user_id = ?
+                    `, [userId]
+            );
+            if (userRows.length === 0) {
+                return new Response('User not found', { status: 404 });
+            }
+            const userDbId = userRows[0].id;
+
+            await updateUserResults(tidbCl, userDbId, newResults);
+
+            await tidbCl.txCommit();
+        } catch (error) {
+            await tidbCl.txRollback();
+            throw error;
         }
-        const userDbId = userRows[0].id;
 
-        await updateUserResults(tidbCl, userDbId, newResults);
-    });
-
-    return new MyJsonResp();
+    } catch (error) {
+        console.error("[ERROR]", error);
+        return new Response('Database Error', { status: 500 });
+    }
 }

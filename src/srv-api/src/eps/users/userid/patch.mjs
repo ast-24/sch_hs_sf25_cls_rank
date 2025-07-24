@@ -1,55 +1,46 @@
-import { getUserIdFromReq } from "../../../utils/parse_req.mjs";
-import { createTidbClient } from "../../../cmn/tidb_cl.mjs";
 import { USER_DISPLAY_NAME_MAX_LENGTH } from "../../../conf.mjs";
+import { MyNotFoundError, MyValidationError } from "../../../cmn/errors.mjs";
+import { getUserIdFromReq } from "../../../cmn/req/get_user_id.mjs";
+import { TidbClient } from "../../../cmn/db/tidb_client.mjs";
+import { MyJsonResp } from "../../../cmn/resp.mjs";
 
-export async function handler_users_user_id_patch(request, env) {
+export default async function (request, env) {
     let newDisplayName;
     {
         let body;
         try {
             body = await request.json();
         } catch (error) {
-            return new Response('Invalid JSON body', { status: 400 });
+            throw new MyValidationError('Invalid JSON body');
         }
         newDisplayName = body.display_name;
         if (newDisplayName && typeof newDisplayName !== 'string') {
-            return new Response(`Display Name must be a string`, { status: 400 });
+            throw new MyValidationError(`Display Name must be a string`);
         }
         newDisplayName = newDisplayName?.trim?.();
         if (newDisplayName && USER_DISPLAY_NAME_MAX_LENGTH < newDisplayName.length) {
-            return new Response(`Display Name must be at most ${USER_DISPLAY_NAME_MAX_LENGTH} characters`, { status: 400 });
+            throw new MyValidationError(`Display Name must be at most ${USER_DISPLAY_NAME_MAX_LENGTH} characters`);
         }
     }
 
     const userId = getUserIdFromReq(request);
-    if (userId instanceof Response) {
-        return userId;
-    }
 
-    const tidbCl = createTidbClient(env);
-    if (tidbCl instanceof Response) {
-        return tidbCl;
-    }
+    const tidbCl = new TidbClient(env);
 
-    try {
-        const userRows = await tidbCl.query(`
+    const userRows = await tidbCl.query(`
             SELECT id FROM users WHERE user_id = ?
             `, [userId]
-        );
-        if (userRows.length === 0) {
-            return new Response('User not found', { status: 404 });
-        }
+    );
+    if (userRows.length === 0) {
+        throw new MyNotFoundError('user');
+    }
 
-        newDisplayName = newDisplayName || `User ${String(userId).padStart(4, '0')}`;
+    newDisplayName = newDisplayName || `User ${String(userId).padStart(4, '0')}`;
 
-        await tidbCl.query(`
+    await tidbCl.query(`
             UPDATE users SET display_name = ? WHERE user_id = ?
             `, [newDisplayName, userId]
-        );
+    );
 
-        return new Response('ok', { status: 200 });
-    } catch (error) {
-        console.error("[ERROR]", error);
-        return new Response('Database Error', { status: 500 });
-    }
+    return new MyJsonResp();
 }
