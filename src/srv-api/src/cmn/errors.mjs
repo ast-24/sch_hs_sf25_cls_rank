@@ -2,7 +2,7 @@ import {
     MyBadRequestResp,
     MyFatalResp,
     MyNotFoundResp,
-    MyStatusConflictResp,
+    MyConflictResp,
     MyTransientResp,
     MyValidationErrorResp
 } from "./resp.mjs";
@@ -78,12 +78,12 @@ export class MyNotFoundError extends MyError {
     }
 }
 
-export class MyStatusConflictError extends MyError {
+export class MyConflictError extends MyError {
     constructor(resource = null) {
         super(
-            'StatusConflictError',
+            'ConflictError',
             null,
-            new MyStatusConflictResp(resource)
+            new MyConflictResp(resource)
         );
     }
 }

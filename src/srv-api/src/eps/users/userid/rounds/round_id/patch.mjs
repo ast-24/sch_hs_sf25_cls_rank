@@ -1,67 +1,51 @@
-import { createTidbClient } from "../../../../../cmn/tidb_cl.mjs";
-import { getRoundIdFromReq, getUserIdFromReq } from "../../../../../utils/parse_req.mjs";
-import { updateUserScoreCache } from "../../../../../utils/user_score_cache.mjs";
+import { TidbClient } from "../../../../../cmn/db/tidb_client.mjs";
+import { MyNotFoundError, MyValidationError } from "../../../../../cmn/errors.mjs";
+import { getUserIdFromReq } from "../../../../../cmn/req/get_user_id.mjs";
+import { getRoundIdFromReq } from "../../../../../cmn/req/get_round_id.mjs";
+import { MyJsonResp } from "../../../../../cmn/resp.mjs";
+import { updateUserScore } from "../../../../../cmn/db/update_user_score.mjs";
 
-export async function handler_users_user_id_rounds_round_id_patch(request, env) {
+export default async function (request, env) {
     const userId = getUserIdFromReq(request);
-    if (userId instanceof Response) {
-        return userId;
-    }
-
     const roundId = getRoundIdFromReq(request);
-    if (roundId instanceof Response) {
-        return roundId;
-    }
 
     let finished;
-    try {
-        const body = await request.json();
+    {
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            throw new MyValidationError('Invalid JSON body');
+        }
         finished = body.finished;
         if (typeof finished !== 'boolean') {
-            return new Response('Invalid finished status', { status: 400 });
+            throw new MyValidationError('Invalid finished status');
         }
-    } catch (error) {
-        return new Response('Invalid JSON body', { status: 400 });
     }
 
-    const tidbCl = createTidbClient(env);
-    if (tidbCl instanceof Response) {
-        return tidbCl;
-    }
 
-    try {
-        await tidbCl.txStart();
+    const tidbCl = new TidbClient(env);
 
-        try {
-
-            const userRows = await tidbCl.query(`
+    await tidbCl.execInTx(async (tidbCl) => {
+        const userRows = await tidbCl.query(`
             SELECT id FROM users WHERE user_id = ?
             `, [userId]
-            );
-            if (userRows.length === 0) {
-                return new Response('User not found', { status: 404 });
-            }
-            const userDbId = userRows[0].id;
+        );
+        if (userRows.length === 0) {
+            throw new MyNotFoundError('user');
+        }
+        const userDbId = userRows[0].id;
 
-            await tidbCl.query(`
+        await tidbCl.query(`
             UPDATE users_rounds ur
             JOIN users u ON ur.user_id = u.id
             SET ur.finished_at = ${finished ? 'NOW()' : 'NULL'}
             WHERE u.user_id = ? AND ur.round_id = ?
             `, [userId, roundId]
-            );
+        );
 
-            await updateUserScoreCache(tidbCl, userDbId, [roundId]);
+        await updateUserScore(tidbCl, userDbId);
+    });
 
-            await tidbCl.txCommit();
-        } catch (error) {
-            await tidbCl.txRollback();
-            throw error;
-        }
-
-        return new Response('ok', { status: 200 });
-    } catch (error) {
-        console.error("[ERROR]", error);
-        return new Response('Database Error', { status: 500 });
-    }
+    return new MyJsonResp();
 }

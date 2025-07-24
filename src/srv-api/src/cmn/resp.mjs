@@ -54,7 +54,7 @@ export class MyNotFoundResp extends MyErrorResp {
     }
 }
 
-export class MyStatusConflictResp extends MyErrorResp {
+export class MyConflictResp extends MyErrorResp {
     constructor(resource = null) {
         super(409, 'Conflict', `Resource conflict: ${resource}`);
     }

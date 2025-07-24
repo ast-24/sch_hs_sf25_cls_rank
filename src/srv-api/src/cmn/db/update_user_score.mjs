@@ -1,4 +1,4 @@
-import { calcScore } from '../cmn/calc_score.mjs';
+import { calcScore } from '../calc_score.mjs';
 import { updateRanking } from './update_ranking.mjs';
 
 export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
