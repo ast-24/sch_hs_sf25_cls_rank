@@ -1,8 +1,8 @@
-import { USER_DISPLAY_NAME_MAX_LENGTH } from "../../../conf.mjs";
 import { MyNotFoundError, MyValidationError } from "../../../cmn/errors.mjs";
 import { getUserIdFromReq } from "../../../cmn/req/get_user_id.mjs";
 import { TidbClient } from "../../../cmn/db/tidb_client.mjs";
 import { MyJsonResp } from "../../../cmn/resp.mjs";
+import { CONF } from "../../../conf.mjs";
 
 export default async function (request, env) {
     let newDisplayName;
@@ -18,8 +18,8 @@ export default async function (request, env) {
             throw new MyValidationError(`Display Name must be a string`);
         }
         newDisplayName = newDisplayName?.trim?.();
-        if (newDisplayName && USER_DISPLAY_NAME_MAX_LENGTH < newDisplayName.length) {
-            throw new MyValidationError(`Display Name must be at most ${USER_DISPLAY_NAME_MAX_LENGTH} characters`);
+        if (newDisplayName && CONF.VALIDATION_RULES.USER_DISPLAY_NAME.MAX_LENGTH < newDisplayName.length) {
+            throw new MyValidationError(`Display Name must be at most ${CONF.VALIDATION_RULES.USER_DISPLAY_NAME.MAX_LENGTH} characters`);
         }
     }
 

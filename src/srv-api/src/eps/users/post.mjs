@@ -1,6 +1,7 @@
 import { TidbClient } from "../../cmn/db/tidb_client.mjs";
-import { MyValidationError } from "../../cmn/errors.mjs";
+import { MyValidationError, MyFatalError } from "../../cmn/errors.mjs";
 import { MyJsonResp } from "../../cmn/resp.mjs";
+import { CONF } from "../../conf.mjs";
 
 export default async function (request, env) {
     let roomId, displayName;
@@ -16,7 +17,7 @@ export default async function (request, env) {
         if (!roomId) {
             throw new MyValidationError('Room ID is required');
         }
-        if (typeof roomId !== 'number' || roomId < 0 || !Number.isInteger(roomId)) {
+        if (typeof roomId !== 'number' || roomId <= 0 || !Number.isInteger(roomId)) {
             throw new MyValidationError('Invalid Room ID');
         }
         if (roomId < CONF.VALIDATION_RULES.ROOM_ID.MIN || CONF.VALIDATION_RULES.ROOM_ID.MAX < roomId) {
@@ -37,10 +38,12 @@ export default async function (request, env) {
     for (let i = 0; i < 3; i++) {
         try {
             const rows = await tidbCl.query(`
-                SELECT MAX(user_id) AS max_user_id FROM users WHERE room_id = ?
-                `, [roomId]
+                SELECT COALESCE(MAX(user_id), ?) + 1 AS next_user_id
+                FROM users
+                WHERE room_id = ?
+                `, [roomId * 1000, roomId]
             );
-            const nextUserId = (rows[0]?.max_user_id ?? roomId * 1000) + 1;
+            const nextUserId = rows[0].next_user_id;
             displayName = displayName || `User ${String(nextUserId).padStart(4, '0')}`;
 
             await tidbCl.query(`
@@ -50,7 +53,7 @@ export default async function (request, env) {
 
             return new MyJsonResp({
                 user_id: nextUserId,
-                user_name: displayName,
+                display_name: displayName,
             });
         } catch (error) {
             if (i == 2) {
@@ -59,5 +62,5 @@ export default async function (request, env) {
         }
     }
 
-    throw "UNREACHABLE";
+    throw new MyFatalError("Failed to create user after retries");
 }

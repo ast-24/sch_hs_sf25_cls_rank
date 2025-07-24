@@ -1,10 +1,3 @@
-import {
-    RANKING_TODAY_TOTAL_COUNT_LIMIT,
-    RANKING_ROUND_COUNT_LIMIT,
-    RANKING_ROUND_MAX_COUNT_LIMIT,
-    RANKING_ROUND_LATEST_BORDER_MIN
-} from '../conf.mjs';
-
 /*
 struct target {
     todayTotal: boolean,
@@ -13,6 +6,8 @@ struct target {
     roundLatest: boolean
 }
 */
+
+import { CONF } from "../../conf.mjs";
 
 export async function updateRanking(
     tidbCl,
@@ -59,7 +54,7 @@ async function updateTodayTotalRanking(tidbCl) {
             score = VALUES(score),
             user_pub_id = VALUES(user_pub_id),
             user_display_name = VALUES(user_display_name)
-    `, [RANKING_TODAY_TOTAL_COUNT_LIMIT]);
+    `, [CONF.RANKING.COUNT_LIMIT.TODAY_TOTAL]);
 
     await tidbCl.query(`
         DELETE FROM rankings_cache_today_total
@@ -70,7 +65,7 @@ async function updateTodayTotalRanking(tidbCl) {
                 LIMIT ?
             ) as top_records
         )
-    `, [RANKING_TODAY_TOTAL_COUNT_LIMIT]);
+    `, [CONF.RANKING.COUNT_LIMIT.TODAY_TOTAL]);
 }
 
 /**
@@ -92,7 +87,7 @@ async function updateRoundMaxRanking(tidbCl) {
             score = VALUES(score),
             user_pub_id = VALUES(user_pub_id),
             user_display_name = VALUES(user_display_name)
-    `, [RANKING_ROUND_MAX_COUNT_LIMIT]);
+    `, [CONF.RANKING.COUNT_LIMIT.ROUND_MAX]);
 
     await tidbCl.query(`
         DELETE FROM rankings_cache_round_max
@@ -103,7 +98,7 @@ async function updateRoundMaxRanking(tidbCl) {
                 LIMIT ?
             ) as top_records
         )
-    `, [RANKING_ROUND_MAX_COUNT_LIMIT]);
+    `, [CONF.RANKING.COUNT_LIMIT.ROUND_MAX]);
 }
 
 /**
@@ -126,7 +121,7 @@ async function updateRoundRanking(tidbCl) {
             score = VALUES(score),
             user_pub_id = VALUES(user_pub_id),
             user_display_name = VALUES(user_display_name)
-    `, [RANKING_ROUND_COUNT_LIMIT]);
+    `, [CONF.RANKING.COUNT_LIMIT.ROUND]);
 
     await tidbCl.query(`
         DELETE FROM rankings_cache_round
@@ -137,7 +132,8 @@ async function updateRoundRanking(tidbCl) {
                 LIMIT ?
             ) as top_records
         )
-    `, [RANKING_ROUND_COUNT_LIMIT]);
+        `, [CONF.RANKING.COUNT_LIMIT.ROUND]
+    );
 }
 
 /**
@@ -160,7 +156,7 @@ async function updateRoundLatestRanking(tidbCl) {
         )
         INSERT INTO rankings_cache_round_latest (room_id, finished_at, round_id, score, user_pub_id, user_display_name)
         SELECT
-            ur.room_id,
+            ur.id,
             ur.finished_at,
             ur.id,
             ur.score,
@@ -169,7 +165,7 @@ async function updateRoundLatestRanking(tidbCl) {
         FROM latest_rounds ur
         JOIN users u ON ur.user_id = u.id
         WHERE ur.rn = 1 AND ur.score IS NOT NULL
-    `, [RANKING_ROUND_LATEST_BORDER_MIN]);
+    `, [CONF.RANKING.ROUND_LATEST_BORDER_MIN]);
 }
 
 /**

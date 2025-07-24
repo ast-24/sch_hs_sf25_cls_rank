@@ -1,6 +1,6 @@
 import { TidbClient } from '../../cmn/db/tidb_client.mjs';
-import { updateRanking } from '../../cmn/db/update_ranking_cache.mjs';
-import { MyValidationError } from '../../cmn/errors.mjs';
+import { updateRanking } from '../../cmn/db/update_ranking.mjs';
+import { MyValidationError, MyNotFoundError } from '../../cmn/errors.mjs';
 import { MyJsonResp } from '../../cmn/resp.mjs';
 
 export default async function (request, env) {

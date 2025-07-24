@@ -119,7 +119,8 @@ export default async function (request, env) {
         } catch (error) {
             throw new MyValidationError('Invalid JSON body');
         }
-        for (const round of Object.values(body)) {
+        newResults = body;
+        for (const round of Object.values(newResults)) {
             if (typeof round !== 'object') {
                 throw new MyValidationError('Invalid results format');
             }

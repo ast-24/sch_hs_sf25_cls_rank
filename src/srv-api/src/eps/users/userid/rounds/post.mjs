@@ -1,7 +1,8 @@
 import { TidbClient } from "../../../../cmn/db/tidb_client.mjs";
-import { MyValidationError } from "../../../../cmn/errors.mjs";
+import { MyValidationError, MyNotFoundError, MyFatalError } from "../../../../cmn/errors.mjs";
 import { getUserIdFromReq } from "../../../../cmn/req/get_user_id.mjs";
 import { MyJsonResp } from "../../../../cmn/resp.mjs";
+import { CONF } from "../../../../conf.mjs";
 
 export default async function (request, env) {
     let roomId;
@@ -16,11 +17,11 @@ export default async function (request, env) {
         if (!roomId) {
             throw new MyValidationError('Room ID is required');
         }
-        if (typeof roomId !== 'number' || roomId < 0 || !Number.isInteger(roomId)) {
+        if (typeof roomId !== 'number' || roomId <= 0 || !Number.isInteger(roomId)) {
             throw new MyValidationError('Invalid Room ID');
         }
-        if (roomId < ROOM_ID_MIN || ROOM_ID_MAX < roomId) {
-            throw new MyValidationError(`Room ID must be between ${ROOM_ID_MIN} and ${ROOM_ID_MAX}`);
+        if (roomId < CONF.VALIDATION_RULES.ROOM_ID.MIN || CONF.VALIDATION_RULES.ROOM_ID.MAX < roomId) {
+            throw new MyValidationError(`Room ID must be between ${CONF.VALIDATION_RULES.ROOM_ID.MIN} and ${CONF.VALIDATION_RULES.ROOM_ID.MAX}`);
         }
     }
 
@@ -28,9 +29,7 @@ export default async function (request, env) {
 
     const tidbCl = new TidbClient(env);
 
-    let nextRoundId;
-
-    await tidbCl.execInTx(async (tidbCl) => {
+    return await tidbCl.execInTx(async (tidbCl) => {
         const userRows = await tidbCl.query(`
             SELECT id
             FROM users
@@ -50,23 +49,33 @@ export default async function (request, env) {
             `, [userDbId]
         );
 
-        const maxRoundRows = await tidbCl.query(`
-            SELECT MAX(round_id) AS max_round_id
-            FROM users_rounds
-            WHERE user_id = ?`,
-            [userDbId]
-        );
-        nextRoundId = (maxRoundRows[0]?.max_round_id ?? 0) + 1;
+        for (let i = 0; i < 3; i++) {
+            try {
+                const maxRoundRows = await tidbCl.query(`
+                    SELECT COALESCE(MAX(round_id), 0) + 1 AS next_round_id
+                    FROM users_rounds
+                    WHERE user_id = ?
+                    `, [userDbId]
+                );
+                const nextRoundId = maxRoundRows[0].next_round_id;
 
-        // ラウンド開始
-        await tidbCl.query(`
-            INSERT INTO users_rounds (user_id, round_id, room_id)
-            VALUES (?, ?, ?)`,
-            [userDbId, nextRoundId, roomId]
-        );
-    });
+                // ラウンド開始
+                await tidbCl.query(`
+                    INSERT INTO users_rounds (user_id, round_id, room_id)
+                    VALUES (?, ?, ?)
+                    `, [userDbId, nextRoundId, roomId]
+                );
 
-    return new MyJsonResp({
-        round_id: nextRoundId
+                return new MyJsonResp({
+                    round_id: nextRoundId
+                });
+            } catch (error) {
+                if (i === 2) {
+                    throw error;
+                }
+            }
+        }
+
+        throw new MyFatalError('Failed to create round after multiple attempts');
     });
 }

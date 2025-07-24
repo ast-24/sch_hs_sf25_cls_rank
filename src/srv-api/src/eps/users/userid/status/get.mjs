@@ -19,23 +19,32 @@ export default async function (request, env) {
     }
     const { score_today_total, score_round_max } = scoreRows[0];
 
-    const todayRankRows = await tidbCl.query(`
-        SELECT COUNT(*) + 1 AS rank
-        FROM users
-        WHERE score_today_total > ?
-        `, [score_today_total]
-    );
-    const roundMaxRankRows = await tidbCl.query(`
-        SELECT COUNT(*) + 1 AS rank
-        FROM users
-        WHERE score_round_max > ?
-        `, [score_round_max]
-    );
+    let todayRank = null, roundMaxRank = null;
+
+    if (score_today_total !== null) {
+        const todayRankRows = await tidbCl.query(`
+            SELECT COUNT(*) + 1 AS rank
+            FROM users
+            WHERE score_today_total > ?
+            `, [score_today_total]
+        );
+        todayRank = todayRankRows[0]?.rank ?? null;
+    }
+
+    if (score_round_max !== null) {
+        const roundMaxRankRows = await tidbCl.query(`
+            SELECT COUNT(*) + 1 AS rank
+            FROM users
+            WHERE score_round_max > ?
+            `, [score_round_max]
+        );
+        roundMaxRank = roundMaxRankRows[0]?.rank ?? null;
+    }
 
     return new MyJsonResp({
         today_total: score_today_total,
-        today_total_rank: todayRankRows[0]?.rank ?? null,
+        today_total_rank: todayRank,
         round_max: score_round_max,
-        round_max_rank: roundMaxRankRows[0]?.rank ?? null
+        round_max_rank: roundMaxRank
     });
 }

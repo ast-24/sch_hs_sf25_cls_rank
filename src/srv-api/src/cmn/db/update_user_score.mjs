@@ -1,5 +1,6 @@
 import { calcScore } from '../calc_score.mjs';
 import { updateRanking } from './update_ranking.mjs';
+import { MyFatalError, MyNotFoundError } from '../errors.mjs';
 
 export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
     await tidbCl.execInTxOptional(async (tidbCl) => {
@@ -29,7 +30,7 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
 
         for (const tgtRoundId of tgtRoundIds) {
             if (!roundAnswers[tgtRoundId]) {
-                throw new Error(`Round ID ${tgtRoundId} not found for user ${userDbId}`);
+                throw new MyNotFoundError(`Round ID ${tgtRoundId}`);
             }
             const roundData = roundAnswers[tgtRoundId];
             roundData.newScore = roundData.finishedAt ? calcScore(0, roundData.isCorrect) : null;
@@ -51,7 +52,7 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
             `, [userDbId]
         );
         if (userScoreRes.length === 0) {
-            throw new Error(`User ID ${userDbId} not found`);
+            throw new MyFatalError(`User DBID ${userDbId} not found`);
         }
         const oldTodayTotalScore = userScoreRes[0].score_today_total;
         const oldRoundMaxScore = userScoreRes[0].score_round_max;

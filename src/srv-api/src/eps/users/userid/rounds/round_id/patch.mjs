@@ -44,7 +44,7 @@ export default async function (request, env) {
             `, [userId, roundId]
         );
 
-        await updateUserScore(tidbCl, userDbId);
+        await updateUserScore(tidbCl, userDbId, [roundId]);
     });
 
     return new MyJsonResp();

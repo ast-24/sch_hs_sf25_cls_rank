@@ -1,6 +1,7 @@
 import { MyNotFoundError } from "../../../cmn/errors.mjs";
 import { getUserIdFromReq } from "../../../cmn/req/get_user_id.mjs";
 import { MyJsonResp } from "../../../cmn/resp.mjs";
+import { TidbClient } from "../../../cmn/db/tidb_client.mjs";
 
 export default async function (request, env) {
     const userId = getUserIdFromReq(request);
@@ -8,7 +9,9 @@ export default async function (request, env) {
     const tidbCl = new TidbClient(env);
 
     const rows = await tidbCl.query(`
-            SELECT * FROM users WHERE user_id = ?
+            SELECT display_name, created_at
+            FROM users
+            WHERE user_id = ?
             `, [userId]
     );
     if (rows.length === 0) {

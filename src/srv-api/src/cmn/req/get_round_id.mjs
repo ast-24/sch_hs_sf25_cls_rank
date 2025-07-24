@@ -1,4 +1,4 @@
-import { MyValidationError } from "../errors.mjs";
+import { MyFatalError, MyValidationError } from "../errors.mjs";
 
 export function getRoundIdFromReq(request) {
     let roundId = request.params?.round_id;

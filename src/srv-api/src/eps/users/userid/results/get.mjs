@@ -1,6 +1,7 @@
 import { TidbClient } from "../../../../cmn/db/tidb_client.mjs";
 import { MyNotFoundError } from "../../../../cmn/errors.mjs";
 import { getUserIdFromReq } from "../../../../cmn/req/get_user_id.mjs";
+import { MyJsonResp } from "../../../../cmn/resp.mjs";
 
 export default async function (request, env) {
     const userId = getUserIdFromReq(request);
