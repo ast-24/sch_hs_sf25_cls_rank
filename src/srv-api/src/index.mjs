@@ -2,46 +2,44 @@ import { IttyRouter } from 'itty-router';
 import { MyError, MyFatalError, MyNotFoundError } from './cmn/errors.mjs';
 import { MyJsonResp } from './cmn/resp.mjs';
 
-import rankingGet from './eps/ranking/get.mjs';
-import rankingHead from './eps/ranking/head.mjs';
-import rankingPost from './eps/ranking/post.mjs';
-import usersPost from './eps/users/post.mjs';
-import userIdGet from './eps/users/userid/get.mjs';
-import userIdPatch from './eps/users/userid/patch.mjs';
-import userIdStatusGet from './eps/users/userid/status/get.mjs';
-import userIdResultsGet from './eps/users/userid/results/get.mjs';
-import userIdResultsPatch from './eps/users/userid/results/patch.mjs';
-import userIdRoundsGet from './eps/users/userid/rounds/get.mjs';
-import userIdRoundsPost from './eps/users/userid/rounds/post.mjs';
-import roundIdGet from './eps/users/userid/rounds/round_id/get.mjs';
-import roundIdPatch from './eps/users/userid/rounds/round_id/patch.mjs';
-import roundIdAnswersPost from './eps/users/userid/rounds/round_id/answers/post.mjs';
-import roundIdStatusGet from './eps/users/userid/rounds/round_id/status/get.mjs';
-import roundIdResultsGet from './eps/users/userid/rounds/round_id/results/get.mjs';
-import roundIdResultsPatch from './eps/users/userid/rounds/round_id/results/patch.mjs';
+import EpsRankingGet from './eps/ranking/get.mjs';
+import EpsRankingHead from './eps/ranking/head.mjs';
+import EpsRankingPost from './eps/ranking/post.mjs';
+import EpsUsersPost from './eps/users/post.mjs';
+import EpsUsersUserIdGet from './eps/users/user_id/get.mjs';
+import EpsUsersUserIdPatch from './eps/users/user_id/patch.mjs';
+import EpsUsersUserIdResultsGet from './eps/users/user_id/results/get.mjs';
+import EpsUsersUserIdResultsPatch from './eps/users/user_id/results/patch.mjs';
+import EpsUsersUserIdRoundsGet from './eps/users/user_id/rounds/get.mjs';
+import EpsUsersUserIdRoundsPost from './eps/users/user_id/rounds/post.mjs';
+import EpsUsersUserIdRoundsRoundIdGet from './eps/users/user_id/rounds/round_id/get.mjs';
+import EpsUsersUserIdRoundsRoundIdPatch from './eps/users/user_id/rounds/round_id/patch.mjs';
+import EpsUsersUserIdRoundsRoundIdAnswersPost from './eps/users/user_id/rounds/round_id/answers/post.mjs';
+import EpsUsersUserIdRoundsRoundIdResultsGet from './eps/users/user_id/rounds/round_id/results/get.mjs';
+import EpsUsersUserIdRoundsRoundIdResultsPatch from './eps/users/user_id/rounds/round_id/results/patch.mjs';
+import EpsUsersUserIdRoundsRoundIdStatusGet from './eps/users/user_id/rounds/round_id/status/get.mjs';
+import EpsUsersUserIdStatusGet from './eps/users/user_id/status/get.mjs';
 
 const router = IttyRouter();
 
-// Ranking endpoints
-router.get('/ranking', rankingGet);
-router.head('/ranking', rankingHead);
-router.post('/ranking', rankingPost);
-
-// User endpoints
-router.post('/users', usersPost);
-router.get('/users/:user_id', userIdGet);
-router.patch('/users/:user_id', userIdPatch);
-router.get('/users/:user_id/status', userIdStatusGet);
-router.get('/users/:user_id/results', userIdResultsGet);
-router.patch('/users/:user_id/results', userIdResultsPatch);
-router.get('/users/:user_id/rounds', userIdRoundsGet);
-router.post('/users/:user_id/rounds', userIdRoundsPost);
-router.get('/users/:user_id/rounds/:round_id', roundIdGet);
-router.patch('/users/:user_id/rounds/:round_id', roundIdPatch);
-router.post('/users/:user_id/rounds/:round_id/answers', roundIdAnswersPost);
-router.get('/users/:user_id/rounds/:round_id/status', roundIdStatusGet);
-router.get('/users/:user_id/rounds/:round_id/results', roundIdResultsGet);
-router.patch('/users/:user_id/rounds/:round_id/results', roundIdResultsPatch);
+// エンドポイント登録
+router.get('/ranking', EpsRankingGet);
+router.head('/ranking', EpsRankingHead);
+router.post('/ranking', EpsRankingPost);
+router.post('/users', EpsUsersPost);
+router.get('/users/:user_id', EpsUsersUserIdGet);
+router.patch('/users/:user_id', EpsUsersUserIdPatch);
+router.get('/users/:user_id/results', EpsUsersUserIdResultsGet);
+router.patch('/users/:user_id/results', EpsUsersUserIdResultsPatch);
+router.get('/users/:user_id/rounds', EpsUsersUserIdRoundsGet);
+router.post('/users/:user_id/rounds', EpsUsersUserIdRoundsPost);
+router.get('/users/:user_id/rounds/:round_id', EpsUsersUserIdRoundsRoundIdGet);
+router.patch('/users/:user_id/rounds/:round_id', EpsUsersUserIdRoundsRoundIdPatch);
+router.post('/users/:user_id/rounds/:round_id/answers', EpsUsersUserIdRoundsRoundIdAnswersPost);
+router.get('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRoundIdResultsGet);
+router.patch('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRoundIdResultsPatch);
+router.get('/users/:user_id/rounds/:round_id/status', EpsUsersUserIdRoundsRoundIdStatusGet);
+router.get('/users/:user_id/status', EpsUsersUserIdStatusGet);
 
 router.all('*', () => { throw new MyNotFoundError('Endpoint') });
 
