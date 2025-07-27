@@ -19,7 +19,10 @@ export default async function (request, env) {
             throw new MyValidationError('Invalid JSON body');
         }
         isCorrect = body.is_correct;
-        if (isCorrect !== null && isCorrect !== undefined && typeof isCorrect !== 'boolean') {
+        if (isCorrect === undefined) {
+            throw new MyValidationError('is_correct field is required');
+        }
+        if (isCorrect !== null && typeof isCorrect !== 'boolean') {
             throw new MyValidationError('is_correct must be a boolean or null');
         }
     }

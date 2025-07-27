@@ -9,8 +9,14 @@ export const CONF = {
         },
     },
     RANKING: {
+        ENABLE: {
+            TOTAL: true,
+            ROUND: true,
+            ROUND_MAX: true,
+            ROUND_LATEST: true,
+        },
         COUNT_LIMIT: {
-            TODAY_TOTAL: 30,
+            TOTAL: 30,
             ROUND: 30,
             ROUND_MAX: 30,
         },

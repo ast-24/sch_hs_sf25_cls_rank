@@ -2,6 +2,7 @@ import { TidbClient } from "../../../../cmn/db/tidb_client.mjs";
 import { MyNotFoundError } from "../../../../cmn/errors.mjs";
 import { getUserIdFromReq } from "../../../../cmn/req/get_user_id.mjs";
 import { MyJsonResp } from "../../../../cmn/resp.mjs";
+import { CONF } from "../../../../conf.mjs";
 
 export default async function (request, env) {
     const userId = getUserIdFromReq(request);
@@ -9,7 +10,7 @@ export default async function (request, env) {
     const tidbCl = new TidbClient(env);
 
     const scoreRows = await tidbCl.query(`
-        SELECT score_today_total, score_round_max
+        SELECT score_total, score_round_max
         FROM users
         WHERE user_id = ?
         `, [userId]
@@ -17,21 +18,21 @@ export default async function (request, env) {
     if (scoreRows.length === 0) {
         throw new MyNotFoundError('user');
     }
-    const { score_today_total, score_round_max } = scoreRows[0];
+    const { score_total, score_round_max } = scoreRows[0];
 
-    let todayRank = null, roundMaxRank = null;
+    let totalRank = null, roundMaxRank = null;
 
-    if (score_today_total !== null) {
-        const todayRankRows = await tidbCl.query(`
+    if (CONF.RANKING.ENABLE.TOTAL && score_total !== null) {
+        const totalRankRows = await tidbCl.query(`
             SELECT COUNT(*) + 1 AS rank
             FROM users
-            WHERE score_today_total > ?
-            `, [score_today_total]
+            WHERE score_total > ?
+            `, [score_total]
         );
-        todayRank = todayRankRows[0]?.rank ?? null;
+        totalRank = totalRankRows[0]?.rank ?? null;
     }
 
-    if (score_round_max !== null) {
+    if (CONF.RANKING.ENABLE.ROUND_MAX && score_round_max !== null) {
         const roundMaxRankRows = await tidbCl.query(`
             SELECT COUNT(*) + 1 AS rank
             FROM users
@@ -42,8 +43,8 @@ export default async function (request, env) {
     }
 
     return new MyJsonResp({
-        today_total: score_today_total,
-        today_total_rank: todayRank,
+        total: score_total,
+        total_rank: totalRank,
         round_max: score_round_max,
         round_max_rank: roundMaxRank
     });

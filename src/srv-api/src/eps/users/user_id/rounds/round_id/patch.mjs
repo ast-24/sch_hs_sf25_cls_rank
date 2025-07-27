@@ -1,5 +1,5 @@
 import { TidbClient } from "../../../../../cmn/db/tidb_client.mjs";
-import { MyNotFoundError, MyValidationError } from "../../../../../cmn/errors.mjs";
+import { MyNotFoundError, MyValidationError, MyConflictError } from "../../../../../cmn/errors.mjs";
 import { getUserIdFromReq } from "../../../../../cmn/req/get_user_id.mjs";
 import { getRoundIdFromReq } from "../../../../../cmn/req/get_round_id.mjs";
 import { MyJsonResp } from "../../../../../cmn/resp.mjs";
@@ -23,18 +23,23 @@ export default async function (request, env) {
         }
     }
 
-
     const tidbCl = new TidbClient(env);
 
     await tidbCl.execInTx(async (tidbCl) => {
-        const userRows = await tidbCl.query(`
-            SELECT id FROM users WHERE user_id = ?
-            `, [userId]
+        const rows = await tidbCl.query(`
+            SELECT u.id as user_db_id, ur.finished_at
+            FROM users u
+            JOIN users_rounds ur ON u.id = ur.user_id
+            WHERE u.user_id = ? AND ur.round_id = ?
+            `, [userId, roundId]
         );
-        if (userRows.length === 0) {
-            throw new MyNotFoundError('user');
+        if (rows.length === 0) {
+            throw new MyNotFoundError('user or round');
         }
-        const userDbId = userRows[0].id;
+
+        if ((rows[0].finished_at !== null) === finished) {
+            throw new MyConflictError('round status');
+        }
 
         await tidbCl.query(`
             UPDATE users_rounds ur
@@ -44,7 +49,7 @@ export default async function (request, env) {
             `, [userId, roundId]
         );
 
-        await updateUserScore(tidbCl, userDbId, [roundId]);
+        await updateUserScore(tidbCl, rows[0].user_db_id, [roundId]);
     });
 
     return new MyJsonResp();

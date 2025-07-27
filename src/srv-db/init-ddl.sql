@@ -21,12 +21,12 @@ CREATE TABLE users (
     user_id             SMALLINT UNSIGNED NOT NULL,     -- ユーザID
     room_id             TINYINT  UNSIGNED NOT NULL,     -- ルームID
     display_name        VARCHAR(255)      NOT NULL,     -- 表示名
-    score_today_total   INT,                            -- 今日の累積スコア(キャッシュ)
-    score_round_max     INT,                            -- 今日の最大スコア(キャッシュ)
+    score_total         INT,                            -- 累積スコア(キャッシュ)
+    score_round_max     INT,                            -- 最大ラウンドスコア(キャッシュ)
 
     UNIQUE INDEX idx__users__user_id (user_id),
            INDEX idx__users__room_id__user_id (room_id, user_id),
-           INDEX idx__users__score_today_total (score_today_total DESC),
+           INDEX idx__users__score_total (score_total DESC),
            INDEX idx__users__score_round_max (score_round_max DESC)
 );
 
@@ -81,7 +81,7 @@ CREATE TABLE rankings_cache_updated (
     created_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    ranking_type        ENUM('today_total', 'round', 'round_max', 'round_latest') NOT NULL, -- ランキングタイプ
+    ranking_type        ENUM('total', 'round', 'round_max', 'round_latest') NOT NULL, -- ランキングタイプ
     ranking_updated_at  DATETIME          NOT NULL, -- ランキングの最終更新日時
 
     UNIQUE INDEX idx__rankings_cache_updated__ranking_type (ranking_type),
@@ -89,7 +89,7 @@ CREATE TABLE rankings_cache_updated (
 );
 
 -- 累計スコア
-CREATE TABLE rankings_cache_today_total (
+CREATE TABLE rankings_cache_total (
     id                  BIGINT            PRIMARY KEY AUTO_RANDOM,
     created_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -101,8 +101,8 @@ CREATE TABLE rankings_cache_today_total (
 
     FOREIGN KEY(user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
 
-    UNIQUE INDEX idx__rankings_cache_today_total__user_id (user_id),
-           INDEX idx__rankings_cache_today_total__score__desc (score DESC)
+    UNIQUE INDEX idx__rankings_cache_total__user_id (user_id),
+           INDEX idx__rankings_cache_total__score__desc (score DESC)
 );
 
 -- 単一ラウンドスコア(各ユーザの最大スコア)

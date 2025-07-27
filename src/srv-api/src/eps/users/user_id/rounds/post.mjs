@@ -3,6 +3,7 @@ import { MyValidationError, MyNotFoundError, MyFatalError } from "../../../../cm
 import { getUserIdFromReq } from "../../../../cmn/req/get_user_id.mjs";
 import { MyJsonResp } from "../../../../cmn/resp.mjs";
 import { CONF } from "../../../../conf.mjs";
+import { updateUserScore } from "../../../../cmn/db/update_user_score.mjs";
 
 export default async function (request, env) {
     let roomId;
@@ -42,12 +43,29 @@ export default async function (request, env) {
         const userDbId = userRows[0].id;
 
         // 未終了ラウンドがあればfinished_atを現在時刻で更新
-        await tidbCl.query(`
-            UPDATE users_rounds
-            SET finished_at = CURRENT_TIMESTAMP
-            WHERE user_id = ? AND finished_at IS NULL
-            `, [userDbId]
-        );
+        {
+            // スコア計算のため、更新対象のround_idを取得
+            const unfinishedRoundRows = await tidbCl.query(`
+                SELECT round_id
+                FROM users_rounds
+                WHERE user_id = ? AND finished_at IS NULL
+                `, [userDbId]
+            );
+            const unfinishedRoundIds = unfinishedRoundRows.map(row => row.round_id);
+
+            // 未終了ラウンドのfinished_atを更新
+            await tidbCl.query(`
+                UPDATE users_rounds
+                SET finished_at = CURRENT_TIMESTAMP
+                WHERE user_id = ? AND finished_at IS NULL
+                `, [userDbId]
+            );
+
+            // 強制終了されたラウンドのスコアを計算・適用
+            if (unfinishedRoundIds.length) {
+                await updateUserScore(tidbCl, userDbId, unfinishedRoundIds);
+            }
+        }
 
         for (let i = 0; i < 3; i++) {
             try {

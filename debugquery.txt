@@ -9,3 +9,11 @@ select u.user_id, ur.round_id, ura.*
 from users_rounds_answers ura
 join users_rounds ur on ura.round_id = ur.id
 join users u on ur.user_id = u.id;
+
+
+select u.user_id, ur.round_id, ura.*
+from users_rounds_answers ura
+join users_rounds ur on ura.round_id = ur.id
+join users u on ur.user_id = u.id
+where u.user_id = 3005 AND ur.round_id = 2
+order by ura.answer_id;

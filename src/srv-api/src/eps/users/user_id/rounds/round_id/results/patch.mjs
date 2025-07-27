@@ -17,12 +17,18 @@ export default async function (request, env) {
         } catch (error) {
             throw new MyValidationError('Invalid JSON body');
         }
-        for (const answer of Object.values(body)) {
-            if ((typeof answer === 'object' && typeof answer?.isCorrect !== 'boolean') && answer !== null) {
+        newAnswers = body;
+        for (const answer of Object.values(newAnswers)) {
+            if ((typeof answer === 'object' && typeof answer?.is_correct !== 'boolean') && answer !== null) {
                 throw new MyValidationError('Invalid results format');
             }
         }
-        newAnswers = body;
+        newAnswers = Object.entries(newAnswers).reduce((acc, [answerId, answer]) => {
+            acc[parseInt(answerId)] = answer === null ? null : {
+                isCorrect: answer.is_correct === null ? null : answer.is_correct,
+            };
+            return acc;
+        }, {});
     }
 
     const tidbCl = new TidbClient(env);
@@ -37,7 +43,7 @@ export default async function (request, env) {
         }
         const userDbId = userRows[0].id;
 
-        await updateUserResults(tidbCl, userDbId, { [roundId]: newAnswers });
+        await updateUserResults(tidbCl, userDbId, { [roundId]: newAnswers }); // ユーザ全体のキャッシュに更新が走ってない
     });
 
     return new MyJsonResp();

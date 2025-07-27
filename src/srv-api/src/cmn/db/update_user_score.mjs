@@ -1,6 +1,7 @@
 import { calcScore } from '../calc_score.mjs';
 import { updateRanking } from './update_ranking.mjs';
-import { MyFatalError, MyNotFoundError } from '../errors.mjs';
+import { MyFatalError } from '../errors.mjs';
+import { CONF } from '../../conf.mjs';
 
 export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
     await tidbCl.execInTxOptional(async (tidbCl) => {
@@ -29,10 +30,11 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
         }
 
         for (const tgtRoundId of tgtRoundIds) {
-            if (!roundAnswers[tgtRoundId]) {
-                throw new MyNotFoundError(`Round ID ${tgtRoundId}`);
-            }
             const roundData = roundAnswers[tgtRoundId];
+            if (!roundData) {
+                // 回答無しのラウンドがある可能性があるため
+                continue;
+            }
             roundData.newScore = roundData.finishedAt ? calcScore(0, roundData.isCorrect) : null;
             if (roundData.newScore !== roundData.score) {
                 await tidbCl.query(`
@@ -41,90 +43,97 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
                     WHERE id = ?
                     `, [roundData.newScore, roundData.dbId]
                 );
-                roundData.score = roundData.newScore;
             }
         }
 
-        const userScoreRes = await tidbCl.query(`
-            SELECT score_today_total, score_round_max
-            FROM users
-            WHERE id = ?
-            `, [userDbId]
-        );
-        if (userScoreRes.length === 0) {
-            throw new MyFatalError(`User DBID ${userDbId} not found`);
+        let oldTotalScore = null;
+        let oldRoundMaxScore = null;
+        let newTotalScore = null;
+        let newRoundMaxScore = null;
+        if (CONF.RANKING.ENABLE.TOTAL || CONF.RANKING.ENABLE.ROUND_MAX) {
+            const userScoreRes = await tidbCl.query(`
+                SELECT score_total, score_round_max
+                FROM users
+                WHERE id = ?
+                `, [userDbId]
+            );
+            if (userScoreRes.length === 0) {
+                throw new MyFatalError(`User DBID ${userDbId} not found`);
+            }
+            oldTotalScore = userScoreRes[0].score_total;
+            oldRoundMaxScore = userScoreRes[0].score_round_max;
+
+            // 有効なスコアを抽出
+            const validScores = Object.entries(roundAnswers)
+                .map(([roundId, rd]) =>
+                    tgtRoundIds.includes(parseInt(roundId))
+                        ? rd.newScore
+                        : rd.score
+                )
+                .filter(score => score !== null && score !== undefined);
+
+            // 累積スコア
+            newTotalScore = validScores.length
+                ? validScores.reduce((sum, score) => sum + score, 0)
+                : null;
+
+            // 最大ラウンドスコア
+            newRoundMaxScore = validScores.length
+                ? Math.max(...validScores)
+                : null;
+
+            await tidbCl.query(`
+                UPDATE users
+                SET score_total = ?, score_round_max = ?
+                WHERE id = ?
+                `, [newTotalScore, newRoundMaxScore, userDbId]
+            );
         }
-        const oldTodayTotalScore = userScoreRes[0].score_today_total;
-        const oldRoundMaxScore = userScoreRes[0].score_round_max;
-
-        // 有効なスコアを抽出
-        const validScores = Object.entries(roundAnswers)
-            .map(([roundId, rd]) =>
-                tgtRoundIds.includes(parseInt(roundId))
-                    ? rd.newScore
-                    : rd.score
-            )
-            .filter(score => score !== null && score !== undefined);
-
-        // 今日の累積スコア
-        const newTodayTotalScore = validScores.length
-            ? validScores.reduce((sum, score) => sum + score, 0)
-            : null;
-
-        // 最大ラウンドスコア
-        const newRoundMaxScore = validScores.length
-            ? Math.max(...validScores)
-            : null;
-
-        await tidbCl.query(`
-            UPDATE users
-            SET score_today_total = ?, score_round_max = ?
-            WHERE id = ?
-            `, [newTodayTotalScore, newRoundMaxScore, userDbId]
-        );
 
         const updateTgt = {
-            todayTotal: false,
+            total: false,
             round: false,
             roundMax: false,
             roundLatest: false
         };
 
-        if (newTodayTotalScore !== oldTodayTotalScore) {
-            // oldかnewのtotalスコアがtoday_totalの最低値を超えているか
-            const minTodayTotalRes = await tidbCl.query(`
-                SELECT MIN(score) as min_score
-                FROM rankings_cache_today_total
-                `
+        if (CONF.RANKING.ENABLE.TOTAL && newTotalScore !== oldTotalScore) {
+            // oldかnewのtotalスコアがtotalの最低値を超えているか
+            const minTotalRes = await tidbCl.query(`
+                    SELECT MIN(score) as min_score
+                    FROM rankings_cache_total
+                    `
             );
-            const minTodayTotal = minTodayTotalRes[0]?.min_score;
-            if (minTodayTotal === null ||
-                oldTodayTotalScore >= minTodayTotal ||
-                newTodayTotalScore >= minTodayTotal) {
-                updateTgt.todayTotal = true;
+            const minTotal = minTotalRes[0]?.min_score;
+            if (minTotal === null ||
+                oldTotalScore >= minTotal ||
+                newTotalScore >= minTotal) {
+                updateTgt.total = true;
             }
         }
 
-        if (newRoundMaxScore !== oldRoundMaxScore) {
+        if (CONF.RANKING.ENABLE.ROUND_MAX && newRoundMaxScore !== oldRoundMaxScore) {
             // oldかnewのround_maxスコアがroundかround_maxの最低値を超えているか
             const minRoundMaxRes = await tidbCl.query(`
-                SELECT MIN(score) as min_score
-                FROM rankings_cache_round_max
-                `
-            );
-            const minRoundRes = await tidbCl.query(`
-                SELECT MIN(score) as min_score
-                FROM rankings_cache_round
-                `
+                    SELECT MIN(score) as min_score
+                    FROM rankings_cache_round_max
+                    `
             );
             const minRoundMax = minRoundMaxRes[0]?.min_score;
-            const minRound = minRoundRes[0]?.min_score;
-
             if (minRoundMax === null ||
                 oldRoundMaxScore >= minRoundMax ||
                 newRoundMaxScore >= minRoundMax) {
                 updateTgt.roundMax = true;
             }
+        }
+
+        if (CONF.RANKING.ENABLE.ROUND && newRoundMaxScore !== oldRoundMaxScore) {
+            const minRoundRes = await tidbCl.query(`
+                    SELECT MIN(score) as min_score
+                    FROM rankings_cache_round
+                    `
+            );
+            const minRound = minRoundRes[0]?.min_score;
             if (minRound === null ||
                 oldRoundMaxScore >= minRound ||
                 newRoundMaxScore >= minRound) {
@@ -132,12 +141,13 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
             }
         }
 
-        if (tgtRoundIds.length) {
+        if (CONF.RANKING.ENABLE.ROUND_LATEST && tgtRoundIds.length) {
             // 更新の走ったラウンドのどれかがround_latestに含まれているか
             const latestRoundRes = await tidbCl.query(`
-                SELECT round_id
-                FROM rankings_cache_round_latest
-                WHERE round_id IN (${tgtRoundIds.map(() => '?').join(',')})
+                SELECT rcrl.round_id
+                FROM rankings_cache_round_latest rcrl
+                JOIN users_rounds ur ON rcrl.round_id = ur.id
+                WHERE ur.round_id IN (${tgtRoundIds.map(() => '?').join(',')})
                 `, tgtRoundIds
             );
             if (latestRoundRes.length > 0) {

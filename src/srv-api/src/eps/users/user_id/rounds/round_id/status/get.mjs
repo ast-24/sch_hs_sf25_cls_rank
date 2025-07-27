@@ -28,16 +28,20 @@ export default async function (request, env) {
     if (finished_at) {
         // finished: スコアはそのまま、ランクを計算
         // ランク: 同じround_id内でscore降順で何位か
-        const rankRows = await tidbCl.query(`
-            SELECT COUNT(*) + 1 AS rank
-            FROM users_rounds
-            WHERE round_id = ? AND score > ?
-            `, [roundId, score]
-        );
+        let roundRank = null;
+        if (CONF.RANKING.ENABLE.ROUND && score !== null) {
+            const rankRows = await tidbCl.query(`
+                SELECT COUNT(*) + 1 AS rank
+                FROM users_rounds
+                WHERE round_id = ? AND score > ?
+                `, [roundId, score]
+            );
+            roundRank = rankRows[0]?.rank ?? null;
+        }
         result = {
             finished: true,
             score,
-            rank: rankRows[0]?.rank ?? null
+            round_rank: roundRank
         };
     } else {
         // 未finished: answersからスコア計算、ランクはnull

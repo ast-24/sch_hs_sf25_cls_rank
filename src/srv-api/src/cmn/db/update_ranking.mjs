@@ -1,6 +1,6 @@
 /*
 struct target {
-    todayTotal: boolean,
+    total: boolean,
     round: boolean,
     roundMax: boolean,
     roundLatest: boolean
@@ -15,19 +15,19 @@ export async function updateRanking(
 ) {
     await tidbCl.execInTxOptional(
         async (tidbCl) => {
-            if (target.todayTotal) {
-                await updateTodayTotalRanking(tidbCl);
-                await updateRankingUpdatedTime(tidbCl, 'today_total');
+            if (CONF.RANKING.ENABLE.TOTAL && target.total) {
+                await updateTotalRanking(tidbCl);
+                await updateRankingUpdatedTime(tidbCl, 'total');
             }
-            if (target.round) {
+            if (CONF.RANKING.ENABLE.ROUND && target.round) {
                 await updateRoundRanking(tidbCl);
                 await updateRankingUpdatedTime(tidbCl, 'round');
             }
-            if (target.roundMax) {
+            if (CONF.RANKING.ENABLE.ROUND_MAX && target.roundMax) {
                 await updateRoundMaxRanking(tidbCl);
                 await updateRankingUpdatedTime(tidbCl, 'round_max');
             }
-            if (target.roundLatest) {
+            if (CONF.RANKING.ENABLE.ROUND_LATEST && target.roundLatest) {
                 await updateRoundLatestRanking(tidbCl);
                 await updateRankingUpdatedTime(tidbCl, 'round_latest');
             }
@@ -36,36 +36,36 @@ export async function updateRanking(
 }
 
 /**
- * 今日の累積スコアランキングキャッシュを更新
+ * 累積スコアランキングキャッシュを更新
  */
-async function updateTodayTotalRanking(tidbCl) {
+async function updateTotalRanking(tidbCl) {
     await tidbCl.query(`
-        INSERT INTO rankings_cache_today_total (user_id, score, user_pub_id, user_display_name)
+        INSERT INTO rankings_cache_total (user_id, score, user_pub_id, user_display_name)
         SELECT
             u.id,
-            u.score_today_total,
+            u.score_total,
             u.user_id,
             u.display_name
         FROM users u
-        WHERE u.score_today_total IS NOT NULL
-        ORDER BY u.score_today_total DESC
+        WHERE u.score_total IS NOT NULL
+        ORDER BY u.score_total DESC
         LIMIT ?
         ON DUPLICATE KEY UPDATE
             score = VALUES(score),
             user_pub_id = VALUES(user_pub_id),
             user_display_name = VALUES(user_display_name)
-    `, [CONF.RANKING.COUNT_LIMIT.TODAY_TOTAL]);
+    `, [CONF.RANKING.COUNT_LIMIT.TOTAL]);
 
     await tidbCl.query(`
-        DELETE FROM rankings_cache_today_total
+        DELETE FROM rankings_cache_total
         WHERE id NOT IN (
             SELECT id FROM (
-                SELECT id FROM rankings_cache_today_total
+                SELECT id FROM rankings_cache_total
                 ORDER BY score DESC
                 LIMIT ?
             ) as top_records
         )
-    `, [CONF.RANKING.COUNT_LIMIT.TODAY_TOTAL]);
+    `, [CONF.RANKING.COUNT_LIMIT.TOTAL]);
 }
 
 /**
@@ -146,6 +146,7 @@ async function updateRoundLatestRanking(tidbCl) {
     // 各ルームの最新ラウンド（かつRANKING_ROUND_LATEST_BORDER_MIN分以内に終了）を取得してキャッシュに挿入
     // 各ルームにつき最大1レコードのみ保存される
     await tidbCl.query(`
+        INSERT INTO rankings_cache_round_latest (room_id, finished_at, round_id, score, user_pub_id, user_display_name)
         WITH latest_rounds AS (
             SELECT
                 ur.*,
@@ -154,7 +155,6 @@ async function updateRoundLatestRanking(tidbCl) {
             WHERE finished_at IS NOT NULL
                 AND finished_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
         )
-        INSERT INTO rankings_cache_round_latest (room_id, finished_at, round_id, score, user_pub_id, user_display_name)
         SELECT
             ur.id,
             ur.finished_at,

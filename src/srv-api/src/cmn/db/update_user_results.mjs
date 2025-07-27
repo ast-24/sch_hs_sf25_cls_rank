@@ -34,11 +34,13 @@ export async function updateUserResults(tidbCl, userDbId, newResults) {
             };
         }
 
-        for (const [newRoundId, newRoundData] of Object.entries(newResults)) {
+        for (const [newRoundIdStr, newRoundData] of Object.entries(newResults)) {
+            const newRoundId = parseInt(newRoundIdStr);
             if (!oldResults[newRoundId]) {
                 throw new MyNotFoundError(`Round ID ${newRoundId}`);
             }
-            for (const [newAnswerId, newAnswerData] of Object.entries(newRoundData)) {
+            for (const [newAnswerIdStr, newAnswerData] of Object.entries(newRoundData)) {
+                const newAnswerId = parseInt(newAnswerIdStr);
                 if (newAnswerData === null) {
                     if (oldResults[newRoundId].answers[newAnswerId]) {
                         // nullなら削除
