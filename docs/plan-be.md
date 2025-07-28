@@ -31,7 +31,7 @@ Cloudflare Pagesの利用を検討
 
 DBサーバとのやり取りを行う
 
-実行時間さえ足りるのであれば、Cloudflare Workersの利用を検討
+Cloudflare Workersを利用
 
 #### APIエンドポイント
 
@@ -39,44 +39,14 @@ DBサーバとのやり取りを行う
 
 タイムスタンプの設定はサーバ側で行う
 
+時刻系はUTCで統一する
+
 ### DBサーバ
 
 APIサーバが利用するデータベース
 
-Cloudflare Workers KVやCloudflare D1を利用したいが整合性に問題がある可能性あり  
-ほぼすべてのデータはKVで管理できるため、DynamoDBも検討する価値がある  
-しかしRDB(特にTiDB)は集計処理に強いため、それが第一選択肢となる
-
-実際のスコア等はTiDBに保存し、  
-上位N(20くらい)件の最終更新はWorkers KVに保存するのがよいかもしれない
-
-スコアとして反映するのはfinishedのレコードのみとする  
-それに伴いWorkers KVへのキャッシュが可能になったため行う  
-(書き込み1000回/日を下回れる)
-
-バックエンドの時刻系はUTCで統一する
+列志向でもあるTiDBを利用
 
 #### データベース設計
 
-- ユーザ
-  - `id`: レコード参照用ID
-  - `room_id`: ルームID
-  - `user_id`: ユーザID(ルームIDと合わせてユニーク)
-  - `display_name`: 表示名 オプショナル
-  - `score_today_total`: 今日の累積スコア(キャッシュに近い)
-  - `score_round_max`: ラウンドの最大スコア(キャッシュに近い)
-
-- ユーザラウンド
-  - `id`: レコード参照用ID
-  - `user_id`: ユーザID(レコード参照用ID)
-  - `round_id`: ラウンドID
-  - `room_id`: ルームID
-  - `finished_at`: ラウンドが終了した日時
-  - `score`: スコア(キャッシュに近い)
-
-- ユーザラウンド回答結果
-  - `id`: レコード参照用ID
-  - `round_id`: ラウンドID(レコード参照用ID)
-  - `q_id`: 質問ID
-  - `timestamp`: 回答日時
-  - `is_correct`: 回答結果(正解/不正解/パス)
+[データベース設計書.md](./docs/database-design.md)を参照

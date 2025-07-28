@@ -2,34 +2,31 @@
 
 - `/ranking`: ランキング
   - HEAD: ランキングの更新日時を取得
-    - リクエスト
-      - クエリパラメータ
-        - `type`: `all` | `today_total` | `round` | `round_max` | `round_latest`
     - レスポンス
       - ヘッダ
-        - `X-Last-Updated`
-          - `today_total`: 今日の累積の最終更新日時
-          - `round_max`: 1周当たりの最大スコアの最終更新日時
+        - `X-Ranking-Last-Modified-TOTAL`: 累積スコアの最終更新日時
+        - `X-Ranking-Last-Modified-ROUND-MAX`: 最大ラウンドスコアの最終更新日時
+        - `X-Ranking-Last-Modified-ROUND`: ラウンドスコアの最終更新日時
+        - `X-Ranking-Last-Modified-ROUND-LATEST`: 最新ラウンドの最終更新日時
   - GET: ランキングを取得
     - リクエスト
       - クエリパラメータ
-        - `type`: ランキング種別の配列
-          - `today_total`: ユーザ別の今日の累積スコア
+        - `type`: ランキング種別（カンマ区切り文字列）
+          - `total`: ユーザ別の累積スコア
           - `round`: ユーザ&ラウンド別の1ラウンド当たりのスコア
           - `round_max`: ユーザ別の最大ラウンドのスコア
           - `round_latest`: ルーム別の最新ラウンドのスコア
     - レスポンス
       - ボディ
         - `:rank_type`: ランキングの種類(`type`と同じ) 中身は配列
-          - `user_id`: ユーザID
-          - `display_name`: 表示名(オプショナル)
-          - `room_id`: ルームID
+          - `user_pub_id`: ユーザID
+          - `user_display_name`: 表示名
           - `score`: スコア
 - `/users`: ユーザ
   - POST: ユーザを登録
     - リクエスト
       - ボディ
-        - `roomid`: ルームID
+        - `room_id`: ルームID
         - `display_name`: 表示名  
           (オプショナル 省略で `User <user_id>` となる)  
           20文字まで
@@ -37,43 +34,40 @@
       - ボディ
         - `user_id`: ユーザID
 - `/users/:user_id`: ユーザ
-  - GET: スタッフ情報を取得
+  - GET: ユーザ情報を取得
     - レスポンス
       - ボディ
         - `display_name`: 表示名
   - PATCH: ユーザを更新
     - ボディ
       - `display_name`: 表示名(オプショナル)
-- `/users/:user_id/stat`: ユーザの統計
+- `/users/:user_id/status`: ユーザの統計
   - GET: ユーザの統計を取得
     - レスポンス
       - ボディ
-        - `today_total`: 今日の累積
-          - `rank`: ランキング順位
-          - `score`: スコア
-        - `round`: 1周当たりのスコア
-          - `round_id`: ラウンドID
-            - `rank`: ランキング順位
-            - `score`: スコア
+        - `score_total`: 累積スコア
+        - `score_round_max`: 最大ラウンドスコア
+        - `total_rank`: 累積スコアのランキング順位
+        - `round_max_rank`: 最大ラウンドスコアのランキング順位
 - `/users/:user_id/results`: ユーザの結果
   - GET: ユーザの結果を取得
     - レスポンス
       - ボディ
-        - `round_id`: ラウンドID
-          - `q_id`: 質問ID
+        - `[round_id]`: ラウンドIDをキーとした配列
+          - `[answer_id]`: 回答IDをキーとした配列
             - `is_correct`: 回答結果(正解/不正解/パス(Null))
             - `timestamp`: 回答日時
   - PATCH: ユーザの結果を更新
     - リクエスト
       - ボディ
-        - `round_id`: ラウンドID
-          - `q_id`: 質問ID(自動挿入/削除) 中身がNullなら削除
+        - `[round_id]`: ラウンドIDをキーとした配列
+          - `[answer_id]`: 回答IDをキーとした配列 中身がNullなら削除
             - `is_correct`: 回答結果(正解/不正解/パス(Null))
 - `/users/:user_id/rounds`: ラウンド
   - GET: ラウンドの一覧を取得
     - レスポンス
       - ボディ
-        - `round_id`: ラウンドID
+        - `[round_id]`: ラウンドIDをキーとした配列
           - `room_id`: ルームID
           - `finished_at`: ラウンド終了日時(未終了ならNull)
   - POST: ラウンドを開始
@@ -88,9 +82,12 @@
     - レスポンス
       - ボディ
         - `room_id`: ルームID
-        - `is_finished`: ラウンドが終了済みかどうか
-  - DELETE: ラウンドを終了
-- `/users/:user_id/rounds/:round_id/stat`: ラウンドの統計
+        - `finished_at`: ラウンド終了日時(未終了ならNull)
+  - PATCH: ラウンドを終了
+    - リクエスト
+      - ボディ
+        - `finished`: ラウンド終了したか
+- `/users/:user_id/rounds/:round_id/status`: ラウンドの統計
   - GET: ラウンドの統計を取得
     - レスポンス
       - ボディ
@@ -100,15 +97,15 @@
   - GET: ラウンドの結果を取得
     - レスポンス
       - ボディ
-        - `q_id`: 質問ID
+        - `[answer_id]`: 回答IDをキーとした配列
           - `is_correct`: 回答結果(正解/不正解/パス(Null))
           - `timestamp`: 回答日時
   - PATCH: ラウンドの結果を更新
     - リクエスト
       - ボディ
-        - `q_id`: 質問ID(自動挿入/削除) Nullなら削除
+        - `[answer_id]`: 回答IDをキーとした配列 Nullなら削除
           - `is_correct`: 回答結果(正解/不正解/パス(Null))
-- `/users/:user_id/rounds/:round_id/q`: 問題
+- `/users/:user_id/rounds/:round_id/answers`: 回答
   - POST: 回答結果を登録
     - リクエスト
       - ボディ

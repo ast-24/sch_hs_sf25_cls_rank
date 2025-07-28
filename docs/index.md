@@ -17,3 +17,7 @@
 ### バックエンド
 
 [バックエンド設計書.md](./plan-be.md)
+
+[APIエンドポイント定義書.md](./plan-be-ep.md)
+
+[データベース設計書.md](./plan-be-db.md)
