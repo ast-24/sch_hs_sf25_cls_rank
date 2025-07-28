@@ -5,6 +5,10 @@ import { CONF } from '../../conf.mjs';
 
 export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
     await tidbCl.execInTxOptional(async (tidbCl) => {
+        if (scoreUpdates.length === 0) {
+            return;
+        }
+
         const placeholders = tgtRoundIds.map(() => '?').join(',');
         const roundAnswersRes = await tidbCl.query(`
             SELECT
@@ -41,11 +45,13 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
             }
         }
 
-        if (scoreUpdates.length > 0) {
-            for (const [score, dbId] of scoreUpdates) {
-                await tidbCl.query(`UPDATE users_rounds SET score = ? WHERE id = ?`, [score, dbId]);
-            }
-        }
+        const values = scoreUpdates.map(() => '(?, ?)').join(',');
+        const params = scoreUpdates.flat();
+        await tidbCl.query(`
+            INSERT INTO users_rounds (score, id) VALUES ${values}
+            ON DUPLICATE KEY UPDATE score = VALUES(score)
+            `, params
+        );
 
         let oldTotalScore = null;
         let oldRoundMaxScore = null;
@@ -79,21 +85,19 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
             // スコアが変更された場合のみ更新
             if (newTotalScore !== oldTotalScore || newRoundMaxScore !== oldRoundMaxScore) {
                 await tidbCl.query(`
-                    UPDATE users SET score_total = ?, score_round_max = ? WHERE id = ?
+                    UPDATE users
+                    SET score_total = ?, score_round_max = ?
+                    WHERE id = ?
                     `, [newTotalScore, newRoundMaxScore, userDbId]
                 );
             }
         }
 
-        if (scoreUpdates.length === 0 && newTotalScore === oldTotalScore && newRoundMaxScore === oldRoundMaxScore) {
-            return;
-        }
-
         await updateRanking(tidbCl, {
-            total: true,
-            round: true,
-            roundMax: true,
-            roundLatest: true
+            total: newTotalScore !== oldTotalScore,
+            round: !!scoreUpdates.length,
+            roundMax: newRoundMaxScore !== oldRoundMaxScore,
+            roundLatest: !!scoreUpdates.length
         });
     });
 }

@@ -1,5 +1,5 @@
 // テストデータ注入スクリプト
-const BASE_URL = 'http://localhost:8787';
+const BASE_URL = 'https://api-skijnjrank.ast24.dev';
 
 // ランダムな表示名生成
 const DISPLAY_NAMES = [
