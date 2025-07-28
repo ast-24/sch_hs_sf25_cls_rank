@@ -25,31 +25,33 @@ export default async function (request, env) {
 
     const tidbCl = new TidbClient(env);
 
+    const rows = await tidbCl.query(`
+        SELECT u.id as user_db_id, ur.finished_at, ur.id as users_rounds_id
+        FROM users u
+        JOIN users_rounds ur ON u.id = ur.user_id
+        WHERE u.user_id = ? AND ur.round_id = ?
+        `, [userId, roundId]
+    );
+    if (rows.length === 0) {
+        throw new MyNotFoundError('user or round');
+    }
+
+    if ((rows[0].finished_at !== null) === finished) {
+        throw new MyConflictError('round status');
+    }
+
+    const userDbId = rows[0].user_db_id;
+    const usersRoundsId = rows[0].users_rounds_id;
+
     await tidbCl.execInTx(async (tidbCl) => {
-        const rows = await tidbCl.query(`
-            SELECT u.id as user_db_id, ur.finished_at
-            FROM users u
-            JOIN users_rounds ur ON u.id = ur.user_id
-            WHERE u.user_id = ? AND ur.round_id = ?
-            `, [userId, roundId]
-        );
-        if (rows.length === 0) {
-            throw new MyNotFoundError('user or round');
-        }
-
-        if ((rows[0].finished_at !== null) === finished) {
-            throw new MyConflictError('round status');
-        }
-
         await tidbCl.query(`
-            UPDATE users_rounds ur
-            JOIN users u ON ur.user_id = u.id
-            SET ur.finished_at = ${finished ? 'NOW()' : 'NULL'}
-            WHERE u.user_id = ? AND ur.round_id = ?
-            `, [userId, roundId]
+                UPDATE users_rounds
+                SET finished_at = ${finished ? 'NOW()' : 'NULL'}
+                WHERE id = ?
+                `, [usersRoundsId]
         );
 
-        await updateUserScore(tidbCl, rows[0].user_db_id, [roundId]);
+        await updateUserScore(tidbCl, userDbId, [roundId]);
     });
 
     return new MyJsonResp();

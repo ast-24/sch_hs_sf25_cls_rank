@@ -4,6 +4,7 @@ import { getUserIdFromReq } from "../../../../../../cmn/req/get_user_id.mjs";
 import { getRoundIdFromReq } from "../../../../../../cmn/req/get_round_id.mjs";
 import { MyJsonResp } from "../../../../../../cmn/resp.mjs";
 import { calcScore } from "../../../../../../cmn/calc_score.mjs";
+import { CONF } from "../../../../../../conf.mjs";
 
 export default async function (request, env) {
     const userId = getUserIdFromReq(request);
@@ -27,16 +28,16 @@ export default async function (request, env) {
 
     if (finished_at) {
         // finished: スコアはそのまま、ランクを計算
-        // ランク: 同じround_id内でscore降順で何位か
+
         let roundRank = null;
         if (CONF.RANKING.ENABLE.ROUND && score !== null) {
             const rankRows = await tidbCl.query(`
-                SELECT COUNT(*) + 1 AS rank
+                SELECT COUNT(*) + 1 AS round_rank
                 FROM users_rounds
-                WHERE round_id = ? AND score > ?
-                `, [roundId, score]
+                WHERE score > ?
+                `, [score]
             );
-            roundRank = rankRows[0]?.rank ?? null;
+            roundRank = rankRows[0]?.round_rank ?? null;
         }
         result = {
             finished: true,
@@ -45,6 +46,7 @@ export default async function (request, env) {
         };
     } else {
         // 未finished: answersからスコア計算、ランクはnull
+
         const ansRows = await tidbCl.query(`
             SELECT is_correct
             FROM users_rounds_answers

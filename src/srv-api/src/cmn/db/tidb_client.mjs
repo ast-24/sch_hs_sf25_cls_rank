@@ -14,6 +14,7 @@ export class TidbClient {
         ) {
             throw new MyFatalError('Missing required environment variables for TiDB connection');
         }
+
         try {
             this.#conn = connect({
                 username: env.TIDB_USERNAME,
@@ -27,13 +28,21 @@ export class TidbClient {
                 'Database error'
             );
         }
+
+        this.#tx = null;
     }
 
     async query(sql, params = []) {
         const startTime = Date.now();
         try {
             const res = await (this.#tx ? this.#tx : this.#conn).execute(sql, params);
-
+            return res;
+        } catch (error) {
+            throw new MyTransientError(
+                `SQL Query execution failed: ${error.message}`,
+                'Database error'
+            );
+        } finally {
             let executeLog = [];
             executeLog.push('[Debug] SQL Query executed');
             executeLog.push('==SQL==');
@@ -42,16 +51,7 @@ export class TidbClient {
             executeLog.push(JSON.stringify(params));
             executeLog.push('==Execution Time==');
             executeLog.push(`${Date.now() - startTime}ms`);
-            executeLog.push('==Result==');
-            executeLog.push(JSON.stringify(res, null, 2));
             console.log(executeLog.join('\n'));
-
-            return res;
-        } catch (error) {
-            throw new MyTransientError(
-                `SQL Query execution failed: ${error.message}`,
-                'Database error'
-            );
         }
     }
 
@@ -80,6 +80,11 @@ export class TidbClient {
         try {
             await this.#tx.commit();
         } catch (error) {
+            try {
+                await this.txRollback();
+            } catch (error) {
+                console.error('Transaction rollback failed:', error.message);
+            }
             throw new MyTransientError(
                 `Failed to commit transaction: ${error.message}`,
                 'Database error'
@@ -107,35 +112,26 @@ export class TidbClient {
 
     async execInTx(fn) {
         await this.txStart();
+        let result;
         try {
-            const result = await fn(this);
-            await this.txCommit();
-            return result;
+            result = await fn(this);
         } catch (error) {
-            await this.txRollback();
+            try {
+                await this.txRollback();
+            } catch (rollbackError) {
+                console.error('Transaction rollback failed:', rollbackError.message);
+            }
             throw error;
         }
+        await this.txCommit();
+        return result;
     }
 
     async execInTxOptional(fn) {
-        let shouldCommit = false;
-
-        if (!this.isTxActive) {
-            await this.txStart();
-            shouldCommit = true;
-        }
-
-        try {
-            const result = await fn(this);
-            if (shouldCommit) {
-                await this.txCommit();
-            }
-            return result;
-        } catch (error) {
-            if (shouldCommit) {
-                await this.txRollback();
-            }
-            throw error;
+        if (this.isTxActive) {
+            await fn(this);
+        } else {
+            await this.execInTx(fn);
         }
     }
 }

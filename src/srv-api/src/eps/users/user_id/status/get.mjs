@@ -24,22 +24,22 @@ export default async function (request, env) {
 
     if (CONF.RANKING.ENABLE.TOTAL && score_total !== null) {
         const totalRankRows = await tidbCl.query(`
-            SELECT COUNT(*) + 1 AS rank
+            SELECT COUNT(*) + 1 AS total_rank
             FROM users
             WHERE score_total > ?
             `, [score_total]
         );
-        totalRank = totalRankRows[0]?.rank ?? null;
+        totalRank = totalRankRows[0]?.total_rank ?? null;
     }
 
     if (CONF.RANKING.ENABLE.ROUND_MAX && score_round_max !== null) {
         const roundMaxRankRows = await tidbCl.query(`
-            SELECT COUNT(*) + 1 AS rank
+            SELECT COUNT(*) + 1 AS round_max_rank
             FROM users
             WHERE score_round_max > ?
             `, [score_round_max]
         );
-        roundMaxRank = roundMaxRankRows[0]?.rank ?? null;
+        roundMaxRank = roundMaxRankRows[0]?.round_max_rank ?? null;
     }
 
     return new MyJsonResp({

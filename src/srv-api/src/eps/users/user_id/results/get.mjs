@@ -31,7 +31,9 @@ export default async function (request, env) {
         if (!results[row.round_id]) results[row.round_id] = {};
         if (row.answer_id !== null) {
             results[row.round_id][row.answer_id] = {
-                is_correct: row.is_correct,
+                is_correct: row.is_correct === null
+                    ? null
+                    : !!row.is_correct, // 0/1 で返ってくるため
                 timestamp: row.timestamp
             };
         }

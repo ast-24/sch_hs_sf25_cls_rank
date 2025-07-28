@@ -26,17 +26,17 @@ const router = IttyRouter();
 router.get('/ranking', EpsRankingGet);
 router.head('/ranking', EpsRankingHead);
 router.post('/ranking', EpsRankingPost);
-router.post('/users', EpsUsersPost); // O
-router.get('/users/:user_id', EpsUsersUserIdGet); // O
-router.patch('/users/:user_id', EpsUsersUserIdPatch); // O
+router.post('/users', EpsUsersPost);
+router.get('/users/:user_id', EpsUsersUserIdGet);
+router.patch('/users/:user_id', EpsUsersUserIdPatch);
 router.get('/users/:user_id/results', EpsUsersUserIdResultsGet);
 router.patch('/users/:user_id/results', EpsUsersUserIdResultsPatch);
-router.get('/users/:user_id/rounds', EpsUsersUserIdRoundsGet); // O
-router.post('/users/:user_id/rounds', EpsUsersUserIdRoundsPost); // O
-router.get('/users/:user_id/rounds/:round_id', EpsUsersUserIdRoundsRoundIdGet); // O
+router.get('/users/:user_id/rounds', EpsUsersUserIdRoundsGet);
+router.post('/users/:user_id/rounds', EpsUsersUserIdRoundsPost);
+router.get('/users/:user_id/rounds/:round_id', EpsUsersUserIdRoundsRoundIdGet);
 router.patch('/users/:user_id/rounds/:round_id', EpsUsersUserIdRoundsRoundIdPatch);
-router.post('/users/:user_id/rounds/:round_id/answers', EpsUsersUserIdRoundsRoundIdAnswersPost); // O
-router.get('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRoundIdResultsGet); // O
+router.post('/users/:user_id/rounds/:round_id/answers', EpsUsersUserIdRoundsRoundIdAnswersPost);
+router.get('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRoundIdResultsGet);
 router.patch('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRoundIdResultsPatch);
 router.get('/users/:user_id/rounds/:round_id/status', EpsUsersUserIdRoundsRoundIdStatusGet);
 router.get('/users/:user_id/status', EpsUsersUserIdStatusGet);

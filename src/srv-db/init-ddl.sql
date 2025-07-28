@@ -1,6 +1,3 @@
-CREATE DATABASE IF NOT EXISTS sch_sf25_cls_rank_main_db;
-USE sch_sf25_cls_rank_main_db;
-
 -- ==========================================
 -- sch_sf25_cls_rank_main_db 初期化用DDL (TiDB用)
 -- ==========================================
@@ -29,6 +26,7 @@ CREATE TABLE users (
            INDEX idx__users__score_total (score_total DESC),
            INDEX idx__users__score_round_max (score_round_max DESC)
 );
+ALTER TABLE users SET TIFLASH REPLICA 1;
 
 -- ==========================================
 -- ユーザラウンドテーブル
@@ -50,6 +48,7 @@ CREATE TABLE users_rounds (
            INDEX idx__users_rounds__room_id (room_id),
            INDEX idx__users_rounds__score (score DESC)
 );
+ALTER TABLE users_rounds SET TIFLASH REPLICA 1;
 
 -- ==========================================
 -- ユーザラウンド回答結果テーブル
@@ -69,6 +68,7 @@ CREATE TABLE users_rounds_answers (
     UNIQUE INDEX idx__users_rounds_answers__round_id__answer_id (round_id, answer_id),
            INDEX idx__users_rounds_answers__timestamp (timestamp)
 );
+ALTER TABLE users_rounds_answers SET TIFLASH REPLICA 1;
 
 -- ==========================================
 -- ランキングキャッシュテーブル群 (キャッシュされたビューに近い)
@@ -87,6 +87,7 @@ CREATE TABLE rankings_cache_updated (
     UNIQUE INDEX idx__rankings_cache_updated__ranking_type (ranking_type),
            INDEX idx__rankings_cache_updated__updated_at (updated_at)
 );
+ALTER TABLE rankings_cache_updated SET TIFLASH REPLICA 1;
 
 -- 累計スコア
 CREATE TABLE rankings_cache_total (
@@ -104,6 +105,7 @@ CREATE TABLE rankings_cache_total (
     UNIQUE INDEX idx__rankings_cache_total__user_id (user_id),
            INDEX idx__rankings_cache_total__score__desc (score DESC)
 );
+ALTER TABLE rankings_cache_total SET TIFLASH REPLICA 1;
 
 -- 単一ラウンドスコア(各ユーザの最大スコア)
 CREATE TABLE rankings_cache_round_max (
@@ -121,6 +123,7 @@ CREATE TABLE rankings_cache_round_max (
     UNIQUE INDEX idx__rankings_cache_round_max__user_id (user_id),
            INDEX idx__rankings_cache_round_max__score__desc (score DESC)
 );
+ALTER TABLE rankings_cache_round_max SET TIFLASH REPLICA 1;
 
 -- 単一ラウンドスコア(同ユーザが複数回ランクインする可能性あり)
 CREATE TABLE rankings_cache_round (
@@ -138,6 +141,7 @@ CREATE TABLE rankings_cache_round (
     UNIQUE INDEX idx__rankings_cache_round__round_id (round_id),
            INDEX idx__rankings_cache_round__score__desc (score DESC)
 );
+ALTER TABLE rankings_cache_round SET TIFLASH REPLICA 1;
 
 -- 各ルームの最新ラウンド
 CREATE TABLE rankings_cache_round_latest (
@@ -159,3 +163,4 @@ CREATE TABLE rankings_cache_round_latest (
     UNIQUE INDEX idx__rankings_cache_round_latest__round_id (round_id),
            INDEX idx__rankings_cache_round_latest__score__desc (score DESC)
 );
+ALTER TABLE rankings_cache_round_latest SET TIFLASH REPLICA 1;

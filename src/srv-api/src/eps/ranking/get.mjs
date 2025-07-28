@@ -34,6 +34,7 @@ export default async function (request, env) {
         const table = tableMap[type];
         let selectCols = '';
         let limit = '';
+        let where = '';
         if (type === 'total') {
             selectCols = 'user_pub_id AS user_id, score, user_display_name';
             limit = `LIMIT ${CONF.RANKING.COUNT_LIMIT.TOTAL}`;
@@ -45,10 +46,11 @@ export default async function (request, env) {
             limit = `LIMIT ${CONF.RANKING.COUNT_LIMIT.ROUND}`;
         } else if (type === 'round_latest') {
             selectCols = 'room_id, round_id, user_pub_id AS user_id, score, user_display_name, finished_at';
+            where = `WHERE finished_at >= DATE_SUB(NOW(), INTERVAL ${CONF.RANKING.ROUND_LATEST_BORDER_MIN} MINUTE)`;
             limit = '';
         }
         result[type] = await tidbCl.query(
-            `SELECT ${selectCols} FROM ${table} ORDER BY score DESC ${limit}`
+            `SELECT ${selectCols} FROM ${table} ${where} ORDER BY score DESC ${limit}`
         );
     }
 
