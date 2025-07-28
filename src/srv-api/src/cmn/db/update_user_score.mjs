@@ -45,13 +45,11 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
             }
         }
 
-        const values = scoreUpdates.map(() => '(?, ?)').join(',');
-        const params = scoreUpdates.flat();
-        await tidbCl.query(`
-            INSERT INTO users_rounds (score, id) VALUES ${values}
-            ON DUPLICATE KEY UPDATE score = VALUES(score)
-            `, params
-        );
+        if (scoreUpdates.length > 0) {
+            for (const [score, dbId] of scoreUpdates) {
+                await tidbCl.query(`UPDATE users_rounds SET score = ? WHERE id = ?`, [score, dbId]);
+            }
+        }
 
         let oldTotalScore = null;
         let oldRoundMaxScore = null;
