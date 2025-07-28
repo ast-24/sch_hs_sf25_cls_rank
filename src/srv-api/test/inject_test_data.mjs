@@ -146,7 +146,7 @@ async function main() {
 
     try {
         // 複数ユーザーのテストデータを作成
-        const userCount = 30; // 作成するユーザー数
+        const userCount = 3; // 作成するユーザー数
         console.log(`${userCount}人のユーザーのテストデータを作成します\n`);
 
         const createdUsers = [];

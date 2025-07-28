@@ -5,7 +5,7 @@ import { CONF } from '../../conf.mjs';
 
 export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
     await tidbCl.execInTxOptional(async (tidbCl) => {
-        if (scoreUpdates.length === 0) {
+        if (tgtRoundIds.length === 0) {
             return;
         }
 
