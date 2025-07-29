@@ -9,16 +9,60 @@ navigator 遷移管理
 domのラッパー？
 */
 
+type SpaError_LogLevelT = 'error' | 'warn' | 'info';
+
 class SpaError extends Error {
-    // HdSfErrorに近い感じで実装する？
-    // あれより緩和して全関数共通の列挙型でいいかも
+    kind: SpaError_KindsE;
+    cause?: Error;
+
+    constructor(kind: SpaError_KindsE, message?: string, cause?: Error) {
+        super(message, { cause: cause });
+        this.name = 'SpaError';
+        this.kind = kind;
+        this.cause = cause;
+    }
+
+    toString(title?: string): string {
+        return `[ERROR] ${title ? `${title}: ` : ''}${this.name}: ${this.kind}: ${this.message}: ${this.stack} (caused by: ${this.cause ? `${this.cause.name}: ${this.cause.message}: ${this.cause.stack}` : 'unknown'})`;
+    }
+
+    logging(level?: SpaError_LogLevelT, title?: string): void {
+        switch (level) {
+            case 'error':
+                console.error(this.toString(title));
+                break;
+            case 'warn':
+                console.warn(this.toString(title));
+                break;
+            case 'info':
+                console.info(this.toString(title));
+                break;
+        }
+    }
 }
 
-
-function delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+enum SpaError_KindsE {
+    Unexpected,   // 原因不明
+    Canceled,     // キャンセル
+    NetworkError, // ネットワーク障害
 }
 
+class coreHelpersC {
+    static async delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    static async yieldThread(): Promise<void> {
+        await coreHelpersC.delay(0);
+    }
+
+    static async cancelCheckAndYieldThread(
+        cctx: CancelContextC | null
+    ): Promise<void> {
+        cctx?.throwIfCanceled();
+        await coreHelpersC.yieldThread();
+    }
+}
 
 type IgniterC_ListenerT<ArgT, RetT> = (arg: ArgT) => Promise<RetT>;
 type IgniterC_ListenersSetT<ArgT, RetT> = Set<IgniterC_ListenerT<ArgT, RetT>>;
@@ -98,7 +142,7 @@ class IgniterC<EventTypeT = string, ArgT = void, RetT = void> {
 
 type CancelContextC_ListenerT = () => void;
 
-/** キャンセルコンテキスト(状態共有) */
+/** キャンセルコンテキスト(状態伝播用) */
 class CancelContextC {
     private _listeners: Set<CancelContextC_ListenerT>;
     private _children: Set<CancelContextC>;
@@ -157,7 +201,7 @@ class CancelContextC {
     /** キャンセル済みなら例外throw */
     throwIfCanceled(): void {
         if (this._isCanceled) {
-            throw new Error('context canceled');
+            throw new SpaError(SpaError_KindsE.Canceled);
         }
     }
 }
@@ -192,7 +236,7 @@ class ResourceFetcherC {
 
     /** prefetch */
     async preFetch(
-        cctx: CancelContextC,
+        fetchCCtx: CancelContextC | null,
         input: RequestInfo | URL,
         init?: RequestInit,
         onResult?: (succeed: boolean) => Promise<void>
@@ -200,15 +244,22 @@ class ResourceFetcherC {
         this: ResourceFetcherC
     }> {
         setTimeout(async () => {
-            let succeed = false;
+            let state: 'succeed' | 'failed' | 'canceled' = 'failed';
             try {
-                await this.fetch(cctx, input, init, 0);
-                succeed = true;
+                await this.fetch(fetchCCtx, input, init, 0);
+                state = 'succeed';
             } catch (e) {
                 // 無視(プリフェッチ失敗は非致命的)
-                // >! ここでキャンセル由来のエラーか判定したい → カスタムエラー型を用意したほうがいい
+                if (e instanceof SpaError && e.kind === SpaError_KindsE.Canceled) {
+                    state = 'canceled'
+                } else {
+                    e.logging('Failed to prefetch');
+                    state = 'failed'
+                }
             } finally {
-                await onResult?.(succeed);
+                if (state === 'succeed' || state === 'failed') {
+                    await onResult?.(state === 'succeed');
+                }
             }
         }, 0);
         return {
@@ -220,8 +271,8 @@ class ResourceFetcherC {
      *  respのbodyは読み取り不可なので注意
      */
     async fetch(
-        cctx: CancelContextC,
-        input: RequestInfo | URL,// Request | string
+        fetchCCtx: CancelContextC | null,
+        input: RequestInfo | URL,
         init?: RequestInit,
         allowCacheWindowMs: number = 0
     ): Promise<{
@@ -240,8 +291,7 @@ class ResourceFetcherC {
             return method !== undefined && ['GET', 'HEAD'].includes(method.toUpperCase());
         })();
 
-        cctx.throwIfCanceled();
-        await delay(0);
+        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
 
         if (isCachableMethod && allowCacheWindowMs) {
             const cacheKey = this.intoCacheKey(input, init);
@@ -259,14 +309,22 @@ class ResourceFetcherC {
             }
         }
 
-        cctx.throwIfCanceled();
-        await delay(0);
+        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
 
-        const resp = await fetch(input, init);
+        let resp: Response;
+        try {
+            resp = await fetch(input, init);
+        } catch (error) {
+            throw new SpaError(SpaError_KindsE.NetworkError, 'Network error occurred while fetching resource', error as Error);
+        }
+
+        // ステータスコードの解釈はクライアントアプリケーション側に任せる
+
+        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+
         const body = await resp.blob();
 
-        cctx.throwIfCanceled();
-        await delay(0);
+        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
 
         if (isCachableMethod) {
             const cacheKey = this.intoCacheKey(input, init);
@@ -278,8 +336,7 @@ class ResourceFetcherC {
             this._cache.set(cacheKey, cacheValue);
         }
 
-        cctx.throwIfCanceled();
-        await delay(0);
+        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
 
         return {
             resp: resp,
