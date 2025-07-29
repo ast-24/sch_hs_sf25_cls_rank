@@ -9,7 +9,11 @@ navigator 遷移管理
 domのラッパー？
 */
 
-type SpaError_LogLevelT = 'error' | 'warn' | 'info';
+enum SpaError_LogLevelE {
+    Error = 'error',
+    Warn = 'warn',
+    Info = 'info'
+}
 
 class SpaError extends Error {
     kind: SpaError_KindsE;
@@ -22,19 +26,19 @@ class SpaError extends Error {
         this.cause = cause;
     }
 
-    toString(title?: string): string {
+    public toString(title?: string): string {
         return `[ERROR] ${title ? `${title}: ` : ''}${this.name}: ${this.kind}: ${this.message}: ${this.stack} (caused by: ${this.cause ? `${this.cause.name}: ${this.cause.message}: ${this.cause.stack}` : 'unknown'})`;
     }
 
-    logging(level?: SpaError_LogLevelT, title?: string): void {
+    public logging(level?: SpaError_LogLevelE, title?: string): void {
         switch (level) {
-            case 'error':
+            case SpaError_LogLevelE.Error:
                 console.error(this.toString(title));
                 break;
-            case 'warn':
+            case SpaError_LogLevelE.Warn:
                 console.warn(this.toString(title));
                 break;
-            case 'info':
+            case SpaError_LogLevelE.Info:
                 console.info(this.toString(title));
                 break;
         }
@@ -42,21 +46,23 @@ class SpaError extends Error {
 }
 
 enum SpaError_KindsE {
-    Unexpected,   // 原因不明
-    Canceled,     // キャンセル
-    NetworkError, // ネットワーク障害
+    Unexpected = 'unexpected',      // 原因不明
+    Canceled = 'canceled',          // キャンセル
+    NetworkError = 'network_error', // ネットワーク障害
 }
 
+
+/** 汎用ヘルパー */
 class coreHelpersC {
-    static async delay(ms: number): Promise<void> {
+    public static async delay(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    static async yieldThread(): Promise<void> {
+    public static async yieldThread(): Promise<void> {
         await coreHelpersC.delay(0);
     }
 
-    static async cancelCheckAndYieldThread(
+    public static async cancelCheckAndYieldThread(
         cctx: CancelContextC | null
     ): Promise<void> {
         cctx?.throwIfCanceled();
@@ -64,99 +70,31 @@ class coreHelpersC {
     }
 }
 
+
+/*
+
+IgniterC -> 叩かれたら全部を叩く
+IgniterWithPriorityC -> 叩かれたら全部をpriority順に叩く
+EventIgniterC -> 叩かれたらイベントに紐づいたものを叩く
+EventIgniterWithPriorityC -> 叩かれたらイベントに紐づいたものをpriority順に叩く
+
+ */
+
+
 type IgniterC_ListenerT<ArgT, RetT> = (arg: ArgT) => Promise<RetT>;
-type IgniterC_ListenersSetT<ArgT, RetT> = Set<IgniterC_ListenerT<ArgT, RetT>>;
-type IgniterC_ListenersSetsMapT<EventTypeT, ArgT, RetT> = Map<EventTypeT, IgniterC_ListenersSetT<ArgT, RetT>>;
+type IgniterC_ListenersCorrectionT<ArgT, RetT> = Set<IgniterC_ListenerT<ArgT, RetT>>;
 
-/** 拡張イベントリスナ */
-class IgniterC<EventTypeT = string, ArgT = void, RetT = void> {
-    private _listeners: IgniterC_ListenersSetsMapT<EventTypeT, ArgT, RetT>;
+/** 拡張リスナ */
+class IgniterC<ArgT = void, RetT = void> {
+    private _listeners: IgniterC_ListenersCorrectionT<ArgT, RetT>;
 
-    constructor() {
-        this._listeners = new Map();
-    }
-
-    /** リスナ登録 */
-    reg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>): {
-        this: IgniterC<EventTypeT, ArgT, RetT>
-        deRegFn: () => void
-    } {
-        if (!this._listeners.has(event)) this._listeners.set(event, new Set());
-        this._listeners.get(event)!.add(listener);
-        return {
-            this: this,
-            deRegFn: () => this.deReg(event, listener)
-        };
-    }
-
-    /** リスナ登録解除 */
-    deReg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>): {
-        this: IgniterC<EventTypeT, ArgT, RetT>
-    } {
-        const set = this._listeners.get(event);
-        if (set) {
-            set.delete(listener);
-            if (set.size === 0) {
-                this._listeners.delete(event);
-            }
-        }
-        return {
-            this: this,
-        };
-    }
-
-    /** イベント発火 */
-    async ignite(event: EventTypeT, arg: ArgT): Promise<{
-        this: IgniterC<EventTypeT, ArgT, RetT>
-        ret: RetT[]
-    }> {
-        const set = this._listeners.get(event);
-        const ret: RetT[] = [];
-        if (set) {
-            for (const listener of set) {
-                ret.push(await listener(arg));
-            }
-        }
-        return {
-            this: this,
-            ret: ret
-        };
-    }
-
-    /** キーのリスト */
-    getEventTypes(): Array<EventTypeT> {
-        return Array.from(this._listeners.keys());
-    }
-
-    /** リスナのリスト */
-    listeners(): IgniterC_ListenersSetsMapT<EventTypeT, ArgT, RetT> {
-        return this._listeners;
-    }
-
-    /** リスナのリスト(イベントに紐づいたもの) */
-    listenersByEvent(event: EventTypeT): IgniterC_ListenersSetT<ArgT, RetT> {
-        return this._listeners.get(event) || new Set();
-    }
-}
-
-
-type CancelContextC_ListenerT = () => void;
-
-/** キャンセルコンテキスト(状態伝播用) */
-class CancelContextC {
-    private _listeners: Set<CancelContextC_ListenerT>;
-    private _children: Set<CancelContextC>;
-    private _isCanceled: boolean;
-
-    constructor() {
+    public constructor() {
         this._listeners = new Set();
-        this._children = new Set();
-        this._isCanceled = false;
     }
 
     /** リスナ登録 */
-    reg(listener: CancelContextC_ListenerT): {
-        this: CancelContextC
+    public reg(listener: IgniterC_ListenerT<ArgT, RetT>): {
+        this: IgniterC<ArgT, RetT>
         deRegFn: () => void
     } {
         this._listeners.add(listener);
@@ -167,39 +105,296 @@ class CancelContextC {
     }
 
     /** リスナ登録解除 */
-    deReg(listener: CancelContextC_ListenerT): void {
+    public deReg(listener: IgniterC_ListenerT<ArgT, RetT>): {
+        this: IgniterC<ArgT, RetT>
+    } {
         this._listeners.delete(listener);
+        return {
+            this: this,
+        };
+    }
+
+    /** イベント発火 */
+    public async ignite(arg: ArgT): Promise<{
+        this: IgniterC<ArgT, RetT>
+        ret: RetT[]
+    }> {
+        const ret: RetT[] = [];
+        for (const listener of this._listeners) {
+            ret.push(await listener(arg));
+        }
+        return {
+            this: this,
+            ret: ret
+        };
+    }
+
+    /** リスナのリスト */
+    public listeners(): IgniterC_ListenersCorrectionT<ArgT, RetT> {
+        return this._listeners;
+    }
+}
+
+type EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT> = Map<EventTypeT, IgniterC<ArgT, RetT>>;
+
+/** 拡張イベントリスナ */
+class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
+    private _listeners: EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT>;
+
+    public constructor() {
+        this._listeners = new Map();
+    }
+
+    /** リスナ登録 */
+    public reg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>): {
+        this: EventIgniterC<EventTypeT, ArgT, RetT>
+        deRegFn: () => void
+    } {
+        if (!this._listeners.has(event)) this._listeners.set(event, new IgniterC());
+        this._listeners.get(event)!.reg(listener);
+        return {
+            this: this,
+            deRegFn: () => this.deReg(event, listener)
+        };
+    }
+
+    /** リスナ登録解除 */
+    public deReg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>): {
+        this: EventIgniterC<EventTypeT, ArgT, RetT>
+    } {
+        const set = this._listeners.get(event);
+        if (set) {
+            set.deReg(listener);
+            if (set.listeners().size === 0) {
+                this._listeners.delete(event);
+            }
+        }
+        return {
+            this: this,
+        };
+    }
+
+    /** イベント発火 */
+    public async ignite(event: EventTypeT, arg: ArgT): Promise<{
+        this: EventIgniterC<EventTypeT, ArgT, RetT>
+        ret: RetT[]
+    }> {
+        const set = this._listeners.get(event);
+        const ret: RetT[] = [];
+        if (set) {
+            const result = await set.ignite(arg);
+            ret.push(...result.ret);
+        }
+        return {
+            this: this,
+            ret: ret
+        };
+    }
+
+    /** イベントタイプのリスト */
+    public listeningEventTypes(): Array<EventTypeT> {
+        return Array.from(this._listeners.keys());
+    }
+
+    /** イベントリスナのリスト */
+    public listeners(): EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT> {
+        return this._listeners;
+    }
+
+    /** リスナのリスト */
+    public listenersByEvent(event: EventTypeT): IgniterC_ListenersCorrectionT<ArgT, RetT> {
+        return this._listeners.get(event)?.listeners() || new Set();
+    }
+}
+
+type IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> = Map<IgniterC_ListenerT<ArgT, RetT>, { priority?: number; }>;
+
+/** 拡張リスナ(+優先順位) */
+class IgniterWithPriorityC<ArgT = void, RetT = void> {
+    private _listeners: IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT>;
+
+    public constructor() {
+        this._listeners = new Map();
+    }
+
+    /** リスナ登録 */
+    public reg(listener: IgniterC_ListenerT<ArgT, RetT>, priority?: number): {
+        this: IgniterWithPriorityC<ArgT, RetT>
+        deRegFn: () => void
+    } {
+        this._listeners.set(listener, { priority });
+        return {
+            this: this,
+            deRegFn: () => this.deReg(listener)
+        };
+    }
+
+    /** リスナ登録解除 */
+    public deReg(listener: IgniterC_ListenerT<ArgT, RetT>): {
+        this: IgniterWithPriorityC<ArgT, RetT>
+    } {
+        this._listeners.delete(listener);
+        return {
+            this: this,
+        };
+    }
+
+    /** イベント発火(優先順位順) */
+    public async ignite(arg: ArgT): Promise<{
+        this: IgniterWithPriorityC<ArgT, RetT>
+        ret: RetT[]
+    }> {
+        const ret: RetT[] = [];
+        const sortedListeners = Array.from(this._listeners.entries()).sort((a, b) => (a[1].priority || 0) - (b[1].priority || 0));
+        for (const [listener] of sortedListeners) {
+            ret.push(await listener(arg));
+        }
+        return {
+            this: this,
+            ret: ret
+        };
+    }
+
+    /** リスナのリスト */
+    public listeners(): IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> {
+        return this._listeners;
+    }
+}
+
+/** 拡張イベントリスナ(+優先順位) */
+class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
+    private _listeners: Map<EventTypeT, IgniterWithPriorityC<ArgT, RetT>>;
+
+    public constructor() {
+        this._listeners = new Map();
+    }
+
+    /** リスナ登録 */
+    public reg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>, priority?: number): {
+        this: EventIgniterWithPriorityC<EventTypeT, ArgT, RetT>
+        deRegFn: () => void
+    } {
+        if (!this._listeners.has(event)) this._listeners.set(event, new IgniterWithPriorityC());
+        this._listeners.get(event)!.reg(listener, priority);
+        return {
+            this: this,
+            deRegFn: () => this.deReg(event, listener)
+        };
+    }
+
+    /** リスナ登録解除 */
+    public deReg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>): {
+        this: EventIgniterWithPriorityC<EventTypeT, ArgT, RetT>
+    } {
+        const igniter = this._listeners.get(event);
+        if (igniter) {
+            igniter.deReg(listener);
+            if (igniter.listeners().size === 0) {
+                this._listeners.delete(event);
+            }
+        }
+        return {
+            this: this,
+        };
+    }
+
+    /** イベント発火(優先順位順) */
+    public async ignite(event: EventTypeT, arg: ArgT): Promise<{
+        this: EventIgniterWithPriorityC<EventTypeT, ArgT, RetT>
+        ret: RetT[]
+    }> {
+        const igniter = this._listeners.get(event);
+        const ret: RetT[] = [];
+        if (igniter) {
+            const result = await igniter.ignite(arg);
+            ret.push(...result.ret);
+        }
+        return {
+            this: this,
+            ret: ret
+        };
+    }
+
+    /** イベントタイプのリスト */
+    public listeningEventTypes(): Array<EventTypeT> {
+        return Array.from(this._listeners.keys());
+    }
+
+    /** イベントリスナのリスト */
+    public listeners(): Map<EventTypeT, IgniterWithPriorityC<ArgT, RetT>> {
+        return this._listeners;
+    }
+
+    /** リスナのリスト */
+    public listenersByEvent(event: EventTypeT): IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> {
+        return this._listeners.get(event)?.listeners() || new Map();
+    }
+}
+
+/** キャンセルコンテキスト(状態伝播用) */
+class CancelContextC {
+    private _onCanceledIgniter: IgniterC<void, void>;
+    private _children: Set<CancelContextC>;
+    private _isCanceled: boolean;
+
+    private constructor() {
+        this._onCanceledIgniter = new IgniterC();
+        this._children = new Set();
+        this._isCanceled = false;
+    }
+
+    public static createRootContext(): CancelContextC {
+        return new CancelContextC();
+    }
+
+    /** リスナ登録 */
+    public reg(listener: IgniterC_ListenerT<void, void>): {
+        this: CancelContextC
+        deRegFn: () => void
+    } {
+        // >! 各リスナのエラーは握りつぶさなければ
+        this._onCanceledIgniter.reg(listener);
+        return {
+            this: this,
+            deRegFn: () => this.deReg(listener)
+        };
+    }
+
+    /** リスナ登録解除 */
+    public deReg(listener: IgniterC_ListenerT<void, void>): void {
+        this._onCanceledIgniter.deReg(listener);
     }
 
     /** キャンセル */
-    cancel(): void {
+    public async cancel(): Promise<void> {
         if (this._isCanceled) return;
         this._isCanceled = true;
-        for (const listener of this._listeners) {
-            listener();
-        }
+        await this._onCanceledIgniter.ignite();
         for (const child of this._children) {
-            child.cancel();
+            // >! ここもエラー抑制
+            await child.cancel();
         }
     }
 
     /** リスナのリスト */
-    listeners(): Array<CancelContextC_ListenerT> {
-        return Array.from(this._listeners);
+    public listeners(): Array<IgniterC_ListenerT<void, void>> {
+        return Array.from(this._onCanceledIgniter.listeners());
     }
 
     /** 子供作成（キャンセル状態共有） */
-    createChild(): CancelContextC {
-        return new CancelContextC();
+    public createChild(): CancelContextC {
+        const child = new CancelContextC();
+        child._isCanceled = this._isCanceled;
+        return child;
     }
 
     /** キャンセル済みか */
-    isCanceled(): boolean {
+    public isCanceled(): boolean {
         return this._isCanceled;
     }
 
     /** キャンセル済みなら例外throw */
-    throwIfCanceled(): void {
+    public throwIfCanceled(): void {
         if (this._isCanceled) {
             throw new SpaError(SpaError_KindsE.Canceled);
         }
@@ -227,38 +422,58 @@ type ResourceFetcherC_CacheValueT = {
 
 type ResourceFetcherC_CacheT = Map<string, ResourceFetcherC_CacheValueT>;
 
+/** リソース取得(キャッシュ機能付き)
+ *  インスタンスは使いまわし
+*/
 class ResourceFetcherC {
+    private static _instance: ResourceFetcherC | null = null;
+
     private _cache: ResourceFetcherC_CacheT;
 
-    constructor() {
+    private constructor() {
         this._cache = new Map();
     }
 
+    public static create(): ResourceFetcherC {
+        if (!ResourceFetcherC._instance) {
+            ResourceFetcherC._instance = new ResourceFetcherC();
+        }
+        return ResourceFetcherC._instance;
+    }
+
     /** prefetch */
-    async preFetch(
+    public async preFetch(
         fetchCCtx: CancelContextC | null,
         input: RequestInfo | URL,
         init?: RequestInit,
-        onResult?: (succeed: boolean) => Promise<void>
+        onResult?: (succeed: boolean, error?: SpaError) => Promise<void>
     ): Promise<{
         this: ResourceFetcherC
     }> {
         setTimeout(async () => {
             let state: 'succeed' | 'failed' | 'canceled' = 'failed';
+            let error: SpaError | undefined;
             try {
                 await this.fetch(fetchCCtx, input, init, 0);
                 state = 'succeed';
             } catch (e) {
                 // 無視(プリフェッチ失敗は非致命的)
-                if (e instanceof SpaError && e.kind === SpaError_KindsE.Canceled) {
-                    state = 'canceled'
+                if (e instanceof SpaError) {
+                    error = e;
+                    if (error.kind === SpaError_KindsE.Canceled) {
+                        state = 'canceled';
+                    } else {
+                        error.logging(SpaError_LogLevelE.Warn, 'Prefetch failed');
+                        state = 'failed';
+                    }
                 } else {
-                    e.logging('Failed to prefetch');
-                    state = 'failed'
+                    error = new SpaError(SpaError_KindsE.Unexpected, 'Unexpected error during prefetch', e as Error);
+                    error.logging(SpaError_LogLevelE.Error, 'Prefetch failed');
+                    state = 'failed';
                 }
             } finally {
                 if (state === 'succeed' || state === 'failed') {
-                    await onResult?.(state === 'succeed');
+                    await onResult?.(state === 'succeed', error);
                 }
             }
         }, 0);
@@ -270,7 +485,7 @@ class ResourceFetcherC {
     /** 取得
      *  respのbodyは読み取り不可なので注意
      */
-    async fetch(
+    public async fetch(
         fetchCCtx: CancelContextC | null,
         input: RequestInfo | URL,
         init?: RequestInit,
@@ -392,8 +607,101 @@ class ResourceFetcherC {
     }
 }
 
-// 以上実装済
-// 以下未実装
+
+enum AspectWatcherC_AspectTypeE {
+    Portrait = 'portrait',
+    Landscape = 'landscape'
+};
+
+enum AspectWatcherC_EventPriorityE {
+    App = 0,
+    Page = 1,
+    Component = 2,
+    Element = 3
+}
+
+/** アスペクト比監視クラス
+ *  インスタンスは使いまわし
+ */
+class AspectWatcherC {
+    private static _instance: AspectWatcherC | null = null;
+
+    private _aspectType: AspectWatcherC_AspectTypeE;
+    private _onResizeListener: IgniterWithPriorityC<{
+        aspectWatcher: AspectWatcherC,
+        aspectType: AspectWatcherC_AspectTypeE
+    }, void>;
+    private _onAspectTypeChangeListener: IgniterWithPriorityC<{
+        aspectWatcher: AspectWatcherC,
+        aspectType: AspectWatcherC_AspectTypeE
+    }, void>;
+    private _resizeDebounceTimeoutId: number | null = null;
+    private readonly _resizeDebounceDelayMs: number = 100;
+
+    private constructor() {
+        this._aspectType = AspectWatcherC.detectAspectType();
+        this._onResizeListener = new IgniterWithPriorityC();
+        this._onAspectTypeChangeListener = new IgniterWithPriorityC();
+
+        window.addEventListener('resize', () => { this.scheduleResize(); });
+    }
+
+    public static create(): AspectWatcherC {
+        if (AspectWatcherC._instance === null) {
+            AspectWatcherC._instance = new AspectWatcherC();
+        }
+        return AspectWatcherC._instance;
+    }
+
+    /** ビューポートの高さ/横幅からアスペクトタイプを判定 */
+    private static detectAspectType(): AspectWatcherC_AspectTypeE {
+        if (window.innerWidth < window.innerHeight) {
+            return AspectWatcherC_AspectTypeE.Portrait;
+        } else {
+            return AspectWatcherC_AspectTypeE.Landscape;
+        }
+    }
+
+    /** 現在のアスペクトタイプ */
+    public getAspectType(): AspectWatcherC_AspectTypeE {
+        return this._aspectType;
+    }
+
+    /** リサイズのデバウンス機構 */
+    private scheduleResize(): void {
+        if (this._resizeDebounceTimeoutId !== null) {
+            clearTimeout(this._resizeDebounceTimeoutId);
+        }
+        this._resizeDebounceTimeoutId = setTimeout(() => {
+            this._resizeDebounceTimeoutId = null;
+            this.onResize();
+        }, this._resizeDebounceDelayMs);
+    }
+
+    /** リサイズ処理 */
+    private async onResize(): Promise<void> {
+        const newAspectType = AspectWatcherC.detectAspectType();
+        if (this._aspectType !== newAspectType) {
+            this._aspectType = newAspectType;
+            await this._onAspectTypeChangeListener.ignite({
+                aspectWatcher: this,
+                aspectType: this._aspectType
+            });
+        }
+        await this._onResizeListener.ignite({
+            aspectWatcher: this,
+            aspectType: this._aspectType
+        });
+    }
+
+    // >! ハンドラ登録(列挙型の優先順位付)とか実装
+    // エラー起きないようにラップも
+}
+
+
+class AssetLoaderC {
+
+}
 
 
 class Router {
