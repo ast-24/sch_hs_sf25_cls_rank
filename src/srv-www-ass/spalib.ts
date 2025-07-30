@@ -1,11 +1,3 @@
-/*
-
-app 全体管理
-router ルーティング
-navigator 遷移管理
-
-*/
-
 enum SpaError_LogLevelE {
     Error = 'error',
     Warn = 'warn',
@@ -62,9 +54,9 @@ class coreHelpersC {
     }
 
     public static async cancelCheckAndYieldThread(
-        cctx: CancelContextC | null
+        cctx: CancelContextC
     ): Promise<void> {
-        cctx?.throwIfCanceled();
+        cctx.throwIfCanceled();
         await coreHelpersC.yieldThread();
     }
 
@@ -82,6 +74,17 @@ class coreHelpersC {
             const spaErr = coreHelpersC.intoUnexpectedError('Unexpected error occurred', err);
             spaErr.logging(SpaError_LogLevelE.Error, title);
         }
+    }
+
+    public static IgniterResultloggingError<RetT>(
+        igniterRes: IgniterC_IgniteResultT<RetT>[],
+        title: string
+    ): void {
+        igniterRes.forEach(r => {
+            if (r.type === 'error') {
+                coreHelpersC.loggingError(r.err, title);
+            }
+        });
     }
 }
 
@@ -119,12 +122,17 @@ class IgniterC<ArgT = void, RetT = void> {
     }
 
     /** イベント発火 */
-    public async ignite(arg: ArgT): Promise<{
+    public async ignite(
+        oprCCtx: CancelContextC,
+        arg: ArgT
+    ): Promise<{
         this: IgniterC<ArgT, RetT>
         res: IgniterC_IgniteResultT<RetT>[]
     }> {
         const res: IgniterC_IgniteResultT<RetT>[] = [];
         for (const listener of this._listeners) {
+            await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
             try {
                 res.push({ type: 'ok', ret: await listener(arg) });
             } catch (err) {
@@ -140,6 +148,16 @@ class IgniterC<ArgT = void, RetT = void> {
     /** リスナのリスト */
     public listeners(): IgniterC_ListenersCorrectionT<ArgT, RetT> {
         return this._listeners;
+    }
+
+    /** リスナのクリア */
+    public clear(): {
+        this: IgniterC<ArgT, RetT>
+    } {
+        this._listeners.clear();
+        return {
+            this: this,
+        };
     }
 }
 
@@ -181,14 +199,18 @@ class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
     }
 
     /** イベント発火 */
-    public async ignite(event: EventTypeT, arg: ArgT): Promise<{
+    public async ignite(
+        oprCCtx: CancelContextC,
+        event: EventTypeT,
+        arg: ArgT
+    ): Promise<{
         this: EventIgniterC<EventTypeT, ArgT, RetT>
         res: IgniterC_IgniteResultT<RetT>[]
     }> {
         const set = this._listeners.get(event);
         const res: IgniterC_IgniteResultT<RetT>[] = [];
         if (set) {
-            const result = await set.ignite(arg);
+            const result = await set.ignite(oprCCtx, arg);
             res.push(...result.res);
         }
         return {
@@ -202,14 +224,34 @@ class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
         return Array.from(this._listeners.keys());
     }
 
+    /** リスナのリスト */
+    public listenersByEvent(event: EventTypeT): IgniterC_ListenersCorrectionT<ArgT, RetT> {
+        return this._listeners.get(event)?.listeners() || new Set();
+    }
+
     /** イベントリスナのリスト */
     public listeners(): EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT> {
         return this._listeners;
     }
 
-    /** リスナのリスト */
-    public listenersByEvent(event: EventTypeT): IgniterC_ListenersCorrectionT<ArgT, RetT> {
-        return this._listeners.get(event)?.listeners() || new Set();
+    /** リスナのクリア */
+    public clear(): {
+        this: EventIgniterC<EventTypeT, ArgT, RetT>
+    } {
+        this._listeners.clear();
+        return {
+            this: this,
+        };
+    }
+
+    /** イベントリスナのクリア */
+    public clearByEvent(event: EventTypeT): {
+        this: EventIgniterC<EventTypeT, ArgT, RetT>
+    } {
+        this._listeners.get(event)?.clear();
+        return {
+            this: this,
+        };
     }
 }
 
@@ -244,13 +286,21 @@ class IgniterWithPriorityC<ArgT = void, RetT = void> {
     }
 
     /** イベント発火(優先順位順) */
-    public async ignite(arg: ArgT): Promise<{
+    public async ignite(
+        oprCCtx: CancelContextC,
+        arg: ArgT
+    ): Promise<{
         this: IgniterWithPriorityC<ArgT, RetT>
         res: IgniterC_IgniteResultT<RetT>[]
     }> {
         const res: IgniterC_IgniteResultT<RetT>[] = [];
         const sortedListeners = Array.from(this._listeners.entries()).sort((a, b) => (a[1].priority || 0) - (b[1].priority || 0));
+
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
         for (const [listener] of sortedListeners) {
+            await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
             try {
                 const result = await listener(arg);
                 res.push({ type: 'ok', ret: result });
@@ -267,6 +317,16 @@ class IgniterWithPriorityC<ArgT = void, RetT = void> {
     /** リスナのリスト */
     public listeners(): IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> {
         return this._listeners;
+    }
+
+    /** リスナのクリア */
+    public clear(): {
+        this: IgniterWithPriorityC<ArgT, RetT>
+    } {
+        this._listeners.clear();
+        return {
+            this: this,
+        };
     }
 }
 
@@ -306,14 +366,18 @@ class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
     }
 
     /** イベント発火(優先順位順) */
-    public async ignite(event: EventTypeT, arg: ArgT): Promise<{
+    public async ignite(
+        oprCCtx: CancelContextC,
+        event: EventTypeT,
+        arg: ArgT
+    ): Promise<{
         this: EventIgniterWithPriorityC<EventTypeT, ArgT, RetT>
         res: IgniterC_IgniteResultT<RetT>[]
     }> {
         const igniter = this._listeners.get(event);
         const res: IgniterC_IgniteResultT<RetT>[] = [];
         if (igniter) {
-            const result = await igniter.ignite(arg);
+            const result = await igniter.ignite(oprCCtx, arg);
             res.push(...result.res);
         }
         return {
@@ -327,16 +391,37 @@ class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
         return Array.from(this._listeners.keys());
     }
 
+    /** リスナのリスト */
+    public listenersByEvent(event: EventTypeT): IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> {
+        return this._listeners.get(event)?.listeners() || new Map();
+    }
+
     /** イベントリスナのリスト */
     public listeners(): Map<EventTypeT, IgniterWithPriorityC<ArgT, RetT>> {
         return this._listeners;
     }
 
-    /** リスナのリスト */
-    public listenersByEvent(event: EventTypeT): IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> {
-        return this._listeners.get(event)?.listeners() || new Map();
+    /** リスナのクリア */
+    public clear(): {
+        this: EventIgniterWithPriorityC<EventTypeT, ArgT, RetT>
+    } {
+        this._listeners.clear();
+        return {
+            this: this,
+        };
+    }
+
+    /** イベントリスナのクリア */
+    public clearByEvent(event: EventTypeT): {
+        this: EventIgniterWithPriorityC<EventTypeT, ArgT, RetT>
+    } {
+        this._listeners.get(event)?.clear();
+        return {
+            this: this,
+        };
     }
 }
+
 
 type CancelContextC_ResultT = {
     igniterRes: IgniterC_IgniteResultT<void>[],
@@ -383,10 +468,11 @@ class CancelContextC {
         };
         if (!this._isCanceled) {
             this._isCanceled = true;
-            res.igniterRes = (await this._onCanceledIgniter.ignite()).res;
+            res.igniterRes = (await this._onCanceledIgniter.ignite(neverEndCCtx)).res;
             for (const child of this._children) {
                 res.childsRes.push((await child.cancel()).res);
             }
+            this._onCanceledIgniter.clear();
         }
         return {
             this: this,
@@ -419,6 +505,8 @@ class CancelContextC {
     }
 }
 
+const neverEndCCtx: CancelContextC = CancelContextC.createRootContext();
+
 
 type ResourceFetcherC_CacheKeyT = {
     method: string
@@ -442,16 +530,13 @@ type ResourceFetcherC_CacheT = Map<string, ResourceFetcherC_CacheValueT>;
  *  インスタンスは使いまわし
 */
 class ResourceFetcherC {
-    private static _instance: ResourceFetcherC | null = null;
+    private static readonly _instance: ResourceFetcherC = new ResourceFetcherC();
 
     private readonly _cache: ResourceFetcherC_CacheT = new Map();
 
     private constructor() { }
 
     public static create(): ResourceFetcherC {
-        if (!ResourceFetcherC._instance) {
-            ResourceFetcherC._instance = new ResourceFetcherC();
-        }
         return ResourceFetcherC._instance;
     }
 
@@ -459,7 +544,7 @@ class ResourceFetcherC {
      *  respのbodyは読み取り不可なので注意
      */
     public async fetch(
-        fetchCCtx: CancelContextC | null,
+        oprCCtx: CancelContextC,
         input: RequestInfo | URL,
         init?: RequestInit,
         allowCacheWindowMs: number = 0
@@ -479,7 +564,7 @@ class ResourceFetcherC {
             return method !== undefined && ['GET', 'HEAD'].includes(method.toUpperCase());
         })();
 
-        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         if (isCachableMethod && allowCacheWindowMs) {
             const cacheKey = this.intoCacheKey(input, init);
@@ -497,19 +582,17 @@ class ResourceFetcherC {
             }
         }
 
-        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         let resp: Response;
         try {
             const fetchAbortController = new AbortController();
             const fetchAbortSignal = fetchAbortController.signal;
-            const fetchCCtxAbortRegRet = fetchCCtx?.reg(async () => { fetchAbortController.abort(); });
+            const oprCCtxAbortRegRet = oprCCtx.reg(async () => { fetchAbortController.abort(); });
             resp = await fetch(input, { signal: fetchAbortSignal, ...init });
-            if (fetchCCtxAbortRegRet) {
-                fetchCCtxAbortRegRet.deRegFn();
-            }
+            oprCCtxAbortRegRet.deRegFn();
         } catch (error) {
-            if (fetchCCtx?.isCanceled()) {
+            if (oprCCtx?.isCanceled()) {
                 throw new SpaError(SpaError_KindsE.Canceled, 'Fetch operation was canceled');
             }
             const url = (input instanceof Request ? input.url : (input instanceof URL ? input.href : String(input)));
@@ -518,11 +601,11 @@ class ResourceFetcherC {
 
         // ステータスコードの解釈はクライアントアプリケーション側に任せる
 
-        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         const body = await resp.blob();
 
-        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         if (isCachableMethod) {
             const cacheKey = this.intoCacheKey(input, init);
@@ -534,7 +617,7 @@ class ResourceFetcherC {
             this._cache.set(cacheKey, cacheValue);
         }
 
-        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         return {
             resp: resp,
@@ -545,7 +628,7 @@ class ResourceFetcherC {
 
     /** prefetch */
     public async preFetch(
-        fetchCCtx: CancelContextC | null,
+        oprCCtx: CancelContextC,
         input: RequestInfo | URL,
         init?: RequestInit,
         allowCacheWindowMs: number = 0,
@@ -557,7 +640,7 @@ class ResourceFetcherC {
             let state: 'succeed' | 'failed' | 'canceled' = 'failed';
             let error: SpaError | undefined;
             try {
-                await this.fetch(fetchCCtx, input, init, 0);
+                await this.fetch(oprCCtx, input, init, 0);
                 state = 'succeed';
             } catch (e) {
                 // 無視(プリフェッチ失敗は非致命的)
@@ -656,7 +739,7 @@ type AspectWatcherC_ListenerT = IgniterC_ListenerT<AspectWatcherC_ListenerArgT, 
  *  インスタンスは使いまわし
  */
 class AspectWatcherC {
-    private static _instance: AspectWatcherC | null = null;
+    private static readonly _instance: AspectWatcherC = new AspectWatcherC();
 
     private _aspectType: AspectWatcherC_AspectTypeE = AspectWatcherC.detectAspectType();
     private readonly _onResizeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void> = new IgniterWithPriorityC();
@@ -669,9 +752,6 @@ class AspectWatcherC {
     }
 
     public static create(): AspectWatcherC {
-        if (AspectWatcherC._instance === null) {
-            AspectWatcherC._instance = new AspectWatcherC();
-        }
         return AspectWatcherC._instance;
     }
 
@@ -696,34 +776,26 @@ class AspectWatcherC {
         }
         this._resizeDebounceTimeoutId = setTimeout(() => {
             this._resizeDebounceTimeoutId = null;
-            this.onResize();
+            this.onResize(neverEndCCtx);
         }, this._resizeDebounceDelayMs);
     }
 
     /** リサイズ処理 */
-    private async onResize(): Promise<void> {
+    private async onResize(oprCCtx: CancelContextC): Promise<void> {
         const newAspectType = AspectWatcherC.detectAspectType();
         if (this._aspectType !== newAspectType) {
             this._aspectType = newAspectType;
-            const result = await this._onAspectTypeChangeListener.ignite({
+            const result = await this._onAspectTypeChangeListener.ignite(oprCCtx, {
                 aspectWatcher: this,
                 aspectType: this._aspectType
             });
-            result.res.forEach(r => {
-                if (r.type === 'error') {
-                    coreHelpersC.loggingError(r.err, 'on aspect type change listener failed');
-                }
-            });
+            coreHelpersC.IgniterResultloggingError(result.res, 'on aspect type change listener failed');
         }
-        const result = await this._onResizeListener.ignite({
+        const result = await this._onResizeListener.ignite(oprCCtx, {
             aspectWatcher: this,
             aspectType: this._aspectType
         });
-        result.res.forEach(r => {
-            if (r.type === 'error') {
-                coreHelpersC.loggingError(r.err, 'on resize listener failed');
-            }
-        });
+        coreHelpersC.IgniterResultloggingError(result.res, 'on resize listener failed');
     }
 
     /** リサイズハンドラ登録 */
@@ -772,110 +844,457 @@ class AspectWatcherC {
 }
 
 
-/** DOMの簡易ラッパー */
-class SpaVDOM {
-    private _pDOM: HTMLElement;
-
-    public constructor(pDOM: HTMLElement) {
-        this._pDOM = pDOM;
-    }
-
-    public get pDOM(): HTMLElement {
-        return this._pDOM;
-    }
-
-    public set pDOM(value: HTMLElement) {
-        this._pDOM = value;
-    }
-
-    // あとで拡張(継承) innerHTML, appendChild, querySelector など
-}
-
-
 type AssetLoaderC_FetchOptionsT = {
     query?: Array<[string, string]>,
     headers?: Record<string, string>,
 }
 
-/** アセットの取得と適用を行う */
+/** アセットの取得を行う */
 class AssetLoaderC {
+    private static readonly defaultAllowCacheWindowMs: number = 60 * 60 * 1000; // デフォルトは1時間
+
     private readonly _fetcher: ResourceFetcherC = ResourceFetcherC.create();
     private readonly _aspectWatcher: AspectWatcherC = AspectWatcherC.create();
 
     private readonly _baseUrl: string;
-    private readonly _vDOM: SpaVDOM;
 
-    public constructor(baseUrl: string, vDOM: SpaVDOM) {
+    public constructor(baseUrl: string) {
         this._baseUrl = baseUrl.replace(/\/*$/, ''); // 最後のスラッシュを削除
-        this._vDOM = vDOM;
     }
 
-    /** URL構築 */
-    private buildUrl(assetPath: string): URL {
-        const cleanPath = assetPath.replace(/^\/*/, ''); // 先頭のスラッシュを削除
-        return new URL(`${this._baseUrl}/${cleanPath}`);
+    /** フルURL構築 */
+    private buildAssetUrl(assetPath: string): URL {
+        // assetPathは先頭のスラッシュを削除
+        return new URL(`${this._baseUrl}/${assetPath.replace(/^\/*/, '')}`);
+    }
+
+    /** パス構築(+拡張子) */
+    private buildAssetPathWithExt(assetFilePath: string, ext: string): string {
+        // assetFilePathは最後のスラッシュを削除
+        return `${assetFilePath.replace(/\/*$/, '')}.${ext}`;
+    }
+
+    /** パス名構築(+拡張子+アスペクトタイプ) */
+    private buildAssetPathWithExtWithAspectType(assetDirPath: string, ext: string): string {
+        // assetDirPathは最後のスラッシュを削除
+        return this.buildAssetPathWithExt(`${assetDirPath.replace(/\/$/, '')}/${this._aspectWatcher.getAspectType()}`, ext);
     }
 
     /** アセット取得 */
     public async fetchAsset(
-        fetchCCtx: CancelContextC | null,
+        oprCCtx: CancelContextC,
         assetPath: string,
         options?: AssetLoaderC_FetchOptionsT,
-        allowCacheWindowMs: number = 60 * 60 * 1000 // デフォルトは1時間
+        allowCacheWindowMs: number = AssetLoaderC.defaultAllowCacheWindowMs
     ): Promise<string> {
-        const cleanAssetPath = this.buildUrl(assetPath);
+        const cleanAssetPath = this.buildAssetUrl(assetPath);
         options?.query?.forEach(([k, v]) => cleanAssetPath.searchParams.append(k, v));
         const fetchOptions: RequestInit = {
-            headers: options?.headers// >! 型不整合かも
+            headers: options?.headers
         }
 
-        const res = await this._fetcher.fetch(fetchCCtx, cleanAssetPath, fetchOptions, allowCacheWindowMs);
+        const res = await this._fetcher.fetch(oprCCtx, cleanAssetPath, fetchOptions, allowCacheWindowMs);
 
-        // >! ステータスコード(4xxと5xxはエラー、それ以外の!okはunexpected)
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
-        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+        if (!res.resp.ok) {
+            if (Math.floor(res.resp.status / 100) === 4) {
+                throw new SpaError(SpaError_KindsE.Bug, `Client error while fetching asset: ${assetPath} (status: ${res.resp.status})`);
+            }
+            if (Math.floor(res.resp.status / 100) === 5) {
+                throw new SpaError(SpaError_KindsE.ServerError, `Server error while fetching asset: ${assetPath} (status: ${res.resp.status})`);
+            }
+            throw new SpaError(SpaError_KindsE.ServerError, `Failed to fetch asset: ${assetPath} (status: ${res.resp.status})`);
+        }
+
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         try {
             return await res.body.text();
         } catch (e) {
-            // >! バグ(期待してたフォーマットじゃない=不整合)
-            throw e
+            throw new SpaError(SpaError_KindsE.Bug, `Failed to read asset body as text: ${assetPath}`, e as Error);
         }
     }
 
-    /** プリフェッチ（キャッシュなし） */
+    /** アセット取得(HTML) */
+    public async fetchHtml(
+        oprCCtx: CancelContextC,
+        assetFilePath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<string> {
+        return this.fetchAsset(oprCCtx, this.buildAssetPathWithExt(assetFilePath, 'html'), options, allowCacheWindowMs);
+    }
+
+    /** アセット取得(HTML)(+アスペクトタイプ別) */
+    public async fetchHtmlWithAspectType(
+        oprCCtx: CancelContextC,
+        assetDirPath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<string> {
+        return this.fetchAsset(oprCCtx, this.buildAssetPathWithExtWithAspectType(assetDirPath, 'html'), options, allowCacheWindowMs);
+    }
+
+    /** アセット取得(CSS) */
+    public async fetchCss(
+        oprCCtx: CancelContextC,
+        assetFilePath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<string> {
+        return this.fetchAsset(oprCCtx, this.buildAssetPathWithExt(assetFilePath, 'css'), options, allowCacheWindowMs);
+    }
+
+    /** アセット取得(CSS)(+アスペクトタイプ別) */
+    public async fetchCssWithAspectType(
+        oprCCtx: CancelContextC,
+        assetDirPath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<string> {
+        return this.fetchAsset(oprCCtx, this.buildAssetPathWithExtWithAspectType(assetDirPath, 'css'), options, allowCacheWindowMs);
+    }
+
+    /** プリフェッチ */
     public async preFetchAsset(
-        fetchCCtx: CancelContextC | null,
-        path: string,
+        oprCCtx: CancelContextC,
+        assetPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs: number = 0,
     ): Promise<{
         this: AssetLoaderC
     }> {
-        // >! こっちにもアセット取得と同じ(ただし前半だけ)処理
-        await this._fetcher.preFetch(fetchCCtx, path, options, allowCacheWindowMs);
+        const cleanAssetPath = this.buildAssetUrl(assetPath);
+        options?.query?.forEach(([k, v]) => cleanAssetPath.searchParams.append(k, v));
+        const fetchOptions: RequestInit = {
+            headers: options?.headers
+        }
+
+        await this._fetcher.preFetch(oprCCtx, cleanAssetPath, fetchOptions, allowCacheWindowMs);
+
         return {
             this: this
         };
     }
 
-    // 拡張子でURL構築
-    // HTMLを読み込み&適用
-    // CSSを読み込み&適用
-    // デバイス検出してURL構築
-    // HTMLをデバイスごとに読み込み適用
-    // CSSをデバイスごとに読み込み適用
+    /** プリフェッチ(HTML) */
+    public async preFetchHtml(
+        oprCCtx: CancelContextC,
+        assetFilePath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: AssetLoaderC
+    }> {
+        return this.preFetchAsset(oprCCtx, this.buildAssetPathWithExt(assetFilePath, 'html'), options, allowCacheWindowMs);
+    }
+
+    /** プリフェッチ(HTML)(+アスペクトタイプ別) */
+    public async preFetchHtmlWithAspectType(
+        oprCCtx: CancelContextC,
+        assetDirPath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: AssetLoaderC
+    }> {
+        return this.preFetchAsset(oprCCtx, this.buildAssetPathWithExtWithAspectType(assetDirPath, 'html'), options, allowCacheWindowMs);
+    }
+
+    /** プリフェッチ(CSS) */
+    public async preFetchCss(
+        oprCCtx: CancelContextC,
+        assetFilePath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: AssetLoaderC
+    }> {
+        return this.preFetchAsset(oprCCtx, this.buildAssetPathWithExt(assetFilePath, 'css'), options, allowCacheWindowMs);
+    }
+
+    /** プリフェッチ(CSS)(+アスペクトタイプ別) */
+    public async preFetchCssWithAspectType(
+        oprCCtx: CancelContextC,
+        assetDirPath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: AssetLoaderC
+    }> {
+        return this.preFetchAsset(oprCCtx, this.buildAssetPathWithExtWithAspectType(assetDirPath, 'css'), options, allowCacheWindowMs);
+    }
 }
 
 
-class Router {
+type SpaVDomC_ClearResultT = {
+    listeners: IgniterC_IgniteResultT<void>[];
+    children: SpaVDomC_ClearResultT[];
+};
+
+type SpaVDomC_OnClearListenerArgT = {
+    vDom: SpaVDomC
+};
+
+type SpaVDomC_OnClearListenerT = IgniterC_ListenerT<SpaVDomC_OnClearListenerArgT, void>;
+
+/** DOMの簡易ラッパー
+ *  どこかが保持してライフタイムを管理することを想定
+ */
+class SpaVDomC {
+    private readonly _assetLoader: AssetLoaderC;
+    private _vDomLifeCCtx: CancelContextC | null;
+    private _pDom: HTMLElement | null;
+
+    private readonly _children: Set<SpaVDomC> = new Set();
+    private readonly _onClearListeners: IgniterC<SpaVDomC_OnClearListenerArgT, void> = new IgniterC();
+
+    private constructor(assetLoader: AssetLoaderC, vDomLifeCCtx: CancelContextC, pDom: HTMLElement) {
+        this._assetLoader = assetLoader;
+        this._vDomLifeCCtx = vDomLifeCCtx;
+        this._pDom = pDom;
+        this._vDomLifeCCtx?.reg(async () => {
+            const result = await this.dispose(neverEndCCtx);
+            SpaVDomC.clearResultRecursiveErrorLogging(result.clearResult);
+        });
+    }
+
+    public static create(assetLoader: AssetLoaderC, vDomLifeCCtx: CancelContextC, pDom: HTMLElement): SpaVDomC {
+        return new SpaVDomC(assetLoader, vDomLifeCCtx, pDom);
+    }
+
+    /** 設定を継承して子要素を作成 */
+    public createChild(pDom: HTMLElement): {
+        child: SpaVDomC,
+        childLifeCCtx: CancelContextC
+    } {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+        // '!.'としたのは!!this._pDomならthis._vDomLifeCCtxも存在するため
+        const childLifeCCtx = this._vDomLifeCCtx!.createChild();
+        const child = new SpaVDomC(this._assetLoader, childLifeCCtx, pDom);
+        this._children.add(child);
+        return {
+            child,
+            childLifeCCtx
+        };
+    }
+
+    public get pDom(): HTMLElement {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+        return this._pDom;
+    }
+
+    public async dispose(oprCCtx: CancelContextC): Promise<{
+        this: SpaVDomC
+        clearResult: SpaVDomC_ClearResultT
+    }> {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is already disposed');
+        }
+        const clearRet = await this.clear(oprCCtx);
+        this._pDom = null;
+        this._vDomLifeCCtx = null;
+
+        return {
+            this: this,
+            clearResult: clearRet.clearResult
+        };
+    }
+
+    public async clear(oprCCtx: CancelContextC): Promise<{
+        this: SpaVDomC
+        clearResult: SpaVDomC_ClearResultT
+    }> {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+
+        const clearResult: SpaVDomC_ClearResultT = {
+            listeners: [],
+            children: []
+        };
+
+        for (const child of this._children) {
+            clearResult.children.push((await child.dispose(oprCCtx)).clearResult);
+        }
+        this._children.clear();
+
+        clearResult.listeners = (await this._onClearListeners.ignite(oprCCtx, { vDom: this })).res;
+        this._onClearListeners.clear();
+
+        this._pDom.innerHTML = '';
+
+        return {
+            this: this,
+            clearResult: clearResult
+        };
+    }
+
+    public static clearResultRecursiveErrorLogging(
+        res: SpaVDomC_ClearResultT,
+        errorMessage: string = 'on vDom clear listener failed'
+    ): void {
+        coreHelpersC.IgniterResultloggingError(res.listeners, errorMessage);
+        res.children.forEach(childRes => SpaVDomC.clearResultRecursiveErrorLogging(childRes, errorMessage));
+    }
+
+    public regOnClear(listener: SpaVDomC_OnClearListenerT): {
+        this: SpaVDomC
+        deRegFn: () => void
+    } {
+        this._onClearListeners.reg(listener);
+        return {
+            this: this,
+            deRegFn: () => this.deRegOnClear(listener)
+        };
+    }
+
+    public deRegOnClear(listener: SpaVDomC_OnClearListenerT): {
+        this: SpaVDomC
+    } {
+        this._onClearListeners.deReg(listener);
+        return {
+            this: this
+        };
+    }
+
+    public async overrideHtml(
+        oprCCtx: CancelContextC,
+        htmlFilePath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: SpaVDomC
+    }> {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+        const html = await this._assetLoader.fetchHtml(oprCCtx, htmlFilePath, options, allowCacheWindowMs);
+
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
+        await this.clear(oprCCtx);
+
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
+        this._pDom.innerHTML = html;
+        return {
+            this: this
+        };
+    }
+
+    public async overrideHtmlWithAspectType(
+        oprCCtx: CancelContextC,
+        htmlDirPath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: SpaVDomC
+    }> {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+        const html = await this._assetLoader.fetchHtmlWithAspectType(oprCCtx, htmlDirPath, options, allowCacheWindowMs);
+
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
+        await this.clear(oprCCtx);
+
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
+        this._pDom.innerHTML = html;
+        return {
+            this: this
+        };
+    }
+
+    public async appendCss(
+        oprCCtx: CancelContextC,
+        cssFilePath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: SpaVDomC
+    }> {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+        const cssContent = await this._assetLoader.fetchCss(oprCCtx, cssFilePath, options, allowCacheWindowMs);
+
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
+        const styleElement = document.createElement('style');
+        styleElement.textContent = cssContent;
+        this._pDom.appendChild(styleElement);
+        return {
+            this: this
+        };
+    }
+
+    public async appendCssWithAspectType(
+        oprCCtx: CancelContextC,
+        cssDirPath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs?: number
+    ): Promise<{
+        this: SpaVDomC
+    }> {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+        const cssContent = await this._assetLoader.fetchCssWithAspectType(oprCCtx, cssDirPath, options, allowCacheWindowMs);
+
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
+
+        const styleElement = document.createElement('style');
+        styleElement.textContent = cssContent;
+        this._pDom.appendChild(styleElement);
+        return {
+            this: this
+        };
+    }
+
+    public async clearCss(): Promise<{
+        this: SpaVDomC
+    }> {
+        if (!this._pDom) {
+            throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
+        }
+        const styleElements = this._pDom.querySelectorAll('style');
+        styleElements.forEach(el => el.remove());
+        return {
+            this: this
+        };
+    }
+}
+
+
+class RendererBaseC {
 
 }
 
-class SpaNavigator {
+
+class SpaRouterC {
 
 }
 
-class SpaManager {
+
+class SpaNavigatorC {
+
+}
+
+
+class SpaManagerC {
 
 }
