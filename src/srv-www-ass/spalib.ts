@@ -1,13 +1,8 @@
 /*
 
 app 全体管理
-deviceDetector デバイス判定(縦横比)
-resourceLoader アセット読み込み
 router ルーティング
 navigator 遷移管理
-
-domのラッパー？
-vdomにしとけば拡張が効く
 
 */
 
@@ -18,10 +13,10 @@ enum SpaError_LogLevelE {
 }
 
 class SpaError extends Error {
-    kind: SpaError_KindsE;
-    cause?: Error;
+    public readonly kind: SpaError_KindsE;
+    public readonly cause?: Error;
 
-    constructor(kind: SpaError_KindsE, message?: string, cause?: Error) {
+    public constructor(kind: SpaError_KindsE, message?: string, cause?: Error) {
         super(message, { cause: cause });
         this.name = 'SpaError';
         this.kind = kind;
@@ -51,6 +46,8 @@ enum SpaError_KindsE {
     Unexpected = 'unexpected',      // 原因不明
     Canceled = 'canceled',          // キャンセル
     NetworkError = 'network_error', // ネットワーク障害
+    Bug = 'bug',                    // クライアント側バグ
+    ServerError = 'server_error',   // サーバー側エラー
 }
 
 
@@ -78,12 +75,12 @@ class coreHelpersC {
         return new SpaError(SpaError_KindsE.Unexpected, msg, err);
     }
 
-    public static loggingError(err: Error) {
+    public static loggingError(err: Error, title: string) {
         if (err instanceof SpaError) {
-            err.logging(SpaError_LogLevelE.Error);
+            err.logging(SpaError_LogLevelE.Error, title);
         } else {
             const spaErr = coreHelpersC.intoUnexpectedError('Unexpected error occurred', err);
-            spaErr.logging(SpaError_LogLevelE.Error);
+            spaErr.logging(SpaError_LogLevelE.Error, title);
         }
     }
 }
@@ -95,11 +92,9 @@ type IgniterC_IgniteResultT<RetT> = { type: 'ok', ret: RetT } | { type: 'error',
 
 /** 拡張リスナ */
 class IgniterC<ArgT = void, RetT = void> {
-    private _listeners: IgniterC_ListenersCorrectionT<ArgT, RetT>;
+    private readonly _listeners: IgniterC_ListenersCorrectionT<ArgT, RetT> = new Set();
 
-    public constructor() {
-        this._listeners = new Set();
-    }
+    public constructor() { }
 
     /** リスナ登録 */
     public reg(listener: IgniterC_ListenerT<ArgT, RetT>): {
@@ -152,11 +147,9 @@ type EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT> = Map<EventTy
 
 /** 拡張イベントリスナ */
 class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
-    private _listeners: EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT>;
+    private readonly _listeners: EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT> = new Map();
 
-    public constructor() {
-        this._listeners = new Map();
-    }
+    public constructor() { }
 
     /** リスナ登録 */
     public reg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>): {
@@ -224,11 +217,9 @@ type IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> = Map<IgniterC_Listene
 
 /** 拡張リスナ(+優先順位) */
 class IgniterWithPriorityC<ArgT = void, RetT = void> {
-    private _listeners: IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT>;
+    private readonly _listeners: IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> = new Map();
 
-    public constructor() {
-        this._listeners = new Map();
-    }
+    public constructor() { }
 
     /** リスナ登録 */
     public reg(listener: IgniterC_ListenerT<ArgT, RetT>, priority?: number): {
@@ -281,11 +272,9 @@ class IgniterWithPriorityC<ArgT = void, RetT = void> {
 
 /** 拡張イベントリスナ(+優先順位) */
 class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
-    private _listeners: Map<EventTypeT, IgniterWithPriorityC<ArgT, RetT>>;
+    private readonly _listeners: Map<EventTypeT, IgniterWithPriorityC<ArgT, RetT>> = new Map();
 
-    public constructor() {
-        this._listeners = new Map();
-    }
+    public constructor() { }
 
     /** リスナ登録 */
     public reg(event: EventTypeT, listener: IgniterC_ListenerT<ArgT, RetT>, priority?: number): {
@@ -356,15 +345,11 @@ type CancelContextC_ResultT = {
 
 /** キャンセルコンテキスト(状態伝播用) */
 class CancelContextC {
-    private _onCanceledIgniter: IgniterC<void, void>;
-    private _children: Set<CancelContextC>;
-    private _isCanceled: boolean;
+    private readonly _onCanceledIgniter: IgniterC<void, void> = new IgniterC();
+    private readonly _children: Set<CancelContextC> = new Set();
+    private _isCanceled: boolean = false;
 
-    private constructor() {
-        this._onCanceledIgniter = new IgniterC();
-        this._children = new Set();
-        this._isCanceled = false;
-    }
+    private constructor() { }
 
     public static createRootContext(): CancelContextC {
         return new CancelContextC();
@@ -459,58 +444,15 @@ type ResourceFetcherC_CacheT = Map<string, ResourceFetcherC_CacheValueT>;
 class ResourceFetcherC {
     private static _instance: ResourceFetcherC | null = null;
 
-    private _cache: ResourceFetcherC_CacheT;
+    private readonly _cache: ResourceFetcherC_CacheT = new Map();
 
-    private constructor() {
-        this._cache = new Map();
-    }
+    private constructor() { }
 
     public static create(): ResourceFetcherC {
         if (!ResourceFetcherC._instance) {
             ResourceFetcherC._instance = new ResourceFetcherC();
         }
         return ResourceFetcherC._instance;
-    }
-
-    /** prefetch */
-    public async preFetch(
-        fetchCCtx: CancelContextC | null,
-        input: RequestInfo | URL,
-        init?: RequestInit,
-        onResult?: (succeed: boolean, error?: SpaError) => Promise<void>
-    ): Promise<{
-        this: ResourceFetcherC
-    }> {
-        setTimeout(async () => {
-            let state: 'succeed' | 'failed' | 'canceled' = 'failed';
-            let error: SpaError | undefined;
-            try {
-                await this.fetch(fetchCCtx, input, init, 0);
-                state = 'succeed';
-            } catch (e) {
-                // 無視(プリフェッチ失敗は非致命的)
-                if (e instanceof SpaError) {
-                    error = e;
-                    if (error.kind === SpaError_KindsE.Canceled) {
-                        state = 'canceled';
-                    } else {
-                        error.logging(SpaError_LogLevelE.Warn, 'Prefetch failed');
-                        state = 'failed';
-                    }
-                } else {
-                    error = coreHelpersC.intoUnexpectedError('Unexpected error during prefetch', e as Error);
-                    error.logging(SpaError_LogLevelE.Error, 'Prefetch failed');
-                    state = 'failed';
-                }
-            } finally {
-                if (state === 'succeed' || state === 'failed') {
-                    await onResult?.(state === 'succeed', error);
-                }
-            }
-        }, 0);
-        return {
-            this: this
-        };
     }
 
     /** 取得
@@ -559,9 +501,19 @@ class ResourceFetcherC {
 
         let resp: Response;
         try {
-            resp = await fetch(input, init);
+            const fetchAbortController = new AbortController();
+            const fetchAbortSignal = fetchAbortController.signal;
+            const fetchCCtxAbortRegRet = fetchCCtx?.reg(async () => { fetchAbortController.abort(); });
+            resp = await fetch(input, { signal: fetchAbortSignal, ...init });
+            if (fetchCCtxAbortRegRet) {
+                fetchCCtxAbortRegRet.deRegFn();
+            }
         } catch (error) {
-            throw new SpaError(SpaError_KindsE.NetworkError, 'Network error occurred while fetching resource', error as Error);
+            if (fetchCCtx?.isCanceled()) {
+                throw new SpaError(SpaError_KindsE.Canceled, 'Fetch operation was canceled');
+            }
+            const url = (input instanceof Request ? input.url : (input instanceof URL ? input.href : String(input)));
+            throw new SpaError(SpaError_KindsE.NetworkError, `Network error occurred while fetching resource: ${url}`, error as Error);
         }
 
         // ステータスコードの解釈はクライアントアプリケーション側に任せる
@@ -588,6 +540,48 @@ class ResourceFetcherC {
             resp: resp,
             body: body,
             isCache: false
+        };
+    }
+
+    /** prefetch */
+    public async preFetch(
+        fetchCCtx: CancelContextC | null,
+        input: RequestInfo | URL,
+        init?: RequestInit,
+        allowCacheWindowMs: number = 0,
+        onResult?: (succeed: boolean, error?: SpaError) => Promise<void>
+    ): Promise<{
+        this: ResourceFetcherC
+    }> {
+        setTimeout(async () => {
+            let state: 'succeed' | 'failed' | 'canceled' = 'failed';
+            let error: SpaError | undefined;
+            try {
+                await this.fetch(fetchCCtx, input, init, 0);
+                state = 'succeed';
+            } catch (e) {
+                // 無視(プリフェッチ失敗は非致命的)
+                if (e instanceof SpaError) {
+                    error = e;
+                    if (error.kind === SpaError_KindsE.Canceled) {
+                        state = 'canceled';
+                    } else {
+                        error.logging(SpaError_LogLevelE.Warn, 'Prefetch failed');
+                        state = 'failed';
+                    }
+                } else {
+                    error = new SpaError(SpaError_KindsE.Unexpected, 'Unexpected error during prefetch', e as Error);
+                    error.logging(SpaError_LogLevelE.Error, 'Prefetch failed');
+                    state = 'failed';
+                }
+            } finally {
+                if (state === 'succeed' || state === 'failed') {
+                    await onResult?.(state === 'succeed', error);
+                }
+            }
+        }, 0);
+        return {
+            this: this
         };
     }
 
@@ -618,7 +612,7 @@ class ResourceFetcherC {
         if (input instanceof URL || typeof input === 'string') {
             const url = input instanceof URL ? input : new URL(input);
             const key: ResourceFetcherC_CacheKeyT = {
-                method: init?.method?.toUpperCase?.() || 'GET',
+                method: (init?.method?.toUpperCase?.() || 'GET'),
                 protocol: url.protocol.toUpperCase(),
                 host: url.hostname,
                 port: parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80),
@@ -654,9 +648,9 @@ enum AspectWatcherC_EventPriorityE {
 type AspectWatcherC_ListenerArgT = {
     aspectWatcher: AspectWatcherC,
     aspectType: AspectWatcherC_AspectTypeE
-}
+};
 
-type AspectWatcherC_ListenerT = IgniterC_ListenerT<AspectWatcherC_ListenerArgT, void>
+type AspectWatcherC_ListenerT = IgniterC_ListenerT<AspectWatcherC_ListenerArgT, void>;
 
 /** アスペクト比監視クラス
  *  インスタンスは使いまわし
@@ -664,17 +658,13 @@ type AspectWatcherC_ListenerT = IgniterC_ListenerT<AspectWatcherC_ListenerArgT, 
 class AspectWatcherC {
     private static _instance: AspectWatcherC | null = null;
 
-    private _aspectType: AspectWatcherC_AspectTypeE;
-    private _onResizeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void>;
-    private _onAspectTypeChangeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void>;
+    private _aspectType: AspectWatcherC_AspectTypeE = AspectWatcherC.detectAspectType();
+    private readonly _onResizeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void> = new IgniterWithPriorityC();
+    private readonly _onAspectTypeChangeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void> = new IgniterWithPriorityC();
     private _resizeDebounceTimeoutId: number | null = null;
     private readonly _resizeDebounceDelayMs: number = 100;
 
     private constructor() {
-        this._aspectType = AspectWatcherC.detectAspectType();
-        this._onResizeListener = new IgniterWithPriorityC();
-        this._onAspectTypeChangeListener = new IgniterWithPriorityC();
-
         window.addEventListener('resize', () => { this.scheduleResize(); });
     }
 
@@ -713,50 +703,43 @@ class AspectWatcherC {
     /** リサイズ処理 */
     private async onResize(): Promise<void> {
         const newAspectType = AspectWatcherC.detectAspectType();
-
         if (this._aspectType !== newAspectType) {
             this._aspectType = newAspectType;
-            const res = await this._onAspectTypeChangeListener.ignite({
+            const result = await this._onAspectTypeChangeListener.ignite({
                 aspectWatcher: this,
                 aspectType: this._aspectType
             });
-            res.res.forEach((res) => {
-                if (res.type === 'error') {
-                    coreHelpersC.loggingError(res.err);
+            result.res.forEach(r => {
+                if (r.type === 'error') {
+                    coreHelpersC.loggingError(r.err, 'on aspect type change listener failed');
                 }
             });
         }
-
-        const res = await this._onResizeListener.ignite({
+        const result = await this._onResizeListener.ignite({
             aspectWatcher: this,
             aspectType: this._aspectType
         });
-        res.res.forEach((res) => {
-            if (res.type === 'error') {
-                coreHelpersC.loggingError(res.err);
+        result.res.forEach(r => {
+            if (r.type === 'error') {
+                coreHelpersC.loggingError(r.err, 'on resize listener failed');
             }
         });
     }
 
-    /** リサイズイベントリスナ登録 */
-    public regOnResize(
-        listener: AspectWatcherC_ListenerT,
-        priority?: AspectWatcherC_EventPriorityE
-    ): {
+    /** リサイズハンドラ登録 */
+    public regOnResize(listener: AspectWatcherC_ListenerT, priority?: AspectWatcherC_EventPriorityE): {
         this: AspectWatcherC
         deRegFn: () => void
     } {
         this._onResizeListener.reg(listener, priority);
         return {
             this: this,
-            deRegFn: () => this._onResizeListener.deReg(listener)
+            deRegFn: () => this.deRegOnResize(listener)
         };
     }
 
-    /** リサイズイベントリスナ登録解除 */
-    public deRegOnResize(
-        listener: AspectWatcherC_ListenerT,
-    ): {
+    /** リサイズハンドラ登録解除 */
+    public deRegOnResize(listener: AspectWatcherC_ListenerT): {
         this: AspectWatcherC
     } {
         this._onResizeListener.deReg(listener);
@@ -765,25 +748,20 @@ class AspectWatcherC {
         };
     }
 
-    /** アスペクトタイプ変更イベントリスナ登録 */
-    public regOnAspectTypeChange(
-        listener: AspectWatcherC_ListenerT,
-        priority?: AspectWatcherC_EventPriorityE
-    ): {
+    /** アスペクトタイプ変更ハンドラ登録 */
+    public regOnAspectTypeChange(listener: AspectWatcherC_ListenerT, priority?: AspectWatcherC_EventPriorityE): {
         this: AspectWatcherC
         deRegFn: () => void
     } {
         this._onAspectTypeChangeListener.reg(listener, priority);
         return {
             this: this,
-            deRegFn: () => this._onAspectTypeChangeListener.deReg(listener)
+            deRegFn: () => this.deRegOnAspectTypeChange(listener)
         };
     }
 
-    /** アスペクトタイプ変更イベントリスナ登録解除 */
-    public deRegOnAspectTypeChange(
-        listener: AspectWatcherC_ListenerT,
-    ): {
+    /** アスペクトタイプ変更ハンドラ登録解除 */
+    public deRegOnAspectTypeChange(listener: AspectWatcherC_ListenerT): {
         this: AspectWatcherC
     } {
         this._onAspectTypeChangeListener.deReg(listener);
@@ -794,8 +772,99 @@ class AspectWatcherC {
 }
 
 
-class AssetLoaderC {
+/** DOMの簡易ラッパー */
+class SpaVDOM {
+    private _pDOM: HTMLElement;
 
+    public constructor(pDOM: HTMLElement) {
+        this._pDOM = pDOM;
+    }
+
+    public get pDOM(): HTMLElement {
+        return this._pDOM;
+    }
+
+    public set pDOM(value: HTMLElement) {
+        this._pDOM = value;
+    }
+
+    // あとで拡張(継承) innerHTML, appendChild, querySelector など
+}
+
+
+type AssetLoaderC_FetchOptionsT = {
+    query?: Array<[string, string]>,
+    headers?: Record<string, string>,
+}
+
+/** アセットの取得と適用を行う */
+class AssetLoaderC {
+    private readonly _fetcher: ResourceFetcherC = ResourceFetcherC.create();
+    private readonly _aspectWatcher: AspectWatcherC = AspectWatcherC.create();
+
+    private readonly _baseUrl: string;
+    private readonly _vDOM: SpaVDOM;
+
+    public constructor(baseUrl: string, vDOM: SpaVDOM) {
+        this._baseUrl = baseUrl.replace(/\/*$/, ''); // 最後のスラッシュを削除
+        this._vDOM = vDOM;
+    }
+
+    /** URL構築 */
+    private buildUrl(assetPath: string): URL {
+        const cleanPath = assetPath.replace(/^\/*/, ''); // 先頭のスラッシュを削除
+        return new URL(`${this._baseUrl}/${cleanPath}`);
+    }
+
+    /** アセット取得 */
+    public async fetchAsset(
+        fetchCCtx: CancelContextC | null,
+        assetPath: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs: number = 60 * 60 * 1000 // デフォルトは1時間
+    ): Promise<string> {
+        const cleanAssetPath = this.buildUrl(assetPath);
+        options?.query?.forEach(([k, v]) => cleanAssetPath.searchParams.append(k, v));
+        const fetchOptions: RequestInit = {
+            headers: options?.headers// >! 型不整合かも
+        }
+
+        const res = await this._fetcher.fetch(fetchCCtx, cleanAssetPath, fetchOptions, allowCacheWindowMs);
+
+        // >! ステータスコード(4xxと5xxはエラー、それ以外の!okはunexpected)
+
+        await coreHelpersC.cancelCheckAndYieldThread(fetchCCtx);
+
+        try {
+            return await res.body.text();
+        } catch (e) {
+            // >! バグ(期待してたフォーマットじゃない=不整合)
+            throw e
+        }
+    }
+
+    /** プリフェッチ（キャッシュなし） */
+    public async preFetchAsset(
+        fetchCCtx: CancelContextC | null,
+        path: string,
+        options?: AssetLoaderC_FetchOptionsT,
+        allowCacheWindowMs: number = 0,
+    ): Promise<{
+        this: AssetLoaderC
+    }> {
+        // >! こっちにもアセット取得と同じ(ただし前半だけ)処理
+        await this._fetcher.preFetch(fetchCCtx, path, options, allowCacheWindowMs);
+        return {
+            this: this
+        };
+    }
+
+    // 拡張子でURL構築
+    // HTMLを読み込み&適用
+    // CSSを読み込み&適用
+    // デバイス検出してURL構築
+    // HTMLをデバイスごとに読み込み適用
+    // CSSをデバイスごとに読み込み適用
 }
 
 
