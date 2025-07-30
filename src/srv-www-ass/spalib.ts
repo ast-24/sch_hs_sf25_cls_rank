@@ -7,6 +7,8 @@ router ルーティング
 navigator 遷移管理
 
 domのラッパー？
+vdomにしとけば拡張が効く
+
 */
 
 enum SpaError_LogLevelE {
@@ -68,21 +70,28 @@ class coreHelpersC {
         cctx?.throwIfCanceled();
         await coreHelpersC.yieldThread();
     }
+
+    public static intoUnexpectedError(msg: string, err: Error): SpaError {
+        if (err instanceof SpaError) {
+            return err;
+        }
+        return new SpaError(SpaError_KindsE.Unexpected, msg, err);
+    }
+
+    public static loggingError(err: Error) {
+        if (err instanceof SpaError) {
+            err.logging(SpaError_LogLevelE.Error);
+        } else {
+            const spaErr = coreHelpersC.intoUnexpectedError('Unexpected error occurred', err);
+            spaErr.logging(SpaError_LogLevelE.Error);
+        }
+    }
 }
-
-
-/*
-
-IgniterC -> 叩かれたら全部を叩く
-IgniterWithPriorityC -> 叩かれたら全部をpriority順に叩く
-EventIgniterC -> 叩かれたらイベントに紐づいたものを叩く
-EventIgniterWithPriorityC -> 叩かれたらイベントに紐づいたものをpriority順に叩く
-
- */
 
 
 type IgniterC_ListenerT<ArgT, RetT> = (arg: ArgT) => Promise<RetT>;
 type IgniterC_ListenersCorrectionT<ArgT, RetT> = Set<IgniterC_ListenerT<ArgT, RetT>>;
+type IgniterC_IgniteResultT<RetT> = { type: 'ok', ret: RetT } | { type: 'error', err: Error };
 
 /** 拡張リスナ */
 class IgniterC<ArgT = void, RetT = void> {
@@ -117,15 +126,19 @@ class IgniterC<ArgT = void, RetT = void> {
     /** イベント発火 */
     public async ignite(arg: ArgT): Promise<{
         this: IgniterC<ArgT, RetT>
-        ret: RetT[]
+        res: IgniterC_IgniteResultT<RetT>[]
     }> {
-        const ret: RetT[] = [];
+        const res: IgniterC_IgniteResultT<RetT>[] = [];
         for (const listener of this._listeners) {
-            ret.push(await listener(arg));
+            try {
+                res.push({ type: 'ok', ret: await listener(arg) });
+            } catch (err) {
+                res.push({ type: 'error', err: err });
+            }
         }
         return {
             this: this,
-            ret: ret
+            res: res
         };
     }
 
@@ -177,17 +190,17 @@ class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
     /** イベント発火 */
     public async ignite(event: EventTypeT, arg: ArgT): Promise<{
         this: EventIgniterC<EventTypeT, ArgT, RetT>
-        ret: RetT[]
+        res: IgniterC_IgniteResultT<RetT>[]
     }> {
         const set = this._listeners.get(event);
-        const ret: RetT[] = [];
+        const res: IgniterC_IgniteResultT<RetT>[] = [];
         if (set) {
             const result = await set.ignite(arg);
-            ret.push(...result.ret);
+            res.push(...result.res);
         }
         return {
             this: this,
-            ret: ret
+            res: res
         };
     }
 
@@ -242,16 +255,21 @@ class IgniterWithPriorityC<ArgT = void, RetT = void> {
     /** イベント発火(優先順位順) */
     public async ignite(arg: ArgT): Promise<{
         this: IgniterWithPriorityC<ArgT, RetT>
-        ret: RetT[]
+        res: IgniterC_IgniteResultT<RetT>[]
     }> {
-        const ret: RetT[] = [];
+        const res: IgniterC_IgniteResultT<RetT>[] = [];
         const sortedListeners = Array.from(this._listeners.entries()).sort((a, b) => (a[1].priority || 0) - (b[1].priority || 0));
         for (const [listener] of sortedListeners) {
-            ret.push(await listener(arg));
+            try {
+                const result = await listener(arg);
+                res.push({ type: 'ok', ret: result });
+            } catch (err) {
+                res.push({ type: 'error', err: err });
+            }
         }
         return {
             this: this,
-            ret: ret
+            res: res
         };
     }
 
@@ -301,17 +319,17 @@ class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
     /** イベント発火(優先順位順) */
     public async ignite(event: EventTypeT, arg: ArgT): Promise<{
         this: EventIgniterWithPriorityC<EventTypeT, ArgT, RetT>
-        ret: RetT[]
+        res: IgniterC_IgniteResultT<RetT>[]
     }> {
         const igniter = this._listeners.get(event);
-        const ret: RetT[] = [];
+        const res: IgniterC_IgniteResultT<RetT>[] = [];
         if (igniter) {
             const result = await igniter.ignite(arg);
-            ret.push(...result.ret);
+            res.push(...result.res);
         }
         return {
             this: this,
-            ret: ret
+            res: res
         };
     }
 
@@ -329,6 +347,11 @@ class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
     public listenersByEvent(event: EventTypeT): IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> {
         return this._listeners.get(event)?.listeners() || new Map();
     }
+}
+
+type CancelContextC_ResultT = {
+    igniterRes: IgniterC_IgniteResultT<void>[],
+    childsRes: CancelContextC_ResultT[]
 }
 
 /** キャンセルコンテキスト(状態伝播用) */
@@ -352,7 +375,6 @@ class CancelContextC {
         this: CancelContextC
         deRegFn: () => void
     } {
-        // >! 各リスナのエラーは握りつぶさなければ
         this._onCanceledIgniter.reg(listener);
         return {
             this: this,
@@ -366,14 +388,25 @@ class CancelContextC {
     }
 
     /** キャンセル */
-    public async cancel(): Promise<void> {
-        if (this._isCanceled) return;
-        this._isCanceled = true;
-        await this._onCanceledIgniter.ignite();
-        for (const child of this._children) {
-            // >! ここもエラー抑制
-            await child.cancel();
+    public async cancel(): Promise<{
+        this: CancelContextC
+        res: CancelContextC_ResultT
+    }> {
+        let res: CancelContextC_ResultT = {
+            igniterRes: [],
+            childsRes: []
+        };
+        if (!this._isCanceled) {
+            this._isCanceled = true;
+            res.igniterRes = (await this._onCanceledIgniter.ignite()).res;
+            for (const child of this._children) {
+                res.childsRes.push((await child.cancel()).res);
+            }
         }
+        return {
+            this: this,
+            res: res
+        };
     }
 
     /** リスナのリスト */
@@ -402,11 +435,9 @@ class CancelContextC {
 }
 
 
-type ResourceFetcherC_CachableMethodT = 'GET' | 'HEAD';
-
 type ResourceFetcherC_CacheKeyT = {
-    method: ResourceFetcherC_CachableMethodT
-    protocol: 'HTTPS' | 'HTTP'
+    method: string
+    protocol: string
     host: string
     port: number
     path: string
@@ -467,7 +498,7 @@ class ResourceFetcherC {
                         state = 'failed';
                     }
                 } else {
-                    error = new SpaError(SpaError_KindsE.Unexpected, 'Unexpected error during prefetch', e as Error);
+                    error = coreHelpersC.intoUnexpectedError('Unexpected error during prefetch', e as Error);
                     error.logging(SpaError_LogLevelE.Error, 'Prefetch failed');
                     state = 'failed';
                 }
@@ -568,8 +599,8 @@ class ResourceFetcherC {
         if (input instanceof Request) {
             const url = new URL(input.url);
             const key: ResourceFetcherC_CacheKeyT = {
-                method: input.method.toUpperCase() as ResourceFetcherC_CachableMethodT,
-                protocol: url.protocol.replace(/:$/, '').toUpperCase() as 'HTTPS' | 'HTTP',
+                method: input.method.toUpperCase(),
+                protocol: url.protocol.toUpperCase(),
                 host: url.hostname,
                 port: parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80),
                 path: url.pathname,
@@ -587,8 +618,8 @@ class ResourceFetcherC {
         if (input instanceof URL || typeof input === 'string') {
             const url = input instanceof URL ? input : new URL(input);
             const key: ResourceFetcherC_CacheKeyT = {
-                method: (init?.method?.toUpperCase?.() || 'GET') as ResourceFetcherC_CachableMethodT,
-                protocol: url.protocol.replace(/:$/, '').toUpperCase() as 'HTTPS' | 'HTTP',
+                method: init?.method?.toUpperCase?.() || 'GET',
+                protocol: url.protocol.toUpperCase(),
                 host: url.hostname,
                 port: parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80),
                 path: url.pathname,
@@ -620,6 +651,13 @@ enum AspectWatcherC_EventPriorityE {
     Element = 3
 }
 
+type AspectWatcherC_ListenerArgT = {
+    aspectWatcher: AspectWatcherC,
+    aspectType: AspectWatcherC_AspectTypeE
+}
+
+type AspectWatcherC_ListenerT = IgniterC_ListenerT<AspectWatcherC_ListenerArgT, void>
+
 /** アスペクト比監視クラス
  *  インスタンスは使いまわし
  */
@@ -627,14 +665,8 @@ class AspectWatcherC {
     private static _instance: AspectWatcherC | null = null;
 
     private _aspectType: AspectWatcherC_AspectTypeE;
-    private _onResizeListener: IgniterWithPriorityC<{
-        aspectWatcher: AspectWatcherC,
-        aspectType: AspectWatcherC_AspectTypeE
-    }, void>;
-    private _onAspectTypeChangeListener: IgniterWithPriorityC<{
-        aspectWatcher: AspectWatcherC,
-        aspectType: AspectWatcherC_AspectTypeE
-    }, void>;
+    private _onResizeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void>;
+    private _onAspectTypeChangeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void>;
     private _resizeDebounceTimeoutId: number | null = null;
     private readonly _resizeDebounceDelayMs: number = 100;
 
@@ -681,21 +713,84 @@ class AspectWatcherC {
     /** リサイズ処理 */
     private async onResize(): Promise<void> {
         const newAspectType = AspectWatcherC.detectAspectType();
+
         if (this._aspectType !== newAspectType) {
             this._aspectType = newAspectType;
-            await this._onAspectTypeChangeListener.ignite({
+            const res = await this._onAspectTypeChangeListener.ignite({
                 aspectWatcher: this,
                 aspectType: this._aspectType
             });
+            res.res.forEach((res) => {
+                if (res.type === 'error') {
+                    coreHelpersC.loggingError(res.err);
+                }
+            });
         }
-        await this._onResizeListener.ignite({
+
+        const res = await this._onResizeListener.ignite({
             aspectWatcher: this,
             aspectType: this._aspectType
         });
+        res.res.forEach((res) => {
+            if (res.type === 'error') {
+                coreHelpersC.loggingError(res.err);
+            }
+        });
     }
 
-    // >! ハンドラ登録(列挙型の優先順位付)とか実装
-    // エラー起きないようにラップも
+    /** リサイズイベントリスナ登録 */
+    public regOnResize(
+        listener: AspectWatcherC_ListenerT,
+        priority?: AspectWatcherC_EventPriorityE
+    ): {
+        this: AspectWatcherC
+        deRegFn: () => void
+    } {
+        this._onResizeListener.reg(listener, priority);
+        return {
+            this: this,
+            deRegFn: () => this._onResizeListener.deReg(listener)
+        };
+    }
+
+    /** リサイズイベントリスナ登録解除 */
+    public deRegOnResize(
+        listener: AspectWatcherC_ListenerT,
+    ): {
+        this: AspectWatcherC
+    } {
+        this._onResizeListener.deReg(listener);
+        return {
+            this: this
+        };
+    }
+
+    /** アスペクトタイプ変更イベントリスナ登録 */
+    public regOnAspectTypeChange(
+        listener: AspectWatcherC_ListenerT,
+        priority?: AspectWatcherC_EventPriorityE
+    ): {
+        this: AspectWatcherC
+        deRegFn: () => void
+    } {
+        this._onAspectTypeChangeListener.reg(listener, priority);
+        return {
+            this: this,
+            deRegFn: () => this._onAspectTypeChangeListener.deReg(listener)
+        };
+    }
+
+    /** アスペクトタイプ変更イベントリスナ登録解除 */
+    public deRegOnAspectTypeChange(
+        listener: AspectWatcherC_ListenerT,
+    ): {
+        this: AspectWatcherC
+    } {
+        this._onAspectTypeChangeListener.deReg(listener);
+        return {
+            this: this
+        };
+    }
 }
 
 
