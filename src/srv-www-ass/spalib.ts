@@ -718,45 +718,6 @@ class RestartableCancelContextC extends CancelContextC {
             res: res
         };
     }
-
-    /** タイムアウト(オーバーライド版Cancelを使用) */
-    public setTimeout(
-        oprCCtx: CancelContextC | null,
-        timeoutBeforeMs: number
-    ): {
-        this: CancelContextC
-        res: AsyncResultC<CancelContextC_ResultT>
-    } {
-        const asyncResult = AsyncResultC.create<CancelContextC_ResultT>();
-        setTimeout(async () => {
-            try {
-                const cancelRes = await this.cancel(oprCCtx);
-                asyncResult.setResult({ type: 'ok', ret: cancelRes.res });
-            } catch (err) {
-                if (oprCCtx?.isCanceled()) {
-                    // 何もしない
-                } else {
-                    asyncResult.setResult({ type: 'error', err: coreHelpersC.intoUnexpectedError('Timeout error', err as Error) });
-                }
-            }
-        }, timeoutBeforeMs);
-        return {
-            this: this,
-            res: asyncResult.this
-        };
-    }
-
-    /** 締め切り(オーバーライド版Cancelを使用) */
-    public setDeadline(
-        oprCCtx: CancelContextC | null,
-        deadlineAt: Date
-    ): {
-        this: CancelContextC
-        res: AsyncResultC<CancelContextC_ResultT>
-    } {
-        const timeoutBeforeMs = Math.max(deadlineAt.getTime() - new Date().getTime(), 0);
-        return this.setTimeout(oprCCtx, timeoutBeforeMs);
-    }
 }
 
 
@@ -1535,13 +1496,236 @@ class SpaVDomC {
 }
 
 
-class RendererBaseC {
+type PageRendererC_FactoryT = () => PageRendererBaseC; // >! あとでちゃんと定義する
 
+/** ページレンダラ基底クラス */
+class PageRendererBaseC {
+
+    protected constructor() { }
+
+    public pageTitle(): string {
+        return '';
+    }
+
+    /*
+        遷移方式はAstroCrowd(別プロジェクト)のspalibと同じにする
+            1. パスパラメータの1部分のみの変更かつ旧レンダラの許可が取れたらページ内遷移(同レンダラ)
+            2. 1の許可が取れなければ新旧レンダラ間で合意を取って、部分クリーンアップ&状態引き継ぎして部分遷移
+            3. 1/2の許可/合意が取れないか失敗すれば、ページ全体をクリーンアップして新規レンダラで全体遷移(状態は一方的に渡せるように)
+
+        エラーページはパスを割り当ててそこに飛ばすだけ
+
+        クエリパラメータの扱いも注意すべきかも←各々が勝手に操作すればいい windowやdocumentはグローバルなんだから
+     */
+
+    // >! 後で実装
+
+    /*
+        dom
+        resourceFetcher
+        assetLoader
+        aspectWatcher
+        navigator
+
+        cleanUpFull
+        renderingFull
+        canPartialTransferToNextPath
+        canPartialReceiveFromPrevPath
+        preparePartialTransfer
+        renderingPartial
+        canInpageTransferTo
+        renderingInpage
+        onDeviceOrientationChange
+     */
 }
 
+type SpaRouterC_RouteTreeHandlerT = {
+    rendererFactory: PageRendererC_FactoryT;
+    pathPatt: string;
+}
 
+type SpaRouterC_RouteTreeNodeT = {
+    handler: SpaRouterC_RouteTreeHandlerT | null; // ルートハンドラ(ページレンダラファクトリ)
+    edge: SpaRouterC_RouteTreeEdgeT | null;
+};
+
+type SpaRouterC_RouteTreeEdgeT = {
+    children: Map<string, SpaRouterC_RouteTreeNodeT> | null;
+    placeholderChild: {
+        node: SpaRouterC_RouteTreeNodeT
+        name: string; // プレースホルダ名("/hoge/:ココ/fuga")
+    } | null; // コロンプレースホルダ(":")
+    wildcardChild: SpaRouterC_RouteTreeNodeT | null; // アスタリスクワイルドカード("*")
+}
+
+type SpaRouterC_FindRouteResultT = {
+    rendererFactory: PageRendererC_FactoryT
+    pathPatt: string
+    pathParams: Record<string, string>
+}
+
+/** ルート管理クラス
+ *
+ *  パスを分解しN分木で管理
+ *
+ *  コロンを1階層のプレースホルダ、アスタリスクを複数階層のワイルドカードとして扱う
+ *
+ *  探索は完全マッチ(children)最優先
+ *  マッチ失敗すればplaceholderChildにフォールバック
+ *  それでもマッチしなければwildcardChildにさらにフォールバック
+*/
 class SpaRouterC {
+    private readonly _routeTree: SpaRouterC_RouteTreeNodeT = {
+        handler: null,
+        edge: null
+    }
 
+    private constructor() { }
+
+    public static createRouter(): SpaRouterC {
+        return new SpaRouterC();
+    }
+
+    private static normPath(path: string): string {
+        return path
+            .replace(/^\/*/, '')
+            .replace(/\/*$/, '')
+            .replace(/\/+/g, '/')
+            .replace(/[\?#].*$/, '')
+            .toLowerCase();
+    }
+
+    private static validatePathPatt(pathPattNorm: string): void {
+        pathPattNorm.split('/').forEach((part, index, ary) => {
+            if (part.startsWith(':')) {
+                if (!(2 < part.length)) {
+                    throw new SpaError(SpaError_KindsE.Bug, `Invalid placeholder in path pattern: "${pathPattNorm}" at part index ${index}: Need the name of the placeholder`);
+                }
+            }
+            if (part.startsWith('*')) {
+                if (2 < part.length) {
+                    throw new SpaError(SpaError_KindsE.Bug, `Invalid wildcard in path pattern: "${pathPattNorm}" at part index ${index}: Wildcard should not have a name`);
+                }
+                if (index !== ary.length - 1) {
+                    throw new SpaError(SpaError_KindsE.Bug, `Invalid wildcard in path pattern: "${pathPattNorm}" at part index ${index}: Wildcard should be the last part`);
+                }
+            }
+        });
+    }
+
+    public regRoute(pathPatt: string, rendererFactory: PageRendererC_FactoryT): {
+        this: SpaRouterC
+    } {
+        const normPathPatt = SpaRouterC.normPath(pathPatt);
+        SpaRouterC.validatePathPatt(normPathPatt);
+
+        let currentNode: SpaRouterC_RouteTreeNodeT = this._routeTree;
+        for (const part of normPathPatt.split('/')) {
+            if (part === '*') {
+                if (currentNode.edge?.wildcardChild) {
+                    throw new SpaError(SpaError_KindsE.Bug, `Wildcard already registered at path pattern: "${normPathPatt}"`);
+                }
+                currentNode.edge = currentNode.edge || { children: new Map(), placeholderChild: null, wildcardChild: null };
+                currentNode.edge.wildcardChild = {
+                    handler: null,
+                    edge: null
+                };
+                currentNode = currentNode.edge.wildcardChild;
+                break; // ワイルドカードは最後の部分なのでここで終了
+            } else if (part.startsWith(':')) {
+                const placeholderName = part.slice(1); // コロンを除去
+                if (currentNode.edge?.placeholderChild) {
+                    throw new SpaError(SpaError_KindsE.Bug, `Placeholder already registered at path pattern: "${normPathPatt}"`);
+                }
+                currentNode.edge = currentNode.edge || { children: new Map(), placeholderChild: null, wildcardChild: null };
+                currentNode.edge.placeholderChild = {
+                    node: {
+                        handler: null,
+                        edge: null
+                    },
+                    name: placeholderName
+                };
+                currentNode = currentNode.edge.placeholderChild.node;
+                continue; // プレースホルダはそのまま次の部分へ
+            } else {
+                if (currentNode.edge?.children?.has(part)) {
+                    throw new SpaError(SpaError_KindsE.Bug, `Path part already registered: "${part}" in path pattern: "${normPathPatt}"`);
+                }
+                currentNode.edge = currentNode.edge || { children: new Map(), placeholderChild: null, wildcardChild: null };
+                currentNode.edge.children = currentNode.edge.children || new Map();
+                currentNode.edge.children.set(part, {
+                    handler: null,
+                    edge: null
+                });
+                currentNode = currentNode.edge.children.get(part)!; // 必ず存在する
+                continue; // 次の部分へ
+            }
+        }
+
+        currentNode.handler = {
+            rendererFactory: rendererFactory,
+            pathPatt: normPathPatt
+        };
+
+        return {
+            this: this
+        };
+    }
+
+    public findRoute(path: string): SpaRouterC_FindRouteResultT | null {
+        const matchedNode = SpaRouterC.seekRoute(
+            SpaRouterC.normPath(path).split('/'),
+            this._routeTree,
+            {}
+        );
+
+        if (!matchedNode?.node.handler) {
+            return null;
+        }
+
+        return {
+            rendererFactory: matchedNode.node.handler.rendererFactory,
+            pathPatt: matchedNode.node.handler.pathPatt,
+            pathParams: matchedNode.pathParams
+        };
+    }
+
+    private static seekRoute(
+        tgtParts: string[],
+        currentNode: SpaRouterC_RouteTreeNodeT,
+        pathParams: Record<string, string>
+    ): {
+        node: SpaRouterC_RouteTreeNodeT,
+        pathParams: Record<string, string>
+    } | null {
+        if (tgtParts.length === 0) {
+            return { node: currentNode, pathParams }; //末端に到達
+        }
+        const currentPart = tgtParts[0];
+        if (currentNode.edge?.children?.has(currentPart)) {
+            // 完全一致の子ノードがある場合
+            const ret = SpaRouterC.seekRoute(tgtParts.slice(1), currentNode.edge.children.get(currentPart)!, { ...pathParams });
+            if (ret) return ret; // 子ノードが見つかった
+        }
+        if (currentNode.edge?.placeholderChild) {
+            // プレースホルダの子ノードがある場合
+            const placeholderName = currentNode.edge.placeholderChild.name;
+            if (pathParams[placeholderName]) {
+                throw new SpaError(SpaError_KindsE.Bug, `Duplicate placeholder name: "${placeholderName}" in path pattern: "${currentNode.edge.placeholderChild.node.handler?.pathPatt}"`);
+            }
+            pathParams[placeholderName] = currentPart; // プレースホルダに値を設定
+            const ret = SpaRouterC.seekRoute(tgtParts.slice(1), currentNode.edge.placeholderChild.node, { ...pathParams });
+            if (ret) return ret; // 子ノードが見つかった
+        }
+        if (currentNode.edge?.wildcardChild) {
+            // ワイルドカードの子ノードがある場合
+            pathParams['*'] = tgtParts.slice(0).join('/'); // ワイルドカードに残りのパスを設定
+            const ret = SpaRouterC.seekRoute([], currentNode.edge.wildcardChild, { ...pathParams });
+            if (ret) return ret; // ワイルドカードの子ノードが見つかった
+        }
+        return null; // どのノードもマッチしなかった
+
+    }
 }
 
 
