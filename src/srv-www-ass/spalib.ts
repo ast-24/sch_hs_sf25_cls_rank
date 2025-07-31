@@ -185,7 +185,7 @@ class AsyncResultC<RetT> {
 }
 
 
-type IgniterC_ListenerT<ArgT, RetT> = (arg: ArgT) => Promise<RetT>;
+type IgniterC_ListenerT<ArgT, RetT> = (oprCCtx: CancelContextC | null, arg: ArgT) => Promise<RetT>;
 type IgniterC_ListenersCorrectionT<ArgT, RetT> = Set<IgniterC_ListenerT<ArgT, RetT>>;
 type IgniterC_IgniteResultT<RetT> = { type: 'ok', ret: RetT } | { type: 'error', err: Error };
 
@@ -230,7 +230,7 @@ class IgniterC<ArgT = void, RetT = void> {
             await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
             try {
-                res.push({ type: 'ok', ret: await listener(arg) });
+                res.push({ type: 'ok', ret: await listener(oprCCtx, arg) });
             } catch (err) {
                 res.push({ type: 'error', err: err });
             }
@@ -398,7 +398,7 @@ class IgniterWithPriorityC<ArgT = void, RetT = void> {
             await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
             try {
-                const result = await listener(arg);
+                const result = await listener(oprCCtx, arg);
                 res.push({ type: 'ok', ret: result });
             } catch (err) {
                 res.push({ type: 'error', err: err });
@@ -760,7 +760,6 @@ class RestartableCancelContextC extends CancelContextC {
 }
 
 
-
 type ResourceFetcherC_CacheKeyT = {
     method: string
     protocol: string
@@ -975,9 +974,7 @@ type AspectWatcherC_ListenerArgT = {
 
 type AspectWatcherC_ListenerT = IgniterC_ListenerT<AspectWatcherC_ListenerArgT, void>;
 
-/** アスペクト比監視クラス
- *  インスタンスは使いまわし
- */
+/** アスペクト比監視クラス */
 class AspectWatcherC {
     private _aspectType: AspectWatcherC_AspectTypeE = AspectWatcherC.detectAspectType();
     private _resizeOprCCtx: RestartableCancelContextC | null = null;
@@ -1309,10 +1306,8 @@ class SpaVDomC {
         this._assetLoader = assetLoader;
         this._vDomLifeCCtx = vDomLifeCCtx;
         this._pDom = pDom;
-        this._vDomLifeCCtx?.reg(async () => {
-            // >! vDomLifeCCtxのcalcelに渡されたoprCCtxを継承できない？
-            // つまりCCtxがIgniterに渡す引数を{cancelOprCCtx: CancelContextC | null, arg:ArgT}に変える必要がある
-            const result = await this.dispose(this._disposeCCtx);
+        this._vDomLifeCCtx?.reg(async (oprCCtx: CancelContextC | null) => {
+            const result = await this.dispose(oprCCtx);
             SpaVDomC.clearResultRecursiveErrorLogging(result.clearResult);
         });
     }
