@@ -54,9 +54,9 @@ class coreHelpersC {
     }
 
     public static async cancelCheckAndYieldThread(
-        cctx: CancelContextC
+        cctx: CancelContextC | null
     ): Promise<void> {
-        cctx.throwIfCanceled();
+        cctx?.throwIfCanceled();
         await coreHelpersC.yieldThread();
     }
 
@@ -85,6 +85,102 @@ class coreHelpersC {
                 coreHelpersC.loggingError(r.err, title);
             }
         });
+    }
+}
+
+
+type AsyncResultC_ResultT<RetT> = { type: 'ok', ret: RetT } | { type: 'error', err: Error };
+
+type AsyncResultC_OnFinishListenerT<RetT> = (result: AsyncResultC_ResultT<RetT>) => Promise<void>;
+
+/** 非同期処理の結果取得用クラス
+ *  キャンセルされた場合などは結果が返ってこないので注意
+ */
+class AsyncResultC<RetT> {
+    private _result: AsyncResultC_ResultT<RetT> | null = null;
+
+    private _onFinishListener: AsyncResultC_OnFinishListenerT<RetT> | null = null;
+
+    private constructor() { }
+
+    public static create<RetT>(): {
+        this: AsyncResultC<RetT>,
+        setResult: (result: AsyncResultC_ResultT<RetT>) => Promise<void>,
+    } {
+        const instance = new AsyncResultC<RetT>();
+        return {
+            this: instance,
+            setResult: async (result: AsyncResultC_ResultT<RetT>) => instance.setResult(result)
+        };
+    }
+
+    private async setResult(result: AsyncResultC_ResultT<RetT>): Promise<void> {
+        if (this._result !== null) {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC result is already set');
+        }
+        this._result = result;
+        await this._onFinishListener?.(result);
+    }
+
+    // 以下は関数を叩いた側用のメソッド
+
+    public regOnFinishListener(
+        listener: AsyncResultC_OnFinishListenerT<RetT>
+    ): {
+        this: AsyncResultC<RetT>
+    } {
+        if (this._onFinishListener !== null) {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC OnFinishListener is already set');
+        }
+        this._onFinishListener = async (result: AsyncResultC_ResultT<RetT>) => {
+            try {
+                await listener(result);
+                this._onFinishListener = null;
+            } catch (err) {
+                coreHelpersC.loggingError(err, 'AsyncResultC OnFinishListener failed');
+            }
+        };
+        return {
+            this: this,
+        };
+    }
+
+    public isFinished(): boolean {
+        return !!this._result;
+    }
+
+    public getResult(): AsyncResultC_ResultT<RetT> {
+        if (this._result === null) {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC result is not set yet');
+        }
+        return this._result;
+    }
+
+    public isSuccess(): boolean {
+        if (this._result === null) {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC result is not set yet');
+        }
+        return this._result?.type === 'ok';
+    }
+
+    public getReturnValue(): RetT {
+        if (this._result === null) {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC result is not set yet');
+        }
+        if (this._result.type !== 'ok') {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC result is error');
+        }
+        return this._result.ret;
+    }
+
+    public getError(): Error {
+        if (this._result === null) {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC result is not set yet');
+        }
+        if (this._result.type !== 'error') {
+            throw new SpaError(SpaError_KindsE.Bug, 'AsyncResultC result is not error');
+        }
+        return this._result.err;
     }
 }
 
@@ -123,7 +219,7 @@ class IgniterC<ArgT = void, RetT = void> {
 
     /** イベント発火 */
     public async ignite(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         arg: ArgT
     ): Promise<{
         this: IgniterC<ArgT, RetT>
@@ -200,7 +296,7 @@ class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
 
     /** イベント発火 */
     public async ignite(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         event: EventTypeT,
         arg: ArgT
     ): Promise<{
@@ -287,7 +383,7 @@ class IgniterWithPriorityC<ArgT = void, RetT = void> {
 
     /** イベント発火(優先順位順) */
     public async ignite(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         arg: ArgT
     ): Promise<{
         this: IgniterWithPriorityC<ArgT, RetT>
@@ -367,7 +463,7 @@ class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
 
     /** イベント発火(優先順位順) */
     public async ignite(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         event: EventTypeT,
         arg: ArgT
     ): Promise<{
@@ -430,14 +526,23 @@ type CancelContextC_ResultT = {
 
 /** キャンセルコンテキスト(状態伝播用) */
 class CancelContextC {
-    private readonly _onCanceledIgniter: IgniterC<void, void> = new IgniterC();
-    private readonly _children: Set<CancelContextC> = new Set();
-    private _isCanceled: boolean = false;
+    protected readonly _onCanceledIgniter: IgniterC<void, void> = new IgniterC();
+    protected readonly _children: Set<CancelContextC> = new Set();
+    protected _parent: CancelContextC | null = null;
+    protected _isCanceled: boolean = false;
 
-    private constructor() { }
+    protected constructor() { }
 
     public static createRootContext(): CancelContextC {
         return new CancelContextC();
+    }
+
+    /** 子供作成（キャンセル状態共有） */
+    public createChild(): CancelContextC {
+        const child = new CancelContextC();
+        child._parent = this;
+        this._children.add(child);
+        return child;
     }
 
     /** リスナ登録 */
@@ -458,7 +563,9 @@ class CancelContextC {
     }
 
     /** キャンセル */
-    public async cancel(): Promise<{
+    public async cancel(
+        oprCCtx: CancelContextC | null
+    ): Promise<{
         this: CancelContextC
         res: CancelContextC_ResultT
     }> {
@@ -468,9 +575,9 @@ class CancelContextC {
         };
         if (!this._isCanceled) {
             this._isCanceled = true;
-            res.igniterRes = (await this._onCanceledIgniter.ignite(neverEndCCtx)).res;
+            res.igniterRes = (await this._onCanceledIgniter.ignite(oprCCtx)).res;
             for (const child of this._children) {
-                res.childsRes.push((await child.cancel()).res);
+                res.childsRes.push((await child.cancel(oprCCtx)).res);
             }
             this._onCanceledIgniter.clear();
         }
@@ -480,16 +587,48 @@ class CancelContextC {
         };
     }
 
+    /** タイムアウト */
+    public setTimeout(
+        oprCCtx: CancelContextC | null,
+        timeoutBeforeMs: number
+    ): {
+        this: CancelContextC
+        res: AsyncResultC<CancelContextC_ResultT>
+    } {
+        const asyncResult = AsyncResultC.create<CancelContextC_ResultT>();
+        setTimeout(async () => {
+            try {
+                const cancelRes = await this.cancel(oprCCtx);
+                asyncResult.setResult({ type: 'ok', ret: cancelRes.res });
+            } catch (err) {
+                if (oprCCtx?.isCanceled()) {
+                    // 何もしない
+                } else {
+                    asyncResult.setResult({ type: 'error', err: coreHelpersC.intoUnexpectedError('Timeout error', err as Error) });
+                }
+            }
+        }, timeoutBeforeMs);
+        return {
+            this: this,
+            res: asyncResult.this
+        };
+    }
+
+    /** 締め切り */
+    public setDeadline(
+        oprCCtx: CancelContextC | null,
+        deadlineAt: Date
+    ): {
+        this: CancelContextC
+        res: AsyncResultC<CancelContextC_ResultT>
+    } {
+        const timeoutBeforeMs = Math.max(deadlineAt.getTime() - new Date().getTime(), 0);
+        return this.setTimeout(oprCCtx, timeoutBeforeMs);
+    }
+
     /** リスナのリスト */
     public listeners(): Array<IgniterC_ListenerT<void, void>> {
         return Array.from(this._onCanceledIgniter.listeners());
-    }
-
-    /** 子供作成（キャンセル状態共有） */
-    public createChild(): CancelContextC {
-        const child = new CancelContextC();
-        child._isCanceled = this._isCanceled;
-        return child;
     }
 
     /** キャンセル済みか */
@@ -505,7 +644,121 @@ class CancelContextC {
     }
 }
 
-const neverEndCCtx: CancelContextC = CancelContextC.createRootContext();
+/** キャンセルコンテキスト(状態伝播用)(+再開機能) */
+class RestartableCancelContextC extends CancelContextC {
+    private readonly _onRestartIgniter: IgniterC<void, void> = new IgniterC();
+
+    private constructor() {
+        super();
+    }
+
+    public static createRootRestartableContext(): RestartableCancelContextC {
+        return new RestartableCancelContextC();
+    }
+
+    /** 子供作成（キャンセル状態共有） */
+    public createRestartableChild(): RestartableCancelContextC {
+        const child = new RestartableCancelContextC();
+        child._parent = this;
+        this._children.add(child);
+        return child;
+    }
+
+    /** 再開 */
+    public async restart(
+        oprCCtx: CancelContextC | null
+    ): Promise<{
+        this: RestartableCancelContextC
+        res: CancelContextC_ResultT
+    }> {
+        if (this._parent?.isCanceled()) {
+            throw new SpaError(SpaError_KindsE.Bug, 'Cannot restart a canceled context');
+        }
+        let res: CancelContextC_ResultT = {
+            igniterRes: [],
+            childsRes: []
+        };
+        if (!this._isCanceled) {
+            this._isCanceled = false;
+            res.igniterRes = (await this._onRestartIgniter.ignite(oprCCtx)).res;
+            for (const child of this._children) {
+                if (child instanceof RestartableCancelContextC) {
+                    res.childsRes.push((await child.restart(oprCCtx)).res);
+                }
+            }
+        }
+        return {
+            this: this,
+            res: res
+        };
+    }
+
+    /** キャンセル(リスナをクリアしない版) */
+    public async cancel(
+        oprCCtx: CancelContextC | null
+    ): Promise<{
+        this: CancelContextC
+        res: CancelContextC_ResultT
+    }> {
+        let res: CancelContextC_ResultT = {
+            igniterRes: [],
+            childsRes: []
+        };
+        if (!this._isCanceled) {
+            this._isCanceled = true;
+            res.igniterRes = (await this._onCanceledIgniter.ignite(oprCCtx)).res;
+            for (const child of this._children) {
+                res.childsRes.push((await child.cancel(oprCCtx)).res);
+            }
+            // リスナの削除は行わない
+            // this._onCanceledIgniter.clear();
+        }
+        return {
+            this: this,
+            res: res
+        };
+    }
+
+    /** タイムアウト(オーバーライド版Cancelを使用) */
+    public setTimeout(
+        oprCCtx: CancelContextC | null,
+        timeoutBeforeMs: number
+    ): {
+        this: CancelContextC
+        res: AsyncResultC<CancelContextC_ResultT>
+    } {
+        const asyncResult = AsyncResultC.create<CancelContextC_ResultT>();
+        setTimeout(async () => {
+            try {
+                const cancelRes = await this.cancel(oprCCtx);
+                asyncResult.setResult({ type: 'ok', ret: cancelRes.res });
+            } catch (err) {
+                if (oprCCtx?.isCanceled()) {
+                    // 何もしない
+                } else {
+                    asyncResult.setResult({ type: 'error', err: coreHelpersC.intoUnexpectedError('Timeout error', err as Error) });
+                }
+            }
+        }, timeoutBeforeMs);
+        return {
+            this: this,
+            res: asyncResult.this
+        };
+    }
+
+    /** 締め切り(オーバーライド版Cancelを使用) */
+    public setDeadline(
+        oprCCtx: CancelContextC | null,
+        deadlineAt: Date
+    ): {
+        this: CancelContextC
+        res: AsyncResultC<CancelContextC_ResultT>
+    } {
+        const timeoutBeforeMs = Math.max(deadlineAt.getTime() - new Date().getTime(), 0);
+        return this.setTimeout(oprCCtx, timeoutBeforeMs);
+    }
+}
+
 
 
 type ResourceFetcherC_CacheKeyT = {
@@ -544,7 +797,7 @@ class ResourceFetcherC {
      *  respのbodyは読み取り不可なので注意
      */
     public async fetch(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         input: RequestInfo | URL,
         init?: RequestInit,
         allowCacheWindowMs: number = 0
@@ -588,9 +841,9 @@ class ResourceFetcherC {
         try {
             const fetchAbortController = new AbortController();
             const fetchAbortSignal = fetchAbortController.signal;
-            const oprCCtxAbortRegRet = oprCCtx.reg(async () => { fetchAbortController.abort(); });
+            const oprCCtxAbortRegRet = oprCCtx?.reg(async () => { fetchAbortController.abort(); });
             resp = await fetch(input, { signal: fetchAbortSignal, ...init });
-            oprCCtxAbortRegRet.deRegFn();
+            oprCCtxAbortRegRet?.deRegFn();
         } catch (error) {
             if (oprCCtx?.isCanceled()) {
                 throw new SpaError(SpaError_KindsE.Canceled, 'Fetch operation was canceled');
@@ -628,43 +881,30 @@ class ResourceFetcherC {
 
     /** prefetch */
     public async preFetch(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         input: RequestInfo | URL,
         init?: RequestInit,
         allowCacheWindowMs: number = 0,
-        onResult?: (succeed: boolean, error?: SpaError) => Promise<void>
     ): Promise<{
         this: ResourceFetcherC
+        result: AsyncResultC<void>
     }> {
+        const asyncResult = AsyncResultC.create<void>();
         setTimeout(async () => {
-            let state: 'succeed' | 'failed' | 'canceled' = 'failed';
-            let error: SpaError | undefined;
             try {
-                await this.fetch(oprCCtx, input, init, 0);
-                state = 'succeed';
+                await this.fetch(oprCCtx, input, init, allowCacheWindowMs);
+                await asyncResult.setResult({ type: 'ok', ret: undefined });
             } catch (e) {
-                // 無視(プリフェッチ失敗は非致命的)
-                if (e instanceof SpaError) {
-                    error = e;
-                    if (error.kind === SpaError_KindsE.Canceled) {
-                        state = 'canceled';
-                    } else {
-                        error.logging(SpaError_LogLevelE.Warn, 'Prefetch failed');
-                        state = 'failed';
-                    }
+                if (e instanceof SpaError && e.kind === SpaError_KindsE.Canceled) {
+                    // 何もしない
                 } else {
-                    error = new SpaError(SpaError_KindsE.Unexpected, 'Unexpected error during prefetch', e as Error);
-                    error.logging(SpaError_LogLevelE.Error, 'Prefetch failed');
-                    state = 'failed';
-                }
-            } finally {
-                if (state === 'succeed' || state === 'failed') {
-                    await onResult?.(state === 'succeed', error);
+                    await asyncResult.setResult({ type: 'error', err: coreHelpersC.intoUnexpectedError('Prefetch failed', e as Error) });
                 }
             }
         }, 0);
         return {
-            this: this
+            this: this,
+            result: asyncResult.this
         };
     }
 
@@ -739,20 +979,20 @@ type AspectWatcherC_ListenerT = IgniterC_ListenerT<AspectWatcherC_ListenerArgT, 
  *  インスタンスは使いまわし
  */
 class AspectWatcherC {
-    private static readonly _instance: AspectWatcherC = new AspectWatcherC();
-
     private _aspectType: AspectWatcherC_AspectTypeE = AspectWatcherC.detectAspectType();
+    private _resizeOprCCtx: RestartableCancelContextC | null = null;
     private readonly _onResizeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void> = new IgniterWithPriorityC();
     private readonly _onAspectTypeChangeListener: IgniterWithPriorityC<AspectWatcherC_ListenerArgT, void> = new IgniterWithPriorityC();
     private _resizeDebounceTimeoutId: number | null = null;
     private readonly _resizeDebounceDelayMs: number = 100;
 
-    private constructor() {
-        window.addEventListener('resize', () => { this.scheduleResize(); });
+    private constructor(resizeOprCCtx?: RestartableCancelContextC | null) {
+        this._resizeOprCCtx = resizeOprCCtx || null;
+        window.addEventListener('resize', () => { this.scheduleResize(this._resizeOprCCtx); });
     }
 
     public static create(): AspectWatcherC {
-        return AspectWatcherC._instance;
+        return new AspectWatcherC();
     }
 
     /** ビューポートの高さ/横幅からアスペクトタイプを判定 */
@@ -769,33 +1009,47 @@ class AspectWatcherC {
         return this._aspectType;
     }
 
-    /** リサイズのデバウンス機構 */
-    private scheduleResize(): void {
+    /** リサイズリスナ(+デバウンス機構) */
+    private scheduleResize(oprCCtx: CancelContextC | null): void {
         if (this._resizeDebounceTimeoutId !== null) {
             clearTimeout(this._resizeDebounceTimeoutId);
         }
-        this._resizeDebounceTimeoutId = setTimeout(() => {
+        this._resizeDebounceTimeoutId = setTimeout(async () => {
             this._resizeDebounceTimeoutId = null;
-            this.onResize(neverEndCCtx);
+            const result = await this.onResize(oprCCtx);
+            coreHelpersC.IgniterResultloggingError(result.onResizeListenerRes, 'on resize listener failed');
+            coreHelpersC.IgniterResultloggingError(result.onAspectTypeChangeListenerRes, 'on aspect type change listener failed');
         }, this._resizeDebounceDelayMs);
     }
 
     /** リサイズ処理 */
-    private async onResize(oprCCtx: CancelContextC): Promise<void> {
+    private async onResize(oprCCtx: CancelContextC | null): Promise<{
+        this: AspectWatcherC
+        onAspectTypeChangeListenerRes: IgniterC_IgniteResultT<void>[]
+        onResizeListenerRes: IgniterC_IgniteResultT<void>[]
+    }> {
         const newAspectType = AspectWatcherC.detectAspectType();
-        if (this._aspectType !== newAspectType) {
-            this._aspectType = newAspectType;
-            const result = await this._onAspectTypeChangeListener.ignite(oprCCtx, {
-                aspectWatcher: this,
-                aspectType: this._aspectType
-            });
-            coreHelpersC.IgniterResultloggingError(result.res, 'on aspect type change listener failed');
-        }
-        const result = await this._onResizeListener.ignite(oprCCtx, {
+        const ret: {
+            this: AspectWatcherC
+            onAspectTypeChangeListenerRes: IgniterC_IgniteResultT<void>[]
+            onResizeListenerRes: IgniterC_IgniteResultT<void>[]
+        } = {
+            this: this,
+            onAspectTypeChangeListenerRes: [],
+            onResizeListenerRes: []
+        };
+        ret.onResizeListenerRes = (await this._onResizeListener.ignite(oprCCtx, {
             aspectWatcher: this,
             aspectType: this._aspectType
-        });
-        coreHelpersC.IgniterResultloggingError(result.res, 'on resize listener failed');
+        })).res;
+        if (this._aspectType !== newAspectType) {
+            this._aspectType = newAspectType;
+            ret.onAspectTypeChangeListenerRes = (await this._onAspectTypeChangeListener.ignite(oprCCtx, {
+                aspectWatcher: this,
+                aspectType: this._aspectType
+            })).res;
+        }
+        return ret;
     }
 
     /** リサイズハンドラ登録 */
@@ -854,11 +1108,12 @@ class AssetLoaderC {
     private static readonly defaultAllowCacheWindowMs: number = 60 * 60 * 1000; // デフォルトは1時間
 
     private readonly _fetcher: ResourceFetcherC = ResourceFetcherC.create();
-    private readonly _aspectWatcher: AspectWatcherC = AspectWatcherC.create();
+    private readonly _aspectWatcher: AspectWatcherC;
 
     private readonly _baseUrl: string;
 
-    public constructor(baseUrl: string) {
+    public constructor(aspectWatcher: AspectWatcherC, baseUrl: string) {
+        this._aspectWatcher = aspectWatcher;
         this._baseUrl = baseUrl.replace(/\/*$/, ''); // 最後のスラッシュを削除
     }
 
@@ -882,7 +1137,7 @@ class AssetLoaderC {
 
     /** アセット取得 */
     public async fetchAsset(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs: number = AssetLoaderC.defaultAllowCacheWindowMs
@@ -918,7 +1173,7 @@ class AssetLoaderC {
 
     /** アセット取得(HTML) */
     public async fetchHtml(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetFilePath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -928,7 +1183,7 @@ class AssetLoaderC {
 
     /** アセット取得(HTML)(+アスペクトタイプ別) */
     public async fetchHtmlWithAspectType(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetDirPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -938,7 +1193,7 @@ class AssetLoaderC {
 
     /** アセット取得(CSS) */
     public async fetchCss(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetFilePath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -948,7 +1203,7 @@ class AssetLoaderC {
 
     /** アセット取得(CSS)(+アスペクトタイプ別) */
     public async fetchCssWithAspectType(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetDirPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -958,7 +1213,7 @@ class AssetLoaderC {
 
     /** プリフェッチ */
     public async preFetchAsset(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs: number = 0,
@@ -980,7 +1235,7 @@ class AssetLoaderC {
 
     /** プリフェッチ(HTML) */
     public async preFetchHtml(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetFilePath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -992,7 +1247,7 @@ class AssetLoaderC {
 
     /** プリフェッチ(HTML)(+アスペクトタイプ別) */
     public async preFetchHtmlWithAspectType(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetDirPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -1004,7 +1259,7 @@ class AssetLoaderC {
 
     /** プリフェッチ(CSS) */
     public async preFetchCss(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetFilePath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -1016,7 +1271,7 @@ class AssetLoaderC {
 
     /** プリフェッチ(CSS)(+アスペクトタイプ別) */
     public async preFetchCssWithAspectType(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         assetDirPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -1050,30 +1305,35 @@ class SpaVDomC {
     private readonly _children: Set<SpaVDomC> = new Set();
     private readonly _onClearListeners: IgniterC<SpaVDomC_OnClearListenerArgT, void> = new IgniterC();
 
-    private constructor(assetLoader: AssetLoaderC, vDomLifeCCtx: CancelContextC, pDom: HTMLElement) {
+    private constructor(assetLoader: AssetLoaderC, vDomLifeCCtx: CancelContextC | null, pDom: HTMLElement) {
         this._assetLoader = assetLoader;
         this._vDomLifeCCtx = vDomLifeCCtx;
         this._pDom = pDom;
         this._vDomLifeCCtx?.reg(async () => {
-            const result = await this.dispose(neverEndCCtx);
+            // >! vDomLifeCCtxのcalcelに渡されたoprCCtxを継承できない？
+            // つまりCCtxがIgniterに渡す引数を{cancelOprCCtx: CancelContextC | null, arg:ArgT}に変える必要がある
+            const result = await this.dispose(this._disposeCCtx);
             SpaVDomC.clearResultRecursiveErrorLogging(result.clearResult);
         });
     }
 
-    public static create(assetLoader: AssetLoaderC, vDomLifeCCtx: CancelContextC, pDom: HTMLElement): SpaVDomC {
+    public static create(
+        assetLoader: AssetLoaderC,
+        vDomLifeCCtx: CancelContextC | null,
+        pDom: HTMLElement
+    ): SpaVDomC {
         return new SpaVDomC(assetLoader, vDomLifeCCtx, pDom);
     }
 
     /** 設定を継承して子要素を作成 */
     public createChild(pDom: HTMLElement): {
         child: SpaVDomC,
-        childLifeCCtx: CancelContextC
+        childLifeCCtx: CancelContextC | null
     } {
         if (!this._pDom) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
-        // '!.'としたのは!!this._pDomならthis._vDomLifeCCtxも存在するため
-        const childLifeCCtx = this._vDomLifeCCtx!.createChild();
+        const childLifeCCtx = this._vDomLifeCCtx?.createChild() || null;
         const child = new SpaVDomC(this._assetLoader, childLifeCCtx, pDom);
         this._children.add(child);
         return {
@@ -1089,7 +1349,7 @@ class SpaVDomC {
         return this._pDom;
     }
 
-    public async dispose(oprCCtx: CancelContextC): Promise<{
+    public async dispose(oprCCtx: CancelContextC | null): Promise<{
         this: SpaVDomC
         clearResult: SpaVDomC_ClearResultT
     }> {
@@ -1106,7 +1366,7 @@ class SpaVDomC {
         };
     }
 
-    public async clear(oprCCtx: CancelContextC): Promise<{
+    public async clear(oprCCtx: CancelContextC | null): Promise<{
         this: SpaVDomC
         clearResult: SpaVDomC_ClearResultT
     }> {
@@ -1164,7 +1424,7 @@ class SpaVDomC {
     }
 
     public async overrideHtml(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         htmlFilePath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -1176,12 +1436,12 @@ class SpaVDomC {
         }
         const html = await this._assetLoader.fetchHtml(oprCCtx, htmlFilePath, options, allowCacheWindowMs);
 
-        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         await this.clear(oprCCtx);
 
-        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         this._pDom.innerHTML = html;
@@ -1191,7 +1451,7 @@ class SpaVDomC {
     }
 
     public async overrideHtmlWithAspectType(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         htmlDirPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -1203,12 +1463,12 @@ class SpaVDomC {
         }
         const html = await this._assetLoader.fetchHtmlWithAspectType(oprCCtx, htmlDirPath, options, allowCacheWindowMs);
 
-        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         await this.clear(oprCCtx);
 
-        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         this._pDom.innerHTML = html;
@@ -1218,7 +1478,7 @@ class SpaVDomC {
     }
 
     public async appendCss(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         cssFilePath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -1230,7 +1490,7 @@ class SpaVDomC {
         }
         const cssContent = await this._assetLoader.fetchCss(oprCCtx, cssFilePath, options, allowCacheWindowMs);
 
-        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         const styleElement = document.createElement('style');
@@ -1242,7 +1502,7 @@ class SpaVDomC {
     }
 
     public async appendCssWithAspectType(
-        oprCCtx: CancelContextC,
+        oprCCtx: CancelContextC | null,
         cssDirPath: string,
         options?: AssetLoaderC_FetchOptionsT,
         allowCacheWindowMs?: number
@@ -1254,7 +1514,7 @@ class SpaVDomC {
         }
         const cssContent = await this._assetLoader.fetchCssWithAspectType(oprCCtx, cssDirPath, options, allowCacheWindowMs);
 
-        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx!);
+        await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         const styleElement = document.createElement('style');
