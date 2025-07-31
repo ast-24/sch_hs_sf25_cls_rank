@@ -564,7 +564,7 @@ class CancelContextC {
 
     /** キャンセル */
     public async cancel(
-        oprCCtx: CancelContextC | null
+        oprCCtx: CancelContextC | null = null
     ): Promise<{
         this: CancelContextC
         res: CancelContextC_ResultT
@@ -589,7 +589,7 @@ class CancelContextC {
 
     /** タイムアウト */
     public setTimeout(
-        oprCCtx: CancelContextC | null,
+        oprCCtx: CancelContextC | null = null,
         timeoutBeforeMs: number
     ): {
         this: CancelContextC
@@ -616,7 +616,7 @@ class CancelContextC {
 
     /** 締め切り */
     public setDeadline(
-        oprCCtx: CancelContextC | null,
+        oprCCtx: CancelContextC | null = null,
         deadlineAt: Date
     ): {
         this: CancelContextC
@@ -666,7 +666,7 @@ class RestartableCancelContextC extends CancelContextC {
 
     /** 再開 */
     public async restart(
-        oprCCtx: CancelContextC | null
+        oprCCtx: CancelContextC | null = null
     ): Promise<{
         this: RestartableCancelContextC
         res: CancelContextC_ResultT
@@ -695,7 +695,7 @@ class RestartableCancelContextC extends CancelContextC {
 
     /** キャンセル(リスナをクリアしない版) */
     public async cancel(
-        oprCCtx: CancelContextC | null
+        oprCCtx: CancelContextC | null = null
     ): Promise<{
         this: CancelContextC
         res: CancelContextC_ResultT
@@ -1057,8 +1057,12 @@ class AspectWatcherC {
 
 
 type AssetLoaderC_FetchOptionsT = {
-    query?: Array<[string, string]>,
-    headers?: Record<string, string>,
+    query?: Array<[string, string]>
+    headers?: Record<string, string>
+}
+
+type AssetLoaderC_EntitiesT = {
+    aspectWatcher: AspectWatcherC
 }
 
 /** アセットの取得を行う */
@@ -1066,12 +1070,13 @@ class AssetLoaderC {
     private static readonly defaultAllowCacheWindowMs: number = 60 * 60 * 1000; // デフォルトは1時間
 
     private readonly _fetcher: ResourceFetcherC = ResourceFetcherC.create();
-    private readonly _aspectWatcher: AspectWatcherC;
+
+    private readonly _entities: AssetLoaderC_EntitiesT;
 
     private readonly _baseUrl: string;
 
-    public constructor(aspectWatcher: AspectWatcherC, baseUrl: string) {
-        this._aspectWatcher = aspectWatcher;
+    public constructor(entities: AssetLoaderC_EntitiesT, baseUrl: string) {
+        this._entities = entities;
         this._baseUrl = baseUrl.replace(/\/*$/, ''); // 最後のスラッシュを削除
     }
 
@@ -1090,7 +1095,7 @@ class AssetLoaderC {
     /** パス名構築(+拡張子+アスペクトタイプ) */
     private buildAssetPathWithExtWithAspectType(assetDirPath: string, ext: string): string {
         // assetDirPathは最後のスラッシュを削除
-        return this.buildAssetPathWithExt(`${assetDirPath.replace(/\/$/, '')}/${this._aspectWatcher.getAspectType()}`, ext);
+        return this.buildAssetPathWithExt(`${assetDirPath.replace(/\/$/, '')}/${this._entities.aspectWatcher.getAspectType()}`, ext);
     }
 
     /** アセット取得 */
@@ -1252,19 +1257,24 @@ type SpaVDomC_OnClearListenerArgT = {
 
 type SpaVDomC_OnClearListenerT = IgniterC_ListenerT<SpaVDomC_OnClearListenerArgT, void>;
 
+type SpaVDomC_EntitiesT = {
+    assetLoader: AssetLoaderC
+};
+
 /** DOMの簡易ラッパー
  *  どこかが保持してライフタイムを管理することを想定
  */
 class SpaVDomC {
-    private readonly _assetLoader: AssetLoaderC;
+    private readonly _entities: SpaVDomC_EntitiesT;
+
     private _vDomLifeCCtx: CancelContextC | null;
     private _pDom: HTMLElement | null;
 
     private readonly _children: Set<SpaVDomC> = new Set();
     private readonly _onClearListeners: IgniterC<SpaVDomC_OnClearListenerArgT, void> = new IgniterC();
 
-    private constructor(assetLoader: AssetLoaderC, vDomLifeCCtx: CancelContextC | null, pDom: HTMLElement) {
-        this._assetLoader = assetLoader;
+    private constructor(entities: SpaVDomC_EntitiesT, vDomLifeCCtx: CancelContextC | null, pDom: HTMLElement) {
+        this._entities = entities;
         this._vDomLifeCCtx = vDomLifeCCtx;
         this._pDom = pDom;
         this._vDomLifeCCtx?.reg(async (oprCCtx: CancelContextC | null) => {
@@ -1274,11 +1284,11 @@ class SpaVDomC {
     }
 
     public static create(
-        assetLoader: AssetLoaderC,
+        entities: SpaVDomC_EntitiesT,
         vDomLifeCCtx: CancelContextC | null,
         pDom: HTMLElement
     ): SpaVDomC {
-        return new SpaVDomC(assetLoader, vDomLifeCCtx, pDom);
+        return new SpaVDomC(entities, vDomLifeCCtx, pDom);
     }
 
     /** 設定を継承して子要素を作成 */
@@ -1286,11 +1296,11 @@ class SpaVDomC {
         child: SpaVDomC,
         childLifeCCtx: CancelContextC | null
     } {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
         const childLifeCCtx = this._vDomLifeCCtx?.createChild() || null;
-        const child = new SpaVDomC(this._assetLoader, childLifeCCtx, pDom);
+        const child = new SpaVDomC(this._entities, childLifeCCtx, pDom);
         this._children.add(child);
         return {
             child,
@@ -1305,11 +1315,15 @@ class SpaVDomC {
         return this._pDom;
     }
 
+    public isActive(): boolean {
+        return !!this._pDom;
+    }
+
     public async dispose(oprCCtx: CancelContextC | null): Promise<{
         this: SpaVDomC
         clearResult: SpaVDomC_ClearResultT
     }> {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is already disposed');
         }
         const clearRet = await this.clear(oprCCtx);
@@ -1326,7 +1340,7 @@ class SpaVDomC {
         this: SpaVDomC
         clearResult: SpaVDomC_ClearResultT
     }> {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
 
@@ -1343,7 +1357,7 @@ class SpaVDomC {
         clearResult.listeners = (await this._onClearListeners.ignite(oprCCtx, { vDom: this })).res;
         this._onClearListeners.clear();
 
-        this._pDom.innerHTML = '';
+        this._pDom!.innerHTML = '';
 
         return {
             this: this,
@@ -1387,10 +1401,10 @@ class SpaVDomC {
     ): Promise<{
         this: SpaVDomC
     }> {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
-        const html = await this._assetLoader.fetchHtml(oprCCtx, htmlFilePath, options, allowCacheWindowMs);
+        const html = await this._entities.assetLoader.fetchHtml(oprCCtx, htmlFilePath, options, allowCacheWindowMs);
 
         await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
@@ -1400,7 +1414,7 @@ class SpaVDomC {
         await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
-        this._pDom.innerHTML = html;
+        this._pDom!.innerHTML = html;
         return {
             this: this
         };
@@ -1414,10 +1428,10 @@ class SpaVDomC {
     ): Promise<{
         this: SpaVDomC
     }> {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
-        const html = await this._assetLoader.fetchHtmlWithAspectType(oprCCtx, htmlDirPath, options, allowCacheWindowMs);
+        const html = await this._entities.assetLoader.fetchHtmlWithAspectType(oprCCtx, htmlDirPath, options, allowCacheWindowMs);
 
         await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
@@ -1427,7 +1441,7 @@ class SpaVDomC {
         await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
-        this._pDom.innerHTML = html;
+        this._pDom!.innerHTML = html;
         return {
             this: this
         };
@@ -1441,17 +1455,17 @@ class SpaVDomC {
     ): Promise<{
         this: SpaVDomC
     }> {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
-        const cssContent = await this._assetLoader.fetchCss(oprCCtx, cssFilePath, options, allowCacheWindowMs);
+        const cssContent = await this._entities.assetLoader.fetchCss(oprCCtx, cssFilePath, options, allowCacheWindowMs);
 
         await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         const styleElement = document.createElement('style');
         styleElement.textContent = cssContent;
-        this._pDom.appendChild(styleElement);
+        this._pDom!.appendChild(styleElement);
         return {
             this: this
         };
@@ -1465,17 +1479,17 @@ class SpaVDomC {
     ): Promise<{
         this: SpaVDomC
     }> {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
-        const cssContent = await this._assetLoader.fetchCssWithAspectType(oprCCtx, cssDirPath, options, allowCacheWindowMs);
+        const cssContent = await this._entities.assetLoader.fetchCssWithAspectType(oprCCtx, cssDirPath, options, allowCacheWindowMs);
 
         await coreHelpersC.cancelCheckAndYieldThread(this._vDomLifeCCtx);
         await coreHelpersC.cancelCheckAndYieldThread(oprCCtx);
 
         const styleElement = document.createElement('style');
         styleElement.textContent = cssContent;
-        this._pDom.appendChild(styleElement);
+        this._pDom!.appendChild(styleElement);
         return {
             this: this
         };
@@ -1484,10 +1498,10 @@ class SpaVDomC {
     public async clearCss(): Promise<{
         this: SpaVDomC
     }> {
-        if (!this._pDom) {
+        if (!this.isActive()) {
             throw new SpaError(SpaError_KindsE.Bug, 'pDom is disposed');
         }
-        const styleElements = this._pDom.querySelectorAll('style');
+        const styleElements = this._pDom!.querySelectorAll('style');
         styleElements.forEach(el => el.remove());
         return {
             this: this
@@ -1539,6 +1553,7 @@ class PageRendererBaseC {
      */
 }
 
+
 type SpaRouterC_RouteTreeHandlerT = {
     rendererFactory: PageRendererC_FactoryT;
     pathPatt: string;
@@ -1560,6 +1575,7 @@ type SpaRouterC_RouteTreeEdgeT = {
 
 type SpaRouterC_FindRouteResultT = {
     rendererFactory: PageRendererC_FactoryT
+    pathNorm: string
     pathPatt: string
     pathParams: Record<string, string>
 }
@@ -1673,8 +1689,9 @@ class SpaRouterC {
     }
 
     public findRoute(path: string): SpaRouterC_FindRouteResultT | null {
+        const normPath = SpaRouterC.normPath(path);
         const matchedNode = SpaRouterC.seekRoute(
-            SpaRouterC.normPath(path).split('/'),
+            normPath.split('/'),
             this._routeTree,
             {}
         );
@@ -1685,6 +1702,7 @@ class SpaRouterC {
 
         return {
             rendererFactory: matchedNode.node.handler.rendererFactory,
+            pathNorm: normPath,
             pathPatt: matchedNode.node.handler.pathPatt,
             pathParams: matchedNode.pathParams
         };
@@ -1729,8 +1747,169 @@ class SpaRouterC {
 }
 
 
-class SpaNavigatorC {
+type SpaNavigatorC_EntitiesT = {
+    resourceFetcher: ResourceFetcherC
+    assetLoader: AssetLoaderC
+    aspectWatcher: AspectWatcherC
+    router: SpaRouterC
+    vDom: SpaVDomC
+};
 
+type SpaNavigatorC_PagePathInfoT = {
+    norm: string; // 正規化されたパス
+    patt: string; // パターン化されたパス
+    params: Record<string, string>; // パスパラメータ
+};
+
+type SpaNavigatorC_TransitionResultE = 'success' | 'failed' | 'unable';
+
+/** 遷移管理クラス */
+class SpaNavigatorC {
+    private readonly _entities: SpaNavigatorC_EntitiesT;
+    private readonly _lifeCCtx: CancelContextC | null;
+
+    private prevInfo: {
+        renderer: PageRendererBaseC,
+        renderingCCtx: CancelContextC | null,
+        path: SpaNavigatorC_PagePathInfoT
+    } | null = null;
+
+    private constructor(
+        entities: SpaNavigatorC_EntitiesT,
+        lifeCCtx: CancelContextC | null = null
+    ) {
+        this._entities = entities;
+        this._lifeCCtx = lifeCCtx;
+    }
+
+    public static async create(
+        entities: SpaNavigatorC_EntitiesT,
+        lifeCCtx: CancelContextC | null = null
+    ): Promise<SpaNavigatorC> {
+        const instance = new SpaNavigatorC(entities, lifeCCtx);
+        await instance.start();
+        return instance;
+    }
+
+    private async start() {
+        this._lifeCCtx?.reg(async (oprCCtx: CancelContextC | null) => {
+            await this.stop(oprCCtx, 'Spa life cycle canceled');
+        });
+        window.onerror = async (event: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => {
+            coreHelpersC.loggingError(error || new Error(`Uncaught error`), `Uncaught error global escaped: ${event}`);
+            await this.navigateErrorPage(null);
+        };
+        window.addEventListener('popstate', async () => {
+            const path = window.location.pathname;
+            await this.transition(this._lifeCCtx, path);
+        });
+        await this.transition(this._lifeCCtx, window.location.pathname);
+    }
+
+    private async stop(
+        oprCCtx: CancelContextC | null,
+        reason: string = 'Unknown reason'
+    ) {
+        try {
+            (!this._lifeCCtx?.isCanceled) && await this._lifeCCtx?.cancel(oprCCtx);
+            this._entities.vDom.isActive() && await this._entities.vDom.dispose(oprCCtx);
+            document.body.innerHTML = `<h1>Spa Execution Stopped</h1><h2>Reason: ${reason}</h2>`;
+        } catch (e) {
+            coreHelpersC.loggingError(e, 'Failed to dispose vDom');
+        }
+    }
+
+    public async navigate(oprCCtx: CancelContextC | null, path: string) {
+        history.pushState(null, '', path);
+        await this.transition(oprCCtx, path);
+    }
+
+    public async navigateErrorPage(oprCCtx: CancelContextC | null, msg: string = 'Unexpected error occurred') {
+        try {
+            // レンダリングを中止しエラーページへ遷移
+            (!this.prevInfo?.renderingCCtx?.isCanceled) && await this.prevInfo?.renderingCCtx?.cancel(null);
+            await this.navigate(oprCCtx, `/error?msg=${msg}`);
+        } catch (e) {
+            // どうしようもないレベルのエラーはアプリケーションを落として生のエラーメッセージ表示
+            coreHelpersC.loggingError(e, 'Failed to navigate to error page');
+            await this.stop(oprCCtx, `Critical error occurred`);
+        }
+    }
+
+    private async transition(
+        oprCCtx: CancelContextC | null,
+        path: string
+    ) {
+        try {
+            const matchedRoute = this._entities.router.findRoute(path);
+            if (!matchedRoute) {
+                await this.navigate(oprCCtx, `/error/notfound?path=${path}`);
+                return;
+            }
+            await this.tryTransitions(oprCCtx, {
+                norm: matchedRoute.pathNorm,
+                patt: matchedRoute.pathPatt,
+                params: matchedRoute.pathParams
+            }, matchedRoute.rendererFactory);
+        } catch (e) {
+            coreHelpersC.loggingError(e, `Failed to transition to path: ${path}`);
+            this.navigateErrorPage(oprCCtx, `Failed to transition to path: ${path}`);
+        }
+    }
+
+    private async tryTransitions(
+        oprCCtx: CancelContextC | null,
+        nextPagePathInfo: SpaNavigatorC_PagePathInfoT,
+        rendererFactory: PageRendererC_FactoryT
+    ) {
+        let res: SpaNavigatorC_TransitionResultE = 'unable';
+
+        try {
+            res = await this.transitionInPage(oprCCtx, nextPagePathInfo);
+        } catch (e) {
+            coreHelpersC.loggingError(e, `Failed to transition in page: ${nextPagePathInfo.norm}`);
+            res = 'failed';
+        }
+
+        if (res === 'success') return;
+
+        if (res === 'unable') {
+            try {
+                res = await this.transitionPartial(oprCCtx, nextPagePathInfo);
+            } catch (e) {
+                coreHelpersC.loggingError(e, `Failed to transition partially: ${nextPagePathInfo.norm}`);
+                res = 'failed';
+            }
+        }
+
+        if (res === 'success') return;
+
+        await this.transitionFull(oprCCtx, nextPagePathInfo, rendererFactory);
+    }
+
+    private async transitionInPage(
+        oprCCtx: CancelContextC | null,
+        nextPagePathInfo: SpaNavigatorC_PagePathInfoT
+    ): Promise<'success' | 'unable'> {
+        // >! 後で実装
+        return 'unable'; // 仮の戻り値
+    }
+
+    private async transitionPartial(
+        oprCCtx: CancelContextC | null,
+        nextPagePathInfo: SpaNavigatorC_PagePathInfoT
+    ): Promise<SpaNavigatorC_TransitionResultE> {
+        // >! 後で実装
+        return 'unable'; // 仮の戻り値
+    }
+
+    private async transitionFull(
+        oprCCtx: CancelContextC | null,
+        nextPagePathInfo: SpaNavigatorC_PagePathInfoT,
+        rendererFactory: PageRendererC_FactoryT
+    ): Promise<void> {
+        // >! 後で実装
+    }
 }
 
 
