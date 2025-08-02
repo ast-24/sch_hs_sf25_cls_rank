@@ -1,9 +1,61 @@
+export {
+    SpaError_LogLevelE,
+    SpaError,
+    SpaError_KindsE,
+    coreHelpersC,
+    AsyncResultC_ResultT,
+    AsyncResultC_OnFinishListenerT,
+    AsyncResultC,
+    IgniterC_ListenerT,
+    IgniterC_ListenersCorrectionT,
+    IgniterC_IgniteResultT,
+    IgniterC,
+    EventIgniterC_ListenersCorrectionMapT,
+    EventIgniterC,
+    IgniterWithPriorityC_ListenerCorrectionT,
+    IgniterWithPriorityC,
+    EventIgniterWithPriorityC,
+    CancelContextC_ResultT,
+    CancelContextC,
+    RestartableCancelContextC,
+    ResourceFetcherC_CacheKeyT,
+    ResourceFetcherC_CacheValueT,
+    ResourceFetcherC_CacheT,
+    ResourceFetcherC,
+    AspectWatcherC_AspectTypeE,
+    AspectWatcherC_EventPriorityE,
+    AspectWatcherC_ListenerArgT,
+    AspectWatcherC_ListenerT,
+    AspectWatcherC,
+    AssetLoaderC_FetchOptionsT,
+    AssetLoaderC_EntitiesT,
+    AssetLoaderC,
+    SpaVDomC_ClearResultT,
+    SpaVDomC_OnClearListenerArgT,
+    SpaVDomC_OnClearListenerT,
+    SpaVDomC_EntitiesT,
+    SpaVDomC,
+    PageRendererC_FactoryT,
+    PageRendererBaseC,
+    SpaRouterC_RouteTreeHandlerT,
+    SpaRouterC_RouteTreeNodeT,
+    SpaRouterC_RouteTreeEdgeT,
+    SpaRouterC_FindRouteResultT,
+    SpaRouterC,
+    SpaNavigatorC_EntitiesT,
+    SpaNavigatorC_PagePathInfoT,
+    SpaNavigatorC_TransitionResultE,
+    SpaNavigatorC
+};
+
+
 enum SpaError_LogLevelE {
     Error = 'error',
     Warn = 'warn',
     Info = 'info'
 }
 
+// 移行済み
 class SpaError extends Error {
     public readonly kind: SpaError_KindsE;
     public readonly cause?: Error;
@@ -43,13 +95,13 @@ enum SpaError_KindsE {
 }
 
 
-/** 汎用ヘルパー */
+/** 汎用ヘルパー */ // >! 未移行
 class coreHelpersC {
-    public static async delay(ms: number): Promise<void> {
+    public static async delay(ms: number): Promise<void> { // 移行済み
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    public static async yieldThread(): Promise<void> {
+    public static async yieldThread(): Promise<void> {// 移行済み
         await coreHelpersC.delay(0);
     }
 
@@ -189,7 +241,7 @@ type IgniterC_ListenerT<ArgT, RetT> = (oprCCtx: CancelContextC | null, arg: ArgT
 type IgniterC_ListenersCorrectionT<ArgT, RetT> = Set<IgniterC_ListenerT<ArgT, RetT>>;
 type IgniterC_IgniteResultT<RetT> = { type: 'ok', ret: RetT } | { type: 'error', err: Error };
 
-/** 拡張リスナ */
+/** 拡張リスナ */ // 移行済み
 class IgniterC<ArgT = void, RetT = void> {
     private readonly _listeners: IgniterC_ListenersCorrectionT<ArgT, RetT> = new Set();
 
@@ -259,7 +311,7 @@ class IgniterC<ArgT = void, RetT = void> {
 
 type EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT> = Map<EventTypeT, IgniterC<ArgT, RetT>>;
 
-/** 拡張イベントリスナ */
+/** 拡張イベントリスナ */ // 移行しない
 class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
     private readonly _listeners: EventIgniterC_ListenersCorrectionMapT<EventTypeT, ArgT, RetT> = new Map();
 
@@ -353,7 +405,7 @@ class EventIgniterC<EventTypeT = string, ArgT = void, RetT = void> {
 
 type IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> = Map<IgniterC_ListenerT<ArgT, RetT>, { priority?: number; }>;
 
-/** 拡張リスナ(+優先順位) */
+/** 拡張リスナ(+優先順位) */ // 移行済み
 class IgniterWithPriorityC<ArgT = void, RetT = void> {
     private readonly _listeners: IgniterWithPriorityC_ListenerCorrectionT<ArgT, RetT> = new Map();
 
@@ -426,7 +478,7 @@ class IgniterWithPriorityC<ArgT = void, RetT = void> {
     }
 }
 
-/** 拡張イベントリスナ(+優先順位) */
+/** 拡張イベントリスナ(+優先順位) */ // 移行しない
 class EventIgniterWithPriorityC<EventTypeT = string, ArgT = void, RetT = void> {
     private readonly _listeners: Map<EventTypeT, IgniterWithPriorityC<ArgT, RetT>> = new Map();
 
@@ -524,7 +576,7 @@ type CancelContextC_ResultT = {
     childsRes: CancelContextC_ResultT[]
 }
 
-/** キャンセルコンテキスト(状態伝播用) */
+/** キャンセルコンテキスト(状態伝播用) */  // 移行済み
 class CancelContextC {
     protected readonly _onCanceledIgniter: IgniterC<void, void> = new IgniterC();
     protected readonly _children: Set<CancelContextC> = new Set();
@@ -644,7 +696,7 @@ class CancelContextC {
     }
 }
 
-/** キャンセルコンテキスト(状態伝播用)(+再開機能) */
+/** キャンセルコンテキスト(状態伝播用)(+再開機能) */ // 移行済み
 class RestartableCancelContextC extends CancelContextC {
     private readonly _onRestartIgniter: IgniterC<void, void> = new IgniterC();
 
