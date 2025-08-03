@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>スタッフ用結果入力ページ - 文化祭2-1用ランキングシステム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel=preload href="index.css" as="style">
+    <link rel=preload href="index.mjs" as="script">
+
+    <link rel="stylesheet" href="index.css">
+    <script type="module" src="index.mjs"></script>
+</head>
+
+<body>
+    <div class="title">スタッフ用結果入力ページ</div>
+    <div class="content">
+        <div class="select_room_id">
+            <div class="title">担当ルーム</div>
+            <div class="desc">担当する部屋を選択してください</div>
+            <div class="options">
+                <select id="room_id_selector">
+                    <!--JSでクエリパラメータを取得し、設定済ならそれをselectedに-->
+                    <option value="1">1番(教室前方)</option>
+                    <option value="2">2番(教室中央)</option>
+                    <option value="3">3番(教室後方)</option>
+                </select>
+            </div>
+            <div class="error_message" id="room_id_selector_error">
+                <!--CSSで隠しとく-->
+                <div class="required">ルームを選択してください</div>
+            </div>
+        </div>
+    </div>
+    <div class="enter_user_id">
+        <div class="title">ユーザID</div>
+        <div class="desc">ユーザを新しく作成するか、既存のユーザIDを入力してください</div>
+        <div class="create">
+            <!--実際の作成はsubmit時-->
+            <button id="create_user_button">ユーザを新しく作成</button>
+            <div class="create_options" id="create_user_options_section">
+                <!--CSSで隠しとく-->
+                <div class="title">ユーザ作成オプション</div>
+                <div class="user_name">
+                    <div class="title">ユーザ名(任意)</div>
+                    <div class="desc">20文字以内で入力してください<br>入力しない場合は自動で生成されます<br></div>
+                    <input type="text" id="create_user_options_name" placeholder="田中太郎">
+                    <div class="error_message" id="create_user_options_name_error">
+                        <!--CSSで隠しとく-->
+                        <div class="invalid_format">ユーザ名の形式が不正です</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="input">
+            <!--submit時にroundと一緒に存在チェック-->
+            <button id="input_user_id_button">既存のユーザIDを入力</button>
+            <div class="input_id" id="input_user_id_section">
+                <!--CSSで隠しとく-->
+                <div class="title">ユーザID</div>
+                <div class="desc">1~3から始まる4桁の数字を入力してください</div>
+                <input type="text" id="input_user_id" placeholder="XXXX">
+                <div class="error_message" id="input_user_id_error">
+                    <!--CSSで隠しとく-->
+                    <div class="invalid_format">ユーザIDの形式が不正です</div>
+                    <div class="not_found">ユーザが見つかりません</div>
+                    <div class="required">ユーザIDを入力してください</div>
+                </div>
+            </div>
+        </div>
+        <div class="error_message" id="user_id_error">
+            <!--CSSで隠しとく-->
+            <div class="required_either">ユーザ新規作成か既存ユーザID入力のいずれかが必要です</div>
+        </div>
+    </div>
+    <div class="enter_round_id" id="enter_round_id_section">
+        <!--CSSで隠しとく(新規作成でない場合のみ表示)-->
+        <div class="title">ラウンドID</div>
+        <div class="desc">ラウンドを新しく作成するか、既存のラウンドIDを選択してください</div>
+        <div class="create">
+            <!--実際の作成はsubmit時-->
+            <button id="create_round_button">ラウンドを新しく作成</button>
+        </div>
+        <div class="select">
+            <!--submit時に存在チェック-->
+            <button id="select_round_button">既存のラウンドIDを選択</button>
+            <div class="select_id" id="select_round_id_section">
+                <!--CSSで隠しとく-->
+                <div class="title">ラウンドID</div>
+                <select id="select_round_id_selector">
+                    <!--JSでAPIから取得したラウンドIDのリストを表示(番号と終了済か)-->
+                </select>
+            </div>
+            <div class="error_message" id="select_round_id_error">
+                <!--CSSで隠しとく-->
+                <div class="required">ラウンドIDを選択してください</div>
+            </div>
+        </div>
+        <div class="error_message" id="round_id_error">
+            <!--CSSで隠しとく-->
+            <div class="required">ラウンド新規作成か既存ラウンドID選択のいずれかが必要です</div>
+        </div>
+    </div>
+    <div class="submit">
+        <button id="submit_button">ラウンド開始</button>
+        <div class="error_message" id="submit_button_error">
+            <!--CSSで隠しとく-->
+            <div class="invalid">入力内容に不正があります(各入力欄を参照)</div>
+            <div class="network_error">ネットワークエラーが発生しました<br>接続を確認して再試行してください</div>
+            <div class="internal_error">内部エラーが発生しました<br>再試行してください</div>
+        </div>
+    </div>
+</body>
+
+</html>

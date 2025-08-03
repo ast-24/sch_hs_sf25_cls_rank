@@ -1,0 +1,9 @@
+/* 初期状態で非表示にする要素 */
+.error_message,
+.error_message div,
+#create_user_options_section,
+#input_user_id_section,
+#enter_round_id_section,
+#select_round_id_section {
+    display: none;
+}
