@@ -7,14 +7,14 @@ import type { Igniter_ListenerT } from "./igniter.d";
 import type { CxlCtxCI, CxlCtx_CancelResT } from "../cxlctx/cxlctx.d";
 import { yieldThread } from "../utils";
 
-type VialT = {
+type CxlCtxC_VialT = {
     spaResFactory: SpaResFactoryC,
     spaAsyncResFactory: SpaAsyncResFactoryC,
     spaErrorFactory: SpaErrorFactoryC,
 };
 
 export class CxlCtxC implements CxlCtxCI {
-    private readonly _vial: VialT;
+    private readonly _vial: CxlCtxC_VialT;
     private _parent: CxlCtxC | null;
     private _children: Set<CxlCtxC> = new Set();
     private _onCancel: IgniterC<void, void>;
@@ -22,7 +22,7 @@ export class CxlCtxC implements CxlCtxCI {
     private _cancelAsyncRes: SpaAsyncResC<CxlCtx_CancelResT> | null = null;
     private _deadlineTimer: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(vial: VialT, parent: CxlCtxC | null = null) {
+    constructor(vial: CxlCtxC_VialT, parent: CxlCtxC | null = null) {
         this._vial = vial;
         this._parent = parent;
         this._onCancel = new IgniterC<void, void>({
