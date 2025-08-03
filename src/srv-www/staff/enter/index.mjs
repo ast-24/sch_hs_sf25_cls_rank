@@ -167,6 +167,8 @@ class StateC {
         userIdMode: 'create', // 'create' or 'existing'
         userName: null, // 新規ユーザ作成時の名前
         userId: null, // 既存ユーザ選択時のID
+        roundIdMode: 'create', // 'create' or 'existing'
+        roundId: null,
     };
 
     static init() {
@@ -220,6 +222,26 @@ class StateC {
         this.#state.userId = newId;
     }
 
+    static get roundIdMode() {
+        return this.#state.roundIdMode;
+    }
+
+    static set roundIdMode(newMode) {
+        if (['create', 'existing'].includes(newMode)) {
+            this.#state.roundIdMode = newMode;
+        } else {
+            throw new Error('Invalid round ID mode');
+        }
+    }
+
+    static get roundId() {
+        return this.#state.roundId;
+    }
+
+    static set roundId(newId) {
+        this.#state.roundId = newId;
+    }
+
     static isValid() {
         return this.isValidRoom() && this.isValidUser() && this.isValidRound();
     }
@@ -240,8 +262,28 @@ class StateC {
     }
 
     static isValidRound() {
-        // >! 後で実装
         return true;
+    }
+
+    static intoQuery() {
+        const query = new URLSearchParams();
+
+        if (!this.#state.roomId || !ValidatorC.isValidRoomId(this.#state.roomId)) {
+            throw new Error(CMN_ERRORS.invalidInput);
+        }
+        query.set('room_id', this.#state.roomId);
+
+        if (!this.#state.userId || !ValidatorC.isValidUserId(this.#state.userId)) {
+            throw new Error(CMN_ERRORS.invalidInput);
+        }
+        query.set('user_id', this.#state.userId);
+
+        if (!this.#state.roundId || !ValidatorC.isValidRoundId(this.#state.roundId)) {
+            throw new Error(CMN_ERRORS.invalidInput);
+        }
+        query.set('round_id', this.#state.roundId);
+
+        return query;
     }
 }
 
@@ -252,6 +294,7 @@ class DomManagerC {
         this.#initElements();
         this.#initRoomIdSelected();
         this.#initUserIdModeSelected();
+        this.#initRoundIdModeSelected();
     }
 
     static #initElements() {
@@ -265,7 +308,13 @@ class DomManagerC {
             userIdModeCreateOptionsNameInput: document.getElementById('input_item_user_id_field_mode_create_options_name_input_element'),
             userIdModeExistingButton: document.getElementById('input_item_user_id_field_mode_existing_button'),
             userIdModeExistingOptionsId: document.getElementById('input_item_user_id_field_mode_existing_options_id'),
-            userIdModeExistingOptionsIdInput: document.getElementById('input_item_user_id_field_mode_existing_options_id_input_element')
+            userIdModeExistingOptionsIdInput: document.getElementById('input_item_user_id_field_mode_existing_options_id_input_element'),
+            roundId: document.getElementById('input_item_round_id'),
+            roundIdModeCreateButton: document.getElementById('input_item_round_id_field_mode_create_button'),
+            roundIdModeContinueButton: document.getElementById('input_item_round_id_field_mode_continue_button'),
+            roundIdModeContinueExtraDesc: document.getElementById('input_item_round_id_field_mode_continue_extra_desc_text'),
+            submitButton: document.getElementById('submit_button'),
+            submitError: document.getElementById('submit_error'),
         }
     }
 
@@ -277,6 +326,10 @@ class DomManagerC {
 
     static #initUserIdModeSelected() {
         this.selectModeButton(this.#elements.userId, StateC.userIdMode);
+    }
+
+    static #initRoundIdModeSelected() {
+        this.selectModeButton(this.#elements.roundId, StateC.roundIdMode);
     }
 
     static get elms() {
@@ -379,10 +432,43 @@ class DomManagerC {
         }
         this.showModeOptions(elm, mode);
     }
+
+    /* input_item -> */
+    static showInputItem(elm) {
+        elm.style.display = 'block';
+    }
+
+    /* input_item -> */
+    static hideInputItem(elm) {
+        elm.style.display = 'none';
+    }
+
+    static hideSubmitError() {
+        const errorElm = this.#elements.submitError;
+        if (errorElm) {
+            errorElm.style.display = 'none';
+            const errorTypes = errorElm.querySelectorAll('.submit_error_item');
+            errorTypes.forEach(div => div.style.display = 'none');
+        }
+    }
+
+    static showSubmitError(type) {
+        const errorElm = this.#elements.submitError;
+        if (errorElm) {
+            errorElm.style.display = 'block';
+            const errorTypes = errorElm.querySelectorAll('.submit_error_item');
+            errorTypes.forEach(div => div.style.display = 'none');
+
+            const targetError = errorElm.querySelector(`.submit_error_item[data-error-type="${type}"]`);
+            if (targetError) {
+                targetError.style.display = 'block';
+            }
+        }
+    }
 }
 
 /* -> { roomId: number, startedAt: Date } | null */
-async function hadActiveRound(userId) {
+async function hasActiveRound(userId) {
     const rounds = await ApiClientC.getUserRounds(userId);
     const tgt = Object.entries(rounds).find(([roundId, round]) => !round.finishedAt);
     if (tgt) {
@@ -414,6 +500,12 @@ function onRoomIdChange() {
 function onUserIdModeChange(mode) {
     StateC.userIdMode = mode;
     DomManagerC.selectModeButton(DomManagerC.elms.userId, StateC.userIdMode);
+    if (!StateC.isValidUser()) {
+        DomManagerC.setInputItemState(DomManagerC.elms.userId, 'error');
+        return;
+    } else {
+        DomManagerC.setInputItemState(DomManagerC.elms.userId, 'ok');
+    }
 }
 
 function onUserIdModeCreateEnterName() {
@@ -441,7 +533,7 @@ function onUserIdModeCreateEnterName() {
     }
 }
 
-function onUserIdModeExsistingEnterId() {
+async function onUserIdModeExsistingEnterId() {
     const userId = DomManagerC.elms.userIdModeExistingOptionsIdInput.value.trim();
     if (!ValidatorC.isValidUserId(userId)) {
         if (!userId) {
@@ -463,14 +555,101 @@ function onUserIdModeExsistingEnterId() {
         }
         return;
     }
+
+    let activeRound;
+    try {
+        activeRound = await hasActiveRound(StateC.userId);
+    } catch (e) {
+        if (e instanceof Error && isThisError('USER_NOT_FOUND', e)) {
+            DomManagerC.showInputItemFieldModeOptionsItemError(DomManagerC.elms.userIdModeExistingOptionsId, 'not_found');
+            DomManagerC.setInputItemFieldModeOptionsItemState(DomManagerC.elms.userIdModeExistingOptionsId, 'error');
+            DomManagerC.setInputItemState(DomManagerC.elms.userId, 'error');
+            StateC.userId = null;
+            return;
+        }
+        throw e;
+    }
+
     DomManagerC.hideInputItemFieldModeOptionsItemError(DomManagerC.elms.userIdModeExistingOptionsId);
     DomManagerC.setInputItemFieldModeOptionsItemState(DomManagerC.elms.userIdModeExistingOptionsId, 'ok');
     if (StateC.isValidUser()) {
         DomManagerC.setInputItemState(DomManagerC.elms.userId, 'ok');
     }
+
+    if (activeRound) {
+        DomManagerC.showInputItem(DomManagerC.elms.roundId);
+
+        const timeStr = activeRound.startedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
+        DomManagerC.elms.roundIdModeContinueExtraDesc.innerHTML = `[既存情報] ルームID: ${activeRound.roomId} 開始時刻: ${timeStr}`;
+    }
+}
+
+function onRoundIdModeChange(mode) {
+    StateC.roundIdMode = mode;
+    DomManagerC.setInputItemFieldMode(DomManagerC.elms.roundId, mode);
+
+    if (!StateC.isValidRound()) {
+        DomManagerC.setInputItemState(DomManagerC.elms.roundId, 'error');
+    } else {
+        DomManagerC.setInputItemState(DomManagerC.elms.roundId, 'ok');
+    }
+}
+
+let isSubmitted = false;
+async function onSubmit() {
+    if (isSubmitted) {
+        return;
+    }
+    if (!StateC.isValid()) {
+        DomManagerC.showSubmitError('invalid_input');
+        return;
+    }
+    DomManagerC.hideSubmitError();
+
+    isSubmitted = true;
+
+    if (StateC.userIdMode === 'create') {
+        const userId = (await ApiClientC.createUser(StateC.userId, StateC.userName)).userId;
+        StateC.userId = userId;
+    }
+
+    if (StateC.roundIdMode === 'create') {
+        const roundId = (await ApiClientC.createRound(StateC.userId, StateC.roomId)).roundId;
+        StateC.roundId = roundId;
+    } else {
+        const roundId = (await hasActiveRound(StateC.userId)).roundId;
+        StateC.roundId = roundId;
+    }
+
+    const query = StateC.intoQuery();
+    const url = new URL(window.location.href + './inround');
+    url.search = query.toString();
+
+    window.location.href = url.toString();
 }
 
 function setupEventListeners() {
+    window.onerror = (event) => {
+        console.error('Global error caught:', event);
+        if (event instanceof Error) {
+            if (isThisError(CMN_ERRORS.fatal, event)) {
+                DomManagerC.showSubmitError('critical');
+            } else if (isThisError(CMN_ERRORS.serverFatal, event)) {
+                DomManagerC.showSubmitError('critical');
+            } else if (isThisError(CMN_ERRORS.serverTransient, event)) {
+                DomManagerC.showSubmitError('internal');
+            } else if (isThisError(CMN_ERRORS.network, event)) {
+                DomManagerC.showSubmitError('network');
+            } else if (isThisError(CMN_ERRORS.invalidInput, event)) {
+                DomManagerC.showSubmitError('invalid');
+            } else {
+                DomManagerC.showSubmitError('unknown');
+            }
+        } else {
+            DomManagerC.showSubmitError('unknown');
+        }
+    };
+
     DomManagerC.elms.roomIdSelector.addEventListener('change', onRoomIdChange);
     DomManagerC.elms.roomIdSelector.addEventListener('blur', onRoomIdChange);
     DomManagerC.elms.userIdModeCreateButton.addEventListener('click', () => onUserIdModeChange('create'));
@@ -482,11 +661,13 @@ function setupEventListeners() {
         }
     });
     DomManagerC.elms.userIdModeExistingOptionsIdInput.addEventListener('blur', onUserIdModeExsistingEnterId);
-    DomManagerC.elms.userIdModeExistingOptionsIdInput.addEventListener('keydown', (e) => {
+    DomManagerC.elms.userIdModeExistingOptionsIdInput.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
-            onUserIdModeExsistingEnterId();
+            await onUserIdModeExsistingEnterId();
         }
     });
+    DomManagerC.elms.roundIdModeCreateButton.addEventListener('click', () => onRoundIdModeChange('create'));
+    DomManagerC.elms.roundIdModeContinueButton.addEventListener('click', () => onRoundIdModeChange('continue'));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -495,346 +676,3 @@ document.addEventListener('DOMContentLoaded', () => {
     DomManagerC.init();
     setupEventListeners();
 });
-
-
-/*
-
-
-// =====================-
-
-// DOM要素の取得
-const roomIdSelector = document.getElementById('room_id_selector');
-const roomIdSelectorError = document.getElementById('room_id_selector_error');
-
-const createUserButton = document.getElementById('create_user_button');
-const createUserOptionsSection = document.getElementById('create_user_options_section');
-const createUserOptionsName = document.getElementById('create_user_options_name');
-const createUserOptionsNameError = document.getElementById('create_user_options_name_error');
-
-const inputUserIdButton = document.getElementById('input_user_id_button');
-const inputUserIdSection = document.getElementById('input_user_id_section');
-const inputUserId = document.getElementById('input_user_id');
-const inputUserIdError = document.getElementById('input_user_id_error');
-const userIdError = document.getElementById('user_id_error');
-
-const enterRoundIdSection = document.getElementById('enter_round_id_section');
-const createRoundButton = document.getElementById('create_round_button');
-const selectRoundButton = document.getElementById('select_round_button');
-const selectRoundIdSection = document.getElementById('select_round_id_section');
-const selectRoundIdSelector = document.getElementById('select_round_id_selector');
-const selectRoundIdError = document.getElementById('select_round_id_error');
-const roundIdError = document.getElementById('round_id_error');
-
-const submitButton = document.getElementById('submit_button');
-const submitButtonSending = document.getElementById('submit_button_sending');
-const submitButtonError = document.getElementById('submit_button_error');
-
-// 状態管理
-let state = {
-    roomId: null,
-    userMode: null, // 'create' or 'existing'
-    roundMode: null, // 'create' or 'existing'
-    userId: null,
-    roundId: null,
-    isCreateUserSelected: false,
-    isInputUserSelected: false,
-    isCreateRoundSelected: false,
-    isSelectRoundSelected: false
-};
-
-// フォーカス状態の管理
-let focusState = {
-    roomIdTouched: false,
-    createUserNameTouched: false,
-    inputUserIdTouched: false,
-    selectRoundIdTouched: false
-};
-
-// エラー表示/非表示の制御
-function showError(errorElement, errorType) {
-    errorElement.style.display = 'block';
-    const errorTypes = errorElement.querySelectorAll('div');
-    errorTypes.forEach(div => div.style.display = 'none');
-
-    const targetError = errorElement.querySelector(`.${errorType}`);
-    if (targetError) {
-        targetError.style.display = 'block';
-    }
-}
-
-function hideError(errorElement) {
-    errorElement.style.display = 'none';
-}
-
-// セクション表示/非表示の制御
-function showSection(sectionElement) {
-    sectionElement.style.display = 'block';
-}
-
-function hideSection(sectionElement) {
-    sectionElement.style.display = 'none';
-}
-
-function validateUserMode(showErrors = false) {
-    if (!state.userMode) {
-        if (showErrors) {
-            showError(userIdError, 'required_either');
-        }
-        return false;
-    }
-
-    if (state.userMode === 'create') {
-        const userName = createUserOptionsName.value.trim();
-        if (!validateUserName(userName, showErrors)) {
-            return false;
-        }
-    } else if (state.userMode === 'existing') {
-        const userId = inputUserId.value.trim();
-        if (!userId) {
-            if (showErrors && focusState.inputUserIdTouched) {
-                showError(inputUserIdError, 'required');
-            }
-            return false;
-        }
-        if (!validateUserId(userId)) {
-            if (showErrors && focusState.inputUserIdTouched) {
-                showError(inputUserIdError, 'invalid_format');
-            }
-            return false;
-        }
-        hideError(inputUserIdError);
-    }
-
-    hideError(userIdError);
-    return true;
-}
-
-function validateRoundMode(showErrors = false) {
-    if (state.userMode === 'create') {
-        return true; // 新規ユーザ作成時はラウンド選択不要
-    }
-
-    if (!state.roundMode) {
-        if (showErrors) {
-            showError(roundIdError, 'required');
-        }
-        return false;
-    }
-
-    if (state.roundMode === 'existing') {
-        if (!state.roundId) {
-            if (showErrors && focusState.selectRoundIdTouched) {
-                showError(selectRoundIdError, 'required');
-            }
-            return false;
-        }
-        hideError(selectRoundIdError);
-    }
-
-    hideError(roundIdError);
-    return true;
-}
-
-
-// ラウンド一覧の更新
-async function updateRoundsList(userId) {
-    const rounds = await getUserRounds(userId);
-
-    selectRoundIdSelector.innerHTML = '';
-
-    const roundIds = Object.keys(rounds).sort((a, b) => parseInt(b) - parseInt(a));
-
-    // 未終了ラウンドをチェック
-    const hasUnfinishedRounds = roundIds.some(roundId => !rounds[roundId].finished_at);
-
-    if (roundIds.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'ラウンドがありません';
-        option.disabled = true;
-        option.selected = true;
-        selectRoundIdSelector.appendChild(option);
-        hideSection(enterRoundIdSection);
-    } else {
-        // デフォルトオプションを追加
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = 'ラウンドを選択してください';
-        defaultOption.disabled = true;
-        defaultOption.selected = true;
-        selectRoundIdSelector.appendChild(defaultOption);
-
-        roundIds.forEach(roundId => {
-            const round = rounds[roundId];
-            const option = document.createElement('option');
-            option.value = roundId;
-            const status = round.finished_at ? '終了済み' : '進行中';// 進行中のみ
-            option.textContent = `ラウンド ${roundId} (${status})`;
-            selectRoundIdSelector.appendChild(option);
-        });
-
-        // 未終了ラウンドがある場合のみラウンドIDセクションを表示
-        if (hasUnfinishedRounds) {
-            showSection(enterRoundIdSection);
-        } else {
-            hideSection(enterRoundIdSection);
-        }
-    }
-
-    return true;
-}
-
-inputUserId.addEventListener('blur', async () => {
-    focusState.inputUserIdTouched = true;
-    const userId = inputUserId.value.trim();
-
-    if (validateUserId(userId)) {
-        try {
-            await updateRoundsList(userId);
-            state.userId = userId;
-            hideError(inputUserIdError);
-        } catch (error) {
-            console.error('Failed to update rounds list:', error);
-            if (error.message === 'USER_NOT_FOUND') {
-                showError(inputUserIdError, 'not_found');
-            }
-        }
-    } else if (userId) {
-        showError(inputUserIdError, 'invalid_format');
-    } else {
-        showError(inputUserIdError, 'required');
-    }
-});
-
-inputUserId.addEventListener('input', () => {
-    // 入力中はエラーを隠す（blurで再評価）
-    if (focusState.inputUserIdTouched) {
-        hideError(inputUserIdError);
-    }
-
-    // ラウンド関連の状態をリセット
-    state.roundMode = null;
-    state.roundId = null;
-    state.isCreateRoundSelected = false;
-    state.isSelectRoundSelected = false;
-    hideSection(enterRoundIdSection);
-    hideSection(selectRoundIdSection);
-});
-
-createUserOptionsName.addEventListener('blur', () => {
-    focusState.createUserNameTouched = true;
-    const userName = createUserOptionsName.value.trim();
-    validateUserName(userName, true);
-});
-
-createUserOptionsName.addEventListener('input', () => {
-    // 入力中はエラーを隠す（blurで再評価）
-    if (focusState.createUserNameTouched) {
-        hideError(createUserOptionsNameError);
-    }
-});
-
-createRoundButton.addEventListener('click', () => {
-    state.roundMode = state.isCreateRoundSelected ? null : 'create';
-    state.isCreateRoundSelected = !state.isCreateRoundSelected;
-    state.isSelectRoundSelected = false;
-
-    if (state.isCreateRoundSelected) {
-        hideSection(selectRoundIdSection);
-    } else {
-        state.roundMode = null;
-    }
-
-    validateRoundMode();
-});
-
-selectRoundButton.addEventListener('click', () => {
-    state.roundMode = state.isSelectRoundSelected ? null : 'existing';
-    state.isSelectRoundSelected = !state.isSelectRoundSelected;
-    state.isCreateRoundSelected = false;
-
-    if (state.isSelectRoundSelected) {
-        showSection(selectRoundIdSection);
-    } else {
-        hideSection(selectRoundIdSection);
-        state.roundMode = null;
-        state.roundId = null;
-        focusState.selectRoundIdTouched = false;
-        hideError(selectRoundIdError);
-    }
-
-    validateRoundMode();
-});
-
-selectRoundIdSelector.addEventListener('change', () => {
-    state.roundId = selectRoundIdSelector.value;
-    focusState.selectRoundIdTouched = true;
-    validateRoundMode(true);
-});
-
-selectRoundIdSelector.addEventListener('blur', () => {
-    focusState.selectRoundIdTouched = true;
-    validateRoundMode(true);
-});
-
-submitButton.addEventListener('click', async () => {
-    try {
-        // 全てのフィールドをtouchedに設定
-        focusState.roomIdTouched = true;
-        focusState.inputUserIdTouched = true;
-        focusState.createUserNameTouched = true;
-        focusState.selectRoundIdTouched = true;
-
-        // バリデーション（エラー表示あり）
-        const isRoomValid = validateRoomId(true);
-        const isUserValid = validateUserMode(true);
-        const isRoundValid = validateRoundMode(true);
-
-        if (!isRoomValid || !isUserValid || !isRoundValid) {
-            showError(submitButtonError, 'invalid');
-            return;
-        }
-
-        hideError(submitButtonError);
-        submitButton.disabled = true;
-        showSection(submitButtonSending);
-
-        let userId = state.userId;
-        let roundId = state.roundId;
-
-        // ユーザ作成
-        if (state.userMode === 'create') {
-            const userName = createUserOptionsName.value.trim();
-            const userResult = await createUser(state.roomId, userName || null);
-            userId = userResult.user_id;
-        }
-
-        // ラウンド作成（新規ユーザ作成時は常に新規ラウンド）
-        if (state.userMode === 'create' || state.roundMode === 'create') {
-            const roundResult = await createRound(userId, state.roomId);
-            roundId = roundResult.round_id;
-        }
-
-        // リダイレクト
-        const params = new URLSearchParams({
-            room_id: state.roomId,
-            user_id: userId,
-            round_id: roundId
-        });
-
-        window.location.href = `/staff/enter/round/?${params.toString()}`;
-
-    } catch (error) {
-        console.error('Submit error:', error);
-
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            showError(submitButtonError, 'network_error');
-        } else {
-            showError(submitButtonError, 'internal_error');
-        }
-
-        submitButton.disabled = false;
-        hideSection(submitButtonSending);
-    }
-});
-*/

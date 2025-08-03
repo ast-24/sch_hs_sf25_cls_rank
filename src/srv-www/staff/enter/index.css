@@ -261,6 +261,16 @@ html {
                                 }
                             }
                         }
+
+                        .input_item_field_mode_extra_desc {
+                            position: relative;
+                            margin: 1vh auto 0 auto;
+
+                            .input_item_field_mode_extra_desc_text {
+                                position: relative;
+                                font-size: 4vw;
+                            }
+                        }
                     }
                 }
 

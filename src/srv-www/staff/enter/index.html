@@ -221,6 +221,13 @@
                             既存のラウンドで続行
                         </div>
                     </button>
+                    <div class="input_item_field_mode_extra_desc"
+                        id="input_item_round_id_field_mode_continue_extra_desc">
+                        <div class="input_item_field_mode_extra_desc_text"
+                            id="input_item_round_id_field_mode_continue_extra_desc_text">
+                            <!--JSで既存ラウンドについての情報を挿入-->
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="input_item_error" id="input_item_round_id_error">
@@ -239,10 +246,9 @@
             </div>
         </button>
         <div class="submit_error" id="submit_error">
-            <!--CSSで隠しとく-->
             <div class="submit_error_item" id="submit_error_item_invalid">
                 <div class="submit_error_item_text" id="submit_error_item_invalid_text" data-error-type="invalid">
-                    入力内容に不正があります(各入力欄を参照)
+                    入力内容に不正があります(各入力欄を参照)<br>原因不明の場合は再試行してください
                 </div>
             </div>
             <div class="submit_error_item" id="submit_error_item_network" data-error-type="network">
@@ -253,6 +259,16 @@
             <div class="submit_error_item" id="submit_error_item_internal" data-error-type="internal">
                 <div class="submit_error_item_text" id="submit_error_item_internal_text" data-error-type="internal">
                     内部エラーが発生しました<br>再試行してください
+                </div>
+            </div>
+            <div class="submit_error_item" id="submit_error_item_unknown" data-error-type="unknown">
+                <div class="submit_error_item_text" id="submit_error_item_unknown_text" data-error-type="unknown">
+                    不明なエラーが発生しました<br>再試行してください
+                </div>
+            </div>
+            <div class="submit_error_item" id="submit_error_item_critical" data-error-type="critical">
+                <div class="submit_error_item_text" id="submit_error_item_critical_text" data-error-type="critical">
+                    致命的なエラーが発生しました<br>システム管理者に連絡してください
                 </div>
             </div>
         </div>
