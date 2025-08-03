@@ -1,7 +1,6 @@
 #!/bin/bash
 
-SRF_ORIGIN="${X_PH_ORIGIN_SRF}"
-ASS_ORIGIN="${X_PH_ORIGIN_ASS}"
+WWW_ORIGIN="${X_PH_ORIGIN_WWW}"
 API_ORIGIN="${X_PH_ORIGIN_API}"
 
 TARGET_EXTENSIONS=("html" "css" "mjs" "js")
@@ -11,8 +10,7 @@ EXCLUDE_DIRS=("node_modules")
 CURRENT_DIR=$(pwd)
 
 echo "Starting placeholder replacement in: $CURRENT_DIR"
-echo "SRF_ORIGIN: $SRF_ORIGIN"
-echo "ASS_ORIGIN: $ASS_ORIGIN"
+echo "WWW_ORIGIN: $WWW_ORIGIN"
 echo "API_ORIGIN: $API_ORIGIN"
 echo ""
 
@@ -30,12 +28,11 @@ for ext in "${TARGET_EXTENSIONS[@]}"; do
     eval "find \"$CURRENT_DIR\" $FIND_PRUNE -type f -name '*.$ext' -not -name '.*' -print" | while read -r file; do
         echo "  Processing: $file"
 
-        if grep -q "{{SRF_ORIGIN}}\|{{ASS_ORIGIN}}\|{{API_ORIGIN}}" "$file"; then
+        if grep -q "{{WWW_ORIGIN}}\|{{API_ORIGIN}}" "$file"; then
             temp_file=$(mktemp)
 
             sed \
-                -e "s|{{SRF_ORIGIN}}|$SRF_ORIGIN|g" \
-                -e "s|{{ASS_ORIGIN}}|$ASS_ORIGIN|g" \
+                -e "s|{{WWW_ORIGIN}}|$WWW_ORIGIN|g" \
                 -e "s|{{API_ORIGIN}}|$API_ORIGIN|g" \
                 "$file" > "$temp_file"
 
