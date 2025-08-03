@@ -13,7 +13,7 @@ function isThisError(cmnError, error) {
 
 class ValidatorC {
     static isValidRoomId(roomId) {
-        return roomId && ['1', '2', '3'].includes(roomId);
+        return roomId && [1, 2, 3].includes(roomId);
     }
 
     static isValidUserId(userId) {
@@ -227,7 +227,7 @@ class StateC {
     }
 
     static set roundIdMode(newMode) {
-        if (['create', 'existing'].includes(newMode)) {
+        if (['create', 'continue'].includes(newMode)) {
             this.#state.roundIdMode = newMode;
         } else {
             throw new Error('Invalid round ID mode');
@@ -319,8 +319,14 @@ class DomManagerC {
     }
 
     static #initRoomIdSelected() {
-        if (StateC.roomId) {
-            this.#elements.roomIdSelector.value = StateC.roomId;
+        // 存在した場合
+        const selected = Number(this.#elements.roomIdSelector.value);
+        if (ValidatorC.isValidRoomId(selected)) {
+            StateC.roomId = selected;
+        } else {
+            if (StateC.roomId) {
+                this.#elements.roomIdSelector.value = StateC.roomId;
+            }
         }
     }
 
@@ -481,7 +487,7 @@ async function hasActiveRound(userId) {
 }
 
 function onRoomIdChange() {
-    const newRoomId = DomManagerC.elms.roomIdSelector.value;
+    const newRoomId = Number(DomManagerC.elms.roomIdSelector.value);
 
     // 選択肢的に不正な値はありえない
 
@@ -533,7 +539,7 @@ function onUserIdModeCreateEnterName() {
     }
 }
 
-async function onUserIdModeExsistingEnterId() {
+async function onUserIdModeExistingEnterId() {
     const userId = DomManagerC.elms.userIdModeExistingOptionsIdInput.value.trim();
     if (!ValidatorC.isValidUserId(userId)) {
         if (!userId) {
@@ -580,13 +586,13 @@ async function onUserIdModeExsistingEnterId() {
         DomManagerC.showInputItem(DomManagerC.elms.roundId);
 
         const timeStr = activeRound.startedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
-        DomManagerC.elms.roundIdModeContinueExtraDesc.innerHTML = `[既存情報] ルームID: ${activeRound.roomId} 開始時刻: ${timeStr}`;
+        DomManagerC.elms.roundIdModeContinueExtraDesc.innerHTML = `[既存情報] ルームID: ${activeRound.roomId} 開始時刻: ${timeStr} `;
     }
 }
 
 function onRoundIdModeChange(mode) {
     StateC.roundIdMode = mode;
-    DomManagerC.setInputItemFieldMode(DomManagerC.elms.roundId, mode);
+    DomManagerC.selectModeButton(DomManagerC.elms.roundId, mode);
 
     if (!StateC.isValidRound()) {
         DomManagerC.setInputItemState(DomManagerC.elms.roundId, 'error');
@@ -602,6 +608,27 @@ async function onSubmit() {
     }
     if (!StateC.isValid()) {
         DomManagerC.showSubmitError('invalid_input');
+        if (!StateC.isValidRoom()) {
+            DomManagerC.setInputItemState(DomManagerC.elms.roomId, 'error');
+            DomManagerC.showInputItemError(DomManagerC.elms.roomId, 'required');
+        }
+        if (!StateC.isValidUser()) {
+            DomManagerC.setInputItemState(DomManagerC.elms.userId, 'error');
+            if (StateC.userIdMode === 'create') {
+                DomManagerC.setInputItemFieldModeOptionsItemState(DomManagerC.elms.userIdModeCreateOptionsName, 'error');
+                DomManagerC.showInputItemFieldModeOptionsItemError(DomManagerC.elms.userIdModeCreateOptionsName, 'invalid_format');
+            } else {
+                DomManagerC.setInputItemFieldModeOptionsItemState(DomManagerC.elms.userIdModeExistingOptionsId, 'error');
+                if (StateC.userId) {
+                    DomManagerC.showInputItemFieldModeOptionsItemError(DomManagerC.elms.userIdModeExistingOptionsId, 'invalid_format');
+                } else {
+                    DomManagerC.showInputItemFieldModeOptionsItemError(DomManagerC.elms.userIdModeExistingOptionsId, 'required');
+                }
+            }
+        }
+        if (!StateC.isValidRound()) {
+            DomManagerC.setInputItemState(DomManagerC.elms.roundId, 'error');
+        }
         return;
     }
     DomManagerC.hideSubmitError();
@@ -609,7 +636,7 @@ async function onSubmit() {
     isSubmitted = true;
 
     if (StateC.userIdMode === 'create') {
-        const userId = (await ApiClientC.createUser(StateC.userId, StateC.userName)).userId;
+        const userId = (await ApiClientC.createUser(StateC.roomId, StateC.userName)).userId;
         StateC.userId = userId;
     }
 
@@ -629,7 +656,7 @@ async function onSubmit() {
 }
 
 function setupEventListeners() {
-    window.onerror = (event) => {
+    window.addEventListener('error', (event) => {
         console.error('Global error caught:', event);
         if (event instanceof Error) {
             if (isThisError(CMN_ERRORS.fatal, event)) {
@@ -648,7 +675,7 @@ function setupEventListeners() {
         } else {
             DomManagerC.showSubmitError('unknown');
         }
-    };
+    });
 
     DomManagerC.elms.roomIdSelector.addEventListener('change', onRoomIdChange);
     DomManagerC.elms.roomIdSelector.addEventListener('blur', onRoomIdChange);
@@ -660,14 +687,15 @@ function setupEventListeners() {
             onUserIdModeCreateEnterName();
         }
     });
-    DomManagerC.elms.userIdModeExistingOptionsIdInput.addEventListener('blur', onUserIdModeExsistingEnterId);
+    DomManagerC.elms.userIdModeExistingOptionsIdInput.addEventListener('blur', onUserIdModeExistingEnterId);
     DomManagerC.elms.userIdModeExistingOptionsIdInput.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
-            await onUserIdModeExsistingEnterId();
+            await onUserIdModeExistingEnterId();
         }
     });
     DomManagerC.elms.roundIdModeCreateButton.addEventListener('click', () => onRoundIdModeChange('create'));
     DomManagerC.elms.roundIdModeContinueButton.addEventListener('click', () => onRoundIdModeChange('continue'));
+    DomManagerC.elms.submitButton.addEventListener('click', onSubmit);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

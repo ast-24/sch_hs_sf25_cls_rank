@@ -6,8 +6,8 @@
     <title>スタッフ用結果入力ページ - 文化祭2-1用ランキングシステム</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel=preload href="./index.css" as="style">
-    <link rel=preload href="./index.mjs" as="script">
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
 
     <link rel="stylesheet" href="./index.css">
     <script type="module" src="./index.mjs"></script>
@@ -192,7 +192,7 @@
         <div class="input_item input_item_state_empty" id="input_item_round_id">
             <!--新規作成でない場合のみ表示-->
             <div class="input_item_title" id="input_item_round_id_title">
-                <div class="title_text" id="input_item_round_id_title_text">
+                <div class="input_item_title_text" id="input_item_round_id_title_text">
                     対象ラウンド
                 </div>
             </div>
@@ -246,8 +246,8 @@
             </div>
         </button>
         <div class="submit_error" id="submit_error">
-            <div class="submit_error_item" id="submit_error_item_invalid">
-                <div class="submit_error_item_text" id="submit_error_item_invalid_text" data-error-type="invalid">
+            <div class="submit_error_item" id="submit_error_item_invalid" data-error-type="invalid">
+                <div class="submit_error_item_text" id="submit_error_item_invalid_text">
                     入力内容に不正があります(各入力欄を参照)<br>原因不明の場合は再試行してください
                 </div>
             </div>
