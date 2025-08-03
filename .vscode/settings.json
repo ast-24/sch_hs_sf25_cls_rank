@@ -16,5 +16,6 @@
             "database": "main",
             "username": "bvjbdbf9NtHBWN6.root"
         }
-    ]
+    ],
+    "liveServer.settings.port": 5501
 }

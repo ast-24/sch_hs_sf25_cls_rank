@@ -1,9 +1,712 @@
-/* 初期状態で非表示にする要素 */
-.error_message,
-.error_message div,
-#create_user_options_section,
-#input_user_id_section,
-#enter_round_id_section,
-#select_round_id_section {
-    display: none;
+/* デフォ値オーバーライド */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    text-align: center;
 }
+
+html {
+    position: relative;
+    min-width: 100vw;
+    min-height: 100vh;
+    background-color: black;
+    color: white;
+
+    body {
+        position: relative;
+        padding: 2vh 3vw;
+        min-height: 100%;
+        min-width: 100%;
+
+        /* 初期状態で非表示にする要素 */
+        .input_item_error,
+        .input_item_error_item,
+        .input_item_field_mode_options,
+        .input_item_field_mode_options_item_error,
+        .input_item_field_mode_options_item_error_item,
+        #input_item_round_id,
+        .submit_error,
+        .submit_error_item_text {
+            display: none;
+        }
+
+        /* エラーテキストの共通設定 */
+        .input_item_error_item_text,
+        .input_item_field_mode_options_item_error_text,
+        .input_item_field_mode_options_item_error_item_text,
+        .submit_error_item_text {
+            font-size: 4vw;
+            text-align: center;
+            color: red;
+        }
+
+        .page_title {
+            position: relative;
+            margin: 0 auto;
+            padding: 1vh 6vw;
+            border-radius: 5vw;
+            background-color: #222;
+            width: fit-content;
+
+            .page_title_text {
+                position: relative;
+                margin: 0 auto;
+                font-size: 8vw;
+            }
+        }
+
+        .input {
+            position: relative;
+            margin: 2vh auto;
+            padding: 1vh 1vw;
+            border-radius: 1vw;
+            background-color: #222;
+
+            .input_item {
+                position: relative;
+                margin: 1vh auto;
+                padding: 1vh 2vw;
+                background-color: #333;
+                border-radius: 1vw;
+                width: 96%;
+
+                &.input_item_state_empty {
+                    border-color: #a88;
+                    border-style: solid;
+                    border-width: 0.5vw;
+                }
+
+                &.input_item_state_error {
+                    border-color: #f00;
+                    border-style: solid;
+                    border-width: 0.8vw;
+                }
+
+                &.input_item_state_ok {
+                    border-color: #8c8;
+                    border-style: solid;
+                    border-width: 0.5vw;
+                }
+
+                .input_item_title {
+                    position: relative;
+                    margin: 0 auto;
+
+                    .input_item_title_text {
+                        position: relative;
+
+                        font-size: 7vw;
+                        text-align: center;
+                    }
+                }
+
+                .input_item_desc {
+                    position: relative;
+                    margin: 1.5vh auto 0 auto;
+
+                    .input_item_desc_text {
+                        position: relative;
+
+                        font-size: 4vw;
+                        text-align: center;
+                    }
+                }
+
+                .input_item_field {
+                    position: relative;
+                    margin: 1.5vh auto 0 auto;
+                    padding: 0.5vh 1vw;
+
+                    border-color: #888;
+                    border-style: solid;
+                    border-width: 0.8vw;
+
+                    .input_item_field_selector {
+                        position: relative;
+                        margin: 0 auto;
+                        width: fit-content;
+
+                        background-color: #333;
+                        color: white;
+
+                        font-size: 6vw;
+
+                        outline: none;
+
+
+                        .input_item_field_selector_option {
+                            background-color: #333;
+                            color: white;
+                        }
+                    }
+
+                    .input_item_field_mode {
+                        position: relative;
+                        margin: 0 auto;
+                        padding: 0.5vh 2vw;
+                        width: fit-content;
+
+                        .input_item_field_mode_button {
+                            position: relative;
+                            margin: 0 auto;
+                            padding: 0.5vh 2vw;
+
+                            border-radius: 3vw;
+                            color: white;
+
+                            outline: none;
+
+                            &.input_item_field_mode_button_selected {
+                                background-color: #448;
+                                border-color: #88f;
+                                border-style: solid;
+                                border-width: 0.8vw;
+                            }
+
+                            &.input_item_field_mode_button_unselected {
+                                background-color: #333;
+                                border-color: #aaa;
+                                border-style: solid;
+                                border-width: 0.5vw;
+                            }
+
+                            .input_item_field_mode_button_text {
+                                position: relative;
+                                font-size: 5vw;
+                            }
+                        }
+
+                        .input_item_field_mode_options {
+                            position: relative;
+                            margin: 1vh auto 0 auto;
+
+                            .input_item_field_mode_options_item {
+                                position: relative;
+                                margin: 0.5vh auto;
+                                padding: 0.5vh 2vw;
+
+                                &.input_item_field_mode_options_item_state_empty {
+                                    border-color: #a88;
+                                    border-style: solid;
+                                    border-width: 0.5vw;
+                                }
+
+                                &.input_item_field_mode_options_item_state_error {
+                                    border-color: #f00;
+                                    border-style: solid;
+                                    border-width: 0.8vw;
+
+                                    .input_item_field_mode_options_item_state_text {
+                                        color: red;
+                                    }
+                                }
+
+                                &.input_item_field_mode_options_item_state_ok {
+                                    border-color: #8c8;
+                                    border-style: solid;
+                                    border-width: 0.5vw;
+
+                                    .input_item_field_mode_options_item_state_text {
+                                        color: #8c8;
+                                    }
+                                }
+
+                                .input_item_field_mode_options_item_title {
+                                    position: relative;
+                                    margin: 0.5vh auto;
+
+                                    font-size: 5vw;
+                                }
+
+                                .input_item_field_mode_options_item_desc {
+                                    position: relative;
+                                    margin: 0.5vh auto;
+
+                                    font-size: 4vw;
+                                    text-align: center;
+                                }
+
+                                .input_item_field_mode_options_item_input {
+                                    position: relative;
+                                    margin: 1vh auto 0 auto;
+
+                                    .input_item_field_mode_options_item_input_element {
+                                        font-size: 6vw;
+                                        background-color: #333;
+                                        color: white;
+
+                                        border-color: #aaa;
+                                        border-style: solid;
+                                        border-width: 0.5vw;
+                                    }
+                                }
+
+                                .input_item_field_mode_options_item_error {
+                                    position: relative;
+                                    margin: 1vh auto 0 auto;
+
+                                    .input_item_field_mode_options_item_error_item {
+                                        position: relative;
+                                        margin: 0 auto;
+
+                                        .input_item_field_mode_options_item_error_item_text {
+                                            position: relative;
+                                            font-size: 4vw;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .input_item_error {
+                    position: relative;
+                    margin: 1vh auto 0 auto;
+
+                    .input_item_error_item {
+                        position: relative;
+                        margin: 0 auto;
+
+                        .input_item_error_item_text {
+                            position: relative;
+                            font-size: 4vw;
+                        }
+                    }
+                }
+            }
+        }
+
+        .submit {
+            position: relative;
+            margin: 2vh auto;
+            width: fit-content;
+
+            .submit_button {
+                position: relative;
+                margin: 0 auto;
+                padding: 0.5vh 2vw;
+
+                font-size: 7vw;
+                border-radius: 3vw;
+                background-color: #333;
+                color: white;
+                border-color: #aaa;
+                border-style: solid;
+                border-width: 0.5vw;
+
+                outline: none;
+            }
+
+            .submit_error {
+                position: relative;
+                margin: 1vh auto 0 auto;
+
+                .submit_error_item {
+                    position: relative;
+                    margin: 0 auto;
+
+                    .submit_error_item_text {
+                        position: relative;
+                        font-size: 4vw;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+.input {
+    position: relative;
+    margin: 2vh auto;
+    padding: 1vh 4vw;
+    border-radius: 3vw;
+    background-color: #222;
+}
+
+/*
+
+html {
+
+    body {
+        position: relative;
+        margin: 0;
+        padding: 2vh 5vw;
+
+        >.title {
+            position: relative;
+
+            margin: 0 auto;
+            padding: 0.5vh 5vw;
+            border-radius: 6vw;
+
+            background-color: #222;
+            width: fit-content;
+
+            >h1 {
+                position: relative;
+
+                font-size: 8vw;
+                text-align: center;
+            }
+        }
+
+        >.content {
+            position: relative;
+
+            margin: 2vh auto;
+            padding: 1vh 4vw;
+            border-radius: 3vw;
+            background-color: #222;
+
+            >.select_room_id {
+                position: relative;
+
+                margin: 1vh auto;
+                padding: 1vh 2vw;
+
+                background-color: #333;
+                border-radius: 1vw;
+
+                >.title {
+                    font-size: 6vw;
+                    text-align: center;
+                }
+
+                >.desc {
+                    margin: 1.5vh 0 0 0;
+                    font-size: 4vw;
+                    text-align: center;
+                    margin-bottom: 1vh;
+                }
+
+                >.options {
+                    position: relative;
+                    margin: 1.5vh auto 0 auto;
+                    padding: 0.5vh 2vw;
+                    width: fit-content;
+
+                    border-color: #faa;
+                    border-style: solid;
+                    border-width: 0.8vw;
+
+                    >select {
+                        position: relative;
+                        margin: 0 auto;
+                        width: fit-content;
+
+                        font-size: 6vw;
+                        border-radius: 5vw;
+                        background-color: #333;
+                        color: white;
+
+                        outline: none;
+
+                        option {
+                            background-color: #333;
+                            color: white;
+                        }
+                    }
+                }
+
+                >.options.selected {
+                    border-color: #aaa;
+                    border-style: solid;
+                    border-width: 0.5vw;
+                }
+
+                >.error_message {
+                    position: relative;
+                    margin: 1vh auto 0 auto;
+                    padding: 0.5vh 2vw;
+                    width: fit-content;
+
+                    font-size: 4vw;
+                    text-align: center;
+                    color: red;
+                }
+            }
+
+            >.enter_user_id {
+                position: relative;
+
+                margin: 2vh auto;
+                padding: 1vh 2vw;
+
+                background-color: #333;
+                border-radius: 1vw;
+
+                >.title {
+                    font-size: 6vw;
+                    text-align: center;
+                }
+
+                >.desc {
+                    margin: 1.5vh 0 0 0;
+                    font-size: 4vw;
+                    text-align: center;
+                }
+
+                >.create {
+                    position: relative;
+
+                    margin: 1.5vh auto 0 auto;
+                    padding: 0.5vh 2vw;
+                    width: fit-content;
+                    text-align: center;
+
+                    >button {
+                        position: relative;
+                        margin: 0 auto;
+                        padding: 0.5vh 2vw 0 2vw;
+
+                        font-size: 6vw;
+                        border-radius: 3vw;
+                        background-color: #333;
+                        color: white;
+                        border-color: #aaa;
+                        border-style: solid;
+                        border-width: 0.5vw;
+
+                        outline: none;
+                    }
+
+                    >.create_options {
+                        position: relative;
+                        margin: 0.5vh auto 0 auto;
+
+                        >.user_name {
+                            position: relative;
+                            margin: 0 auto;
+                            padding: 0.5vh 2vw;
+                            width: fit-content;
+
+                            border-color: #555;
+                            border-style: solid;
+                            border-width: 0.5vw;
+
+                            >.title {
+                                font-size: 5vw;
+                                text-align: center;
+                            }
+
+                            >.desc {
+                                margin: 1vh 0 0 0;
+                                font-size: 3vw;
+                                text-align: center;
+                            }
+
+                            >input {
+                                position: relative;
+                                margin: 1vh 0 0 0;
+
+                                font-size: 5vw;
+                                background-color: #333;
+                                color: white;
+                                text-align: center;
+
+                                border-color: #aaa;
+                                border-style: solid;
+                                border-width: 0.5vw;
+
+                                outline: none;
+                            }
+
+                            >.error_message {
+                                position: relative;
+                                margin: 0.5vh auto 0 auto;
+                                width: fit-content;
+
+                                font-size: 4vw;
+                                text-align: center;
+                                color: red;
+                            }
+                        }
+                    }
+                }
+
+                >.input {
+                    position: relative;
+
+                    margin: 1vh auto 0 auto;
+                    padding: 0.5vh 2vw;
+                    width: fit-content;
+                    text-align: center;
+
+                    >button {
+                        position: relative;
+                        margin: 0 auto;
+                        padding: 0.5vh 2vw 0 2vw;
+
+                        font-size: 6vw;
+                        border-radius: 3vw;
+                        background-color: #333;
+                        color: white;
+                        border-color: #aaa;
+                        border-style: solid;
+                        border-width: 0.5vw;
+
+                        outline: none;
+                    }
+
+                    >.input_id {
+                        position: relative;
+                        margin: 0.5vh auto 0 auto;
+                        padding: 0.5vh 2vw;
+                        width: fit-content;
+
+                        border-color: #555;
+                        border-style: solid;
+                        border-width: 0.5vw;
+
+                        >.title {
+                            font-size: 5vw;
+                            text-align: center;
+                        }
+
+                        >.desc {
+                            margin: 1vh 0 0 0;
+                            font-size: 3vw;
+                            text-align: center;
+                        }
+
+                        >input {
+                            position: relative;
+                            margin: 1vh 0 0 0;
+
+                            font-size: 5vw;
+                            background-color: #333;
+                            color: white;
+                            text-align: center;
+
+                            border-color: #aaa;
+                            border-style: solid;
+                            border-width: 0.5vw;
+
+                            outline: none;
+                        }
+
+                        >.error_message {
+                            position: relative;
+                            margin: 0.5vh auto 0 auto;
+                            width: fit-content;
+
+                            font-size: 4vw;
+                            text-align: center;
+                            color: red;
+                        }
+                    }
+                }
+            }
+
+            >.enter_round_id {
+                position: relative;
+
+                margin: 2vh auto;
+                padding: 1vh 2vw;
+
+                background-color: #333;
+                border-radius: 1vw;
+
+                >.title {
+                    font-size: 6vw;
+                    text-align: center;
+                }
+
+                >.desc {
+                    margin: 1.5vh 0 0 0;
+                    font-size: 4vw;
+                    text-align: center;
+                }
+
+                >.create {
+                    position: relative;
+                    margin: 1.5vh auto 0 auto;
+                    padding: 0.5vh 2vw;
+                    width: fit-content;
+                    text-align: center;
+
+                    >button {
+                        position: relative;
+                        margin: 0 auto;
+                        padding: 0.5vh 2vw 0 2vw;
+
+                        font-size: 6vw;
+                        border-radius: 3vw;
+                        background-color: #333;
+                        color: white;
+                        border-color: #aaa;
+                        border-style: solid;
+                        border-width: 0.5vw;
+
+                        outline: none;
+                    }
+                }
+
+                >.continue {
+                    position: relative;
+                    margin: 1vh auto 0 auto;
+                    padding: 0.5vh 2vw;
+                    width: fit-content;
+                    text-align: center;
+
+                    >button {
+                        position: relative;
+                        margin: 0 auto;
+                        padding: 0.5vh 2vw 0 2vw;
+
+                        font-size: 6vw;
+                        border-radius: 3vw;
+                        background-color: #333;
+                        color: white;
+                        border-color: #aaa;
+                        border-style: solid;
+                        border-width: 0.5vw;
+
+                        outline: none;
+                    }
+                }
+
+                >.error_message {
+                    position: relative;
+                    margin: 1vh auto 0 auto;
+                    padding: 0.5vh 2vw;
+                    width: fit-content;
+
+                    font-size: 4vw;
+                    text-align: center;
+                    color: red;
+                }
+            }
+
+            >.submit {
+                position: relative;
+                margin: 2vh auto;
+                width: fit-content;
+
+                >button {
+                    position: relative;
+                    margin: 0 auto;
+                    padding: 0.5vh 2vw 0 2vw;
+
+                    font-size: 7vw;
+                    border-radius: 3vw;
+                    background-color: #333;
+                    color: white;
+                    border-color: #aaa;
+                    border-style: solid;
+                    border-width: 0.5vw;
+
+                    outline: none;
+                }
+            }
+        }
+    }
+}
+
+*/
