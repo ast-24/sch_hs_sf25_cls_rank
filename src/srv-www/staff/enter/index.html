@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>スタッフ用結果入力ページ - 文化祭2-1用ランキングシステム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" src="./index.mjs"></script>
+</head>
+
+<body>
+    <div class="page_title" id="page_title">
+        <div class="page_title_text" id="page_title_text">
+            スタッフ用<br>結果入力ページ
+        </div>
+    </div>
+    <div class="input" id="input">
+        <div class="input_item input_item_state_empty" id="input_item_room_id">
+            <div class="input_item_title" id="input_item_room_id_title">
+                <div class="input_item_title_text" id="input_item_room_id_title_text">
+                    担当ルーム
+                </div>
+            </div>
+            <div class="input_item_desc" id="input_item_room_id_desc">
+                <div class="input_item_desc_text" id="input_item_room_id_desc_text">
+                    担当する部屋を選択してください
+                </div>
+            </div>
+            <div class="input_item_field" id="input_item_room_id_field">
+                <select class="input_item_field_selector" id="input_item_room_id_selector">
+                    <!--JSでクエリパラメータを取得し、設定済ならそれをselectedに-->
+                    <option class="input_item_field_selector_option" id="input_item_room_id_selector_option_default"
+                        value="before_select" hidden>
+                        選択してください
+                    </option>
+                    <option class="input_item_field_selector_option" id="input_item_room_id_selector_option_1"
+                        value="1">
+                        1番(教室前方)
+                    </option>
+                    <option class="input_item_field_selector_option" id="input_item_room_id_selector_option_2"
+                        value="2">
+                        2番(教室中央)
+                    </option>
+                    <option class="input_item_field_selector_option" id="input_item_room_id_selector_option_3"
+                        value="3">
+                        3番(教室後方)
+                    </option>
+                </select>
+            </div>
+            <div class="input_item_error" id="input_item_room_id_error">
+                <div class="input_item_error_item" id="input_item_room_id_error_required" data-error-type="required">
+                    <div class="input_item_error_item_text" id="input_item_room_id_error_required_text">
+                        選択してください
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="input_item input_item_state_empty" id="input_item_user_id">
+            <div class="input_item_title" id="input_item_user_id_title">
+                <div class="input_item_title_text" id="input_item_user_id_title_text">
+                    担当ユーザ
+                </div>
+            </div>
+            <div class="input_item_desc" id="input_item_user_id_desc">
+                <div class="input_item_desc_text" id="input_item_user_id_desc_text">
+                    ユーザを新しく作成するか<br>既存のユーザIDを入力してください
+                </div>
+            </div>
+            <div class="input_item_field" id="input_item_user_id_field">
+                <div class="input_item_field_mode" id="input_item_user_id_field_mode_create" data-mode="create">
+                    <!--実際の作成はsubmit時-->
+                    <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
+                        id="input_item_user_id_field_mode_create_button" data-mode="create">
+                        <div class="input_item_field_mode_button_text"
+                            id="input_item_user_id_field_mode_create_button_text">
+                            ユーザを新規作成
+                        </div>
+                    </button>
+                    <div class="input_item_field_mode_options" id="input_item_user_id_field_mode_create_options">
+                        <div class="input_item_field_mode_options_item input_item_field_mode_options_item_state_empty"
+                            id="input_item_user_id_field_mode_create_options_name">
+                            <div class="input_item_field_mode_options_item_title"
+                                id="input_item_user_id_field_mode_create_options_name_title">
+                                <div class="input_item_field_mode_options_item_title_text"
+                                    id="input_item_user_id_field_mode_create_options_name_title_text">
+                                    ユーザ名(任意)
+                                </div>
+                            </div>
+                            <div class="input_item_field_mode_options_item_desc"
+                                id="input_item_user_id_field_mode_create_options_name_desc">
+                                <div class="input_item_field_mode_options_item_desc_text"
+                                    id="input_item_user_id_field_mode_create_options_name_desc_text">
+                                    20文字以内で入力してください<br>入力しない場合は自動で生成されます
+                                </div>
+                            </div>
+                            <div class="input_item_field_mode_options_item_input"
+                                id="input_item_user_id_field_mode_create_options_name_input">
+                                <input class="input_item_field_mode_options_item_input_element"
+                                    id="input_item_user_id_field_mode_create_options_name_input_element" type="text"
+                                    placeholder="田中太郎">
+                            </div>
+                            <div class="input_item_field_mode_options_item_error"
+                                id="input_item_user_id_field_mode_create_options_name_error">
+                                <div class="input_item_field_mode_options_item_error_item"
+                                    id="input_item_user_id_field_mode_create_options_name_error_item_invalid_format"
+                                    data-error-type="invalid_format">
+                                    <div class="input_item_field_mode_options_item_error_item_text"
+                                        id="input_item_user_id_field_mode_create_options_name_error_item_invalid_format_text">
+                                        ユーザ名の形式が不正です
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="input_item_field_mode" id="input_item_user_id_field_mode_existing" data-mode="existing">
+                    <!--roundと一緒に存在チェック-->
+                    <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
+                        id="input_item_user_id_field_mode_existing_button" data-mode="existing">
+                        <div class="input_item_field_mode_button_text"
+                            id="input_item_user_id_field_mode_existing_button_text">
+                            既存のユーザIDを入力
+                        </div>
+                    </button>
+                    <div class="input_item_field_mode_options" id="input_item_user_id_field_mode_existing_options">
+                        <div class="input_item_field_mode_options_item input_item_field_mode_options_item_state_empty"
+                            id="input_item_user_id_field_mode_existing_options_id">
+                            <div class="input_item_field_mode_options_item_title"
+                                id="input_item_user_id_field_mode_existing_options_id_title">
+                                <div class="input_item_field_mode_options_item_title_text"
+                                    id="input_item_user_id_field_mode_existing_options_id_title_text">
+                                    ユーザID(必須)
+                                </div>
+                            </div>
+                            <div class="input_item_field_mode_options_item_desc"
+                                id="input_item_user_id_field_mode_existing_options_id_desc">
+                                <div class="input_item_field_mode_options_item_desc_text"
+                                    id="input_item_user_id_field_mode_existing_options_id_desc_text">
+                                    1~3から始まる<br>4桁の数字を入力してください
+                                </div>
+                            </div>
+                            <div class="input_item_field_mode_options_item_input"
+                                id="input_item_user_id_field_mode_existing_options_id_input">
+                                <input class="input_item_field_mode_options_item_input_element"
+                                    id="input_item_user_id_field_mode_existing_options_id_input_element" type="text"
+                                    placeholder="XXXX">
+                            </div>
+                            <div class="input_item_field_mode_options_item_error"
+                                id="input_item_user_id_field_mode_existing_options_id_error">
+                                <div class="input_item_field_mode_options_item_error_item"
+                                    id="input_item_user_id_field_mode_existing_options_id_error_item_invalid_format"
+                                    data-error-type="invalid_format">
+                                    <div class="input_item_field_mode_options_item_error_item_text"
+                                        id="input_item_user_id_field_mode_existing_options_id_error_item_invalid_format_text">
+                                        ユーザIDの形式が不正です
+                                    </div>
+                                </div>
+                                <div class="input_item_field_mode_options_item_error_item"
+                                    id="input_item_user_id_field_mode_existing_options_id_error_item_not_found"
+                                    data-error-type="not_found">
+                                    <div class="input_item_field_mode_options_item_error_item_text"
+                                        id="input_item_user_id_field_mode_existing_options_id_error_item_not_found_text">
+                                        ユーザが見つかりません
+                                    </div>
+                                </div>
+                                <div class="input_item_field_mode_options_item_error_item"
+                                    id="input_item_user_id_field_mode_existing_options_id_error_item_required"
+                                    data-error-type="required">
+                                    <div class="input_item_field_mode_options_item_error_item_text"
+                                        id="input_item_user_id_field_mode_existing_options_id_error_item_required_text">
+                                        入力してください
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="input_item_error" id="input_item_user_id_error">
+                <div class="input_item_error_item" id="input_item_user_id_error_required" data-error-type="required">
+                    <div class="input_item_error_item_text" id="input_item_user_id_error_required_text">
+                        いずれかを選択してください
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="input_item input_item_state_empty" id="input_item_round_id">
+            <!--新規作成でない場合のみ表示-->
+            <div class="input_item_title" id="input_item_round_id_title">
+                <div class="input_item_title_text" id="input_item_round_id_title_text">
+                    対象ラウンド
+                </div>
+            </div>
+            <div class="input_item_desc" id="input_item_round_id_desc">
+                <div class="input_item_desc_text" id="input_item_round_id_desc_text">
+                    ラウンドを新しく作成するか<br>既存のラウンドで継続してください
+                </div>
+            </div>
+            <div class="input_item_field" id="input_item_round_id_field">
+                <div class="input_item_field_mode" id="input_item_round_id_field_mode_create">
+                    <!--実際の作成はsubmit時-->
+                    <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
+                        id="input_item_round_id_field_mode_create_button" data-mode="create">
+                        <div class="input_item_field_mode_button_text"
+                            id="input_item_round_id_field_mode_create_button_text">
+                            ラウンドを新規作成
+                        </div>
+                    </button>
+                </div>
+                <div class="input_item_field_mode" id="input_item_round_id_field_mode_continue">
+                    <!--submit時に存在チェック-->
+                    <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
+                        id="input_item_round_id_field_mode_continue_button" data-mode="continue">
+                        <div class="input_item_field_mode_button_text"
+                            id="input_item_round_id_field_mode_continue_button_text">
+                            既存のラウンドで続行
+                        </div>
+                    </button>
+                    <div class="input_item_field_mode_extra_desc"
+                        id="input_item_round_id_field_mode_continue_extra_desc">
+                        <div class="input_item_field_mode_extra_desc_text"
+                            id="input_item_round_id_field_mode_continue_extra_desc_text">
+                            <!--JSで既存ラウンドについての情報を挿入-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="input_item_error" id="input_item_round_id_error">
+                <div class="input_item_error_item" id="input_item_round_id_error_required" data-error-type="required">
+                    <div class="input_item_error_item_text" id="input_item_round_id_error_required_text">
+                        いずれかを選択してください
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="submit" id="submit">
+        <button class="submit_button" id="submit_button">
+            <div class="submit_button_text" id="submit_button_text">
+                ラウンド開始
+            </div>
+        </button>
+        <div class="submit_error" id="submit_error">
+            <div class="submit_error_item" id="submit_error_item_invalid" data-error-type="invalid">
+                <div class="submit_error_item_text" id="submit_error_item_invalid_text">
+                    入力内容に不正があります(各入力欄を参照)<br>原因不明の場合は再試行してください
+                </div>
+            </div>
+            <div class="submit_error_item" id="submit_error_item_network" data-error-type="network">
+                <div class="submit_error_item_text" id="submit_error_item_network_text" data-error-type="network">
+                    ネットワークエラーが発生しました<br>接続を確認して再試行してください
+                </div>
+            </div>
+            <div class="submit_error_item" id="submit_error_item_internal" data-error-type="internal">
+                <div class="submit_error_item_text" id="submit_error_item_internal_text" data-error-type="internal">
+                    内部エラーが発生しました<br>再試行してください
+                </div>
+            </div>
+            <div class="submit_error_item" id="submit_error_item_unknown" data-error-type="unknown">
+                <div class="submit_error_item_text" id="submit_error_item_unknown_text" data-error-type="unknown">
+                    不明なエラーが発生しました<br>再試行してください
+                </div>
+            </div>
+            <div class="submit_error_item" id="submit_error_item_critical" data-error-type="critical">
+                <div class="submit_error_item_text" id="submit_error_item_critical_text" data-error-type="critical">
+                    致命的なエラーが発生しました<br>システム管理者に連絡してください
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--
+        構造ではなく役割ベースのクラスについて
+        - input_item_state_empty: input_itemに付与し、入力が未入力であることを示す
+        - input_item_state_error: input_itemに付与し入力がエラーであることを示す
+        - input_item_state_ok   : input_itemに付与し入力が正常であることを示す
+        - input_item_field_mode_options_item_state_empty: input_item_field_mode_options_itemに付与し、入力が未入力であることを示す
+        - input_item_field_mode_options_item_state_error: input_item_field_mode_options_itemに付与し、入力がエラーであることを示す
+        - input_item_field_mode_options_item_state_ok   : input_item_field_mode_options_itemに付与し、入力が正常である
+    -->
+</body>
+
+</html>

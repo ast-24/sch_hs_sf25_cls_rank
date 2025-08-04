@@ -1,4 +1,5 @@
 import http from 'http';
+import https from 'https';
 import { readFile, createReadStream, existsSync, statSync } from 'fs';
 import { extname, join, dirname, resolve } from 'path';
 import { networkInterfaces } from 'os';
@@ -8,9 +9,10 @@ import { promisify } from 'util';
 const readFileAsync = promisify(readFile);
 
 const PORT = 8080;
+const API_SERVER_URL = 'https://api-skijnjrank.ast24.dev';
+
 const currentDir = dirname(fileURLToPath(import.meta.url));
-const ASS_DIR = resolve(currentDir, '../../src/srv-www-ass');
-const SRF_DIR = resolve(currentDir, '../../src/srv-www-srf');
+const WWW_DIR = resolve(currentDir, '../../src/srv-www');
 
 const getAllIPs = () => {
     const ips = ['localhost'];
@@ -48,9 +50,8 @@ const serveFile = async (filePath, res, origin) => {
             let data = await readFileAsync(filePath, 'utf8');
             const fileDir = dirname(filePath).replace(/\\/g, '/');
             data = data
-                .replace(/\{\{ASS_ORIGIN\}\}/g, origin)
-                .replace(/\{\{SRF_ORIGIN\}\}/g, origin)
-                .replace(/\{\{API_ORIGIN\}\}/g, '');
+                .replace(/\{\{WWW_ORIGIN\}\}/g, origin)
+                .replace(/\{\{API_ORIGIN\}\}/g, `${origin}/api`);
             res.writeHead(200, { 'Content-Type': type });
             res.end(data);
         } catch (err) {
@@ -68,15 +69,53 @@ const serveFile = async (filePath, res, origin) => {
     }
 };
 
+// APIプロキシ機能
+const proxyAPIRequest = async (req, res) => {
+    const url = new URL(req.url.replace('/api', ''), API_SERVER_URL);
+
+    const options = {
+        method: req.method,
+        headers: {
+            ...req.headers,
+            host: url.host,
+        },
+    };
+
+    const requestModule = url.protocol === 'https:' ? https : http;
+    const proxyReq = requestModule.request(url, options, (proxyRes) => {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(res);
+    });
+
+    proxyReq.on('error', (err) => {
+        console.error('Proxy error:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Proxy error' }));
+    });
+
+    // リクエストボディをプロキシに転送
+    req.pipe(proxyReq);
+};
+
 const server = http.createServer(async (req, res) => {
     const reqPath = decodeURIComponent(req.url.split('?')[0]);
-    let filePath = join(SRF_DIR, reqPath);
+
+    // APIリクエストの場合はプロキシする
+    if (reqPath.startsWith('/api')) {
+        await proxyAPIRequest(req, res);
+        return;
+    }
+
+    let filePath = join(WWW_DIR, reqPath);
+
+    if (existsSync(filePath) && statSync(filePath).isDirectory()) {
+        filePath = join(filePath, 'index.html');
+    }
 
     if (!existsSync(filePath) || !statSync(filePath).isFile()) {
-        filePath = join(ASS_DIR, reqPath);
-        if (!existsSync(filePath) || !statSync(filePath).isFile()) {
-            filePath = join(SRF_DIR, 'index.html');
-        }
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('File not found');
+        return;
     }
 
     // リクエストからオリジンを抽出

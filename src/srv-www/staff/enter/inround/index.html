@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ラウンド中 - スタッフ用結果入力ページ - 文化祭2-1用ランキングシステム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" src="./index.mjs"></script>
+</head>
+
+<body>
+    <div class="page_title" id="page_title">
+        <div class="page_title_text" id="page_title_text">
+            ラウンド中<br>結果入力ページ
+        </div>
+    </div>
+
+    <div class="round_info" id="round_info">
+        <div class="round_info_item" id="round_info_room">
+            <div class="round_info_item_label">ルーム:</div>
+            <div class="round_info_item_value" id="round_info_room_value">-</div>
+        </div>
+        <div class="round_info_item" id="round_info_user">
+            <div class="round_info_item_label">ユーザID:</div>
+            <div class="round_info_item_value" id="round_info_user_value">-</div>
+        </div>
+        <div class="round_info_item" id="round_info_round">
+            <div class="round_info_item_label">ラウンドID:</div>
+            <div class="round_info_item_value" id="round_info_round_value">-</div>
+        </div>
+    </div>
+
+    <div class="score_info" id="score_info">
+        <div class="score_info_title">
+            <div class="score_info_title_text">スコア</div>
+        </div>
+        <div class="score_info_item" id="score_info_total">
+            <div class="score_info_item_label">累計スコア:</div>
+            <div class="score_info_item_value" id="score_info_total_value">-</div>
+        </div>
+        <div class="score_info_item" id="score_info_round_max">
+            <div class="score_info_item_label">最高ラウンドスコア:</div>
+            <div class="score_info_item_value" id="score_info_round_max_value">-</div>
+        </div>
+        <div class="score_info_item" id="score_info_round_current">
+            <div class="score_info_item_label">現ラウンドスコア:</div>
+            <div class="score_info_item_value" id="score_info_round_current_value">-</div>
+        </div>
+    </div>
+
+    <div class="answer_action" id="answer_action">
+        <div class="answer_action_title">
+            <div class="answer_action_title_text">回答入力</div>
+        </div>
+        <div class="answer_action_buttons" id="answer_action_buttons">
+            <button class="answer_button correct_button" id="answer_correct_button">
+                <div class="answer_button_text">正解</div>
+            </button>
+            <button class="answer_button incorrect_button" id="answer_incorrect_button">
+                <div class="answer_button_text">不正解</div>
+            </button>
+            <button class="answer_button pass_button" id="answer_pass_button">
+                <div class="answer_button_text">パス</div>
+            </button>
+        </div>
+    </div>
+
+    <div class="actions" id="actions">
+        <div class="actions_row" id="actions_row_finish">
+            <button class="action_button finish_button" id="finish_button">
+                <div class="action_button_text" id="finish_button_text">
+                    ラウンド終了
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <div class="question_history" id="question_history">
+        <div class="question_history_title" id="question_history_title">
+            <div class="question_history_title_text" id="question_history_title_text">
+                回答履歴
+            </div>
+        </div>
+        <div class="question_history_list" id="question_history_list">
+            <!-- 回答履歴がここに表示される -->
+        </div>
+    </div>
+
+    <div class="error_display" id="error_display">
+        <div class="error_display_item" id="error_display_item_network" data-error-type="network">
+            <div class="error_display_item_text" id="error_display_item_network_text">
+                ネットワークエラーが発生しました<br>接続を確認して再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_internal" data-error-type="internal">
+            <div class="error_display_item_text" id="error_display_item_internal_text">
+                内部エラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_unknown" data-error-type="unknown">
+            <div class="error_display_item_text" id="error_display_item_unknown_text">
+                不明なエラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_critical" data-error-type="critical">
+            <div class="error_display_item_text" id="error_display_item_critical_text">
+                致命的なエラーが発生しました<br>システム管理者に連絡してください
+            </div>
+        </div>
+    </div>
+
+    <!--
+        構造ではなく役割ベースのクラスについて
+        - input_item_state_empty: input_itemに付与し、入力が未入力であることを示す
+        - input_item_state_error: input_itemに付与し入力がエラーであることを示す
+        - input_item_state_ok   : input_itemに付与し入力が正常であることを示す
+    -->
+</body>
+
+</html>
