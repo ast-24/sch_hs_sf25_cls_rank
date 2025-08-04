@@ -42,7 +42,7 @@ export default async function (request, env) {
         result = {
             finished: true,
             score,
-            round_rank: roundRank
+            rank: Number(roundRank)
         };
     } else {
         // 未finished: answersからスコア計算、ランクはnull

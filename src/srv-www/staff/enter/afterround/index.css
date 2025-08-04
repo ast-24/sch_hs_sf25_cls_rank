@@ -1,0 +1,345 @@
+/* デフォ値オーバーライド */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+html {
+    position: relative;
+    min-width: 100vw;
+    min-height: 100vh;
+    background-color: black;
+    color: white;
+
+    body {
+        position: relative;
+        padding: 2vh 1vw;
+        min-height: 100%;
+        min-width: 100%;
+
+        /* 初期状態で非表示にする要素 */
+        .error_display_item {
+            display: none;
+        }
+
+        .page_title {
+            position: relative;
+            margin: 0 auto 2vh auto;
+            padding: 1vh 6vw;
+            border: 1vw solid white;
+            border-radius: 3vw;
+            max-width: 70vw;
+
+            .page_title_text {
+                font-size: 7vw;
+                font-weight: bold;
+                color: white;
+                line-height: 1.3;
+            }
+        }
+
+        .error_display {
+            position: relative;
+            margin: 1vh auto;
+            max-width: 80vw;
+
+            .error_display_item {
+                margin: 0.5vh 0;
+                padding: 1vh 2vw;
+                border: 0.5vw solid #8a4a4a;
+                border-radius: 2vw;
+                background-color: #2a0a0a;
+
+                .error_display_item_text {
+                    font-size: 4vw;
+                    color: #ff6666;
+                    line-height: 1.3;
+                }
+            }
+        }
+
+        .round_info {
+            position: relative;
+            margin: 2vh auto;
+            padding: 1vh 2vw;
+            border: 0.5vw solid white;
+            border-radius: 2vw;
+            max-width: 80vw;
+
+            .round_info_item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 0.5vh 0;
+                font-size: 4.5vw;
+
+                .round_info_item_label {
+                    font-weight: bold;
+                    text-align: left;
+                }
+
+                .round_info_item_value {
+                    font-family: monospace;
+                    color: #66ff66;
+                    text-align: right;
+                }
+            }
+        }
+
+        .statistics_info {
+            position: relative;
+            margin: 2vh auto;
+            max-width: 80vw;
+
+            .statistics_info_title {
+                margin: 1vh 0;
+                font-size: 6vw;
+                font-weight: bold;
+                color: white;
+
+                .statistics_info_title_text {
+                    padding: 0.5vh 0;
+                    border-bottom: 0.3vw solid white;
+                }
+            }
+
+            .statistics_info_section {
+                margin: 1vh 0;
+                padding: 1vh 2vw;
+                border: 0.5vw solid #66ccff;
+                border-radius: 2vw;
+                background-color: rgba(102, 204, 255, 0.1);
+
+                .statistics_info_section_title {
+                    font-size: 4.5vw;
+                    font-weight: bold;
+                    color: #66ccff;
+                    margin-bottom: 1vh;
+                }
+
+                .statistics_info_item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin: 0.5vh 0;
+                    font-size: 4vw;
+
+                    .statistics_info_item_label {
+                        font-weight: bold;
+                        text-align: left;
+                    }
+
+                    .statistics_info_item_value {
+                        font-family: monospace;
+                        color: #66ff66;
+                        text-align: right;
+                        font-size: 4.5vw;
+                    }
+                }
+            }
+        }
+
+        .round_history {
+            position: relative;
+            margin: 2vh auto;
+            max-width: 90vw;
+
+            .round_history_title {
+                margin: 1vh 0;
+                font-size: 5vw;
+                font-weight: bold;
+                color: white;
+
+                .round_history_title_text {
+                    padding: 0.5vh 0;
+                    border-bottom: 0.3vw solid white;
+                }
+            }
+
+            .round_history_header {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr 2fr;
+                gap: 0.5vw;
+                margin: 1vh 0;
+                padding: 0.5vh 1vw;
+                background-color: #333;
+                border-radius: 1vw;
+                font-size: 3.5vw;
+                font-weight: bold;
+
+                .round_history_header_round,
+                .round_history_header_score,
+                .round_history_header_rank,
+                .round_history_header_finished {
+                    color: #cccccc;
+                }
+            }
+
+            .round_history_list {
+                max-height: 30vh;
+                overflow-y: auto;
+                border: 0.3vw solid #666;
+                border-radius: 1vw;
+                padding: 0.5vh 0;
+
+                .round_history_item {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr 2fr;
+                    gap: 0.5vw;
+                    margin: 0.3vh 0;
+                    padding: 0.5vh 1vw;
+                    font-size: 3.5vw;
+                    border-bottom: 0.1vw solid #444;
+
+                    &:last-child {
+                        border-bottom: none;
+                    }
+
+                    .round_history_item_round {
+                        color: #ffcc66;
+                        font-family: monospace;
+                    }
+
+                    .round_history_item_score {
+                        color: #66ff66;
+                        font-family: monospace;
+                    }
+
+                    .round_history_item_rank {
+                        color: #ff6666;
+                        font-family: monospace;
+                    }
+
+                    .round_history_item_finished {
+                        color: #cccccc;
+                        font-size: 3vw;
+                        font-family: monospace;
+                    }
+                }
+            }
+        }
+
+        .actions {
+            position: relative;
+            margin: 3vh auto 2vh auto;
+            max-width: 80vw;
+
+            .actions_row {
+                margin: 1vh 0;
+
+                .action_button {
+                    width: 100%;
+                    padding: 2vh 4vw;
+                    font-size: 5vw;
+                    font-weight: bold;
+                    border-radius: 3vw;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
+                    .action_button_text {
+                        line-height: 1.2;
+                    }
+
+                    &:hover {
+                        transform: scale(1.05);
+                    }
+
+                    &:active {
+                        transform: scale(0.95);
+                    }
+                }
+
+                .resume_button {
+                    background-color: #4a8a4a;
+                    color: white;
+                    border: 0.5vw solid #66aa66;
+
+                    &:hover {
+                        background-color: #5aa55a;
+                    }
+
+                    &:active {
+                        background-color: #3a7a3a;
+                    }
+                }
+
+                .finish_session_button {
+                    background-color: #8a4a4a;
+                    color: white;
+                    border: 0.5vw solid #aa6666;
+
+                    &:hover {
+                        background-color: #a55a5a;
+                    }
+
+                    &:active {
+                        background-color: #7a3a3a;
+                    }
+                }
+            }
+        }
+
+        /* スマートフォン向けの調整 */
+        @media (max-width: 768px) {
+
+            .round_history_header,
+            .round_history_item {
+                font-size: 3vw;
+            }
+
+            .round_history_item_finished {
+                font-size: 2.5vw;
+            }
+
+            .statistics_info_item {
+                font-size: 3.5vw;
+
+                .statistics_info_item_value {
+                    font-size: 4vw;
+                }
+            }
+        }
+
+        /* タブレット向けの調整 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .page_title_text {
+                font-size: 5vw;
+            }
+
+            .round_info_item,
+            .statistics_info_item {
+                font-size: 3.5vw;
+            }
+
+            .action_button {
+                font-size: 4vw;
+            }
+        }
+
+        /* デスクトップ向けの調整 */
+        @media (min-width: 1025px) {
+            .page_title_text {
+                font-size: 3vw;
+            }
+
+            .round_info_item,
+            .statistics_info_item {
+                font-size: 2.5vw;
+            }
+
+            .action_button {
+                font-size: 3vw;
+            }
+
+            .round_history_header,
+            .round_history_item {
+                font-size: 2vw;
+            }
+        }
+    }
+}

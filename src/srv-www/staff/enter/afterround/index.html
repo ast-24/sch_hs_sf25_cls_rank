@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ラウンド終了 - スタッフ用結果入力ページ - 文化祭2-1用ランキングシステム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" src="./index.mjs"></script>
+</head>
+
+<body>
+    <div class="page_title" id="page_title">
+        <div class="page_title_text" id="page_title_text">
+            ラウンド終了<br>結果確認ページ
+        </div>
+    </div>
+
+    <div class="error_display" id="error_display">
+        <div class="error_display_item" id="error_display_item_invalid" data-error-type="invalid">
+            <div class="error_display_item_text" id="error_display_item_invalid_text">
+                入力内容に不正があります<br>原因不明の場合は再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_network" data-error-type="network">
+            <div class="error_display_item_text" id="error_display_item_network_text">
+                ネットワークエラーが発生しました<br>接続を確認して再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_internal" data-error-type="internal">
+            <div class="error_display_item_text" id="error_display_item_internal_text">
+                内部エラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_unknown" data-error-type="unknown">
+            <div class="error_display_item_text" id="error_display_item_unknown_text">
+                不明なエラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_critical" data-error-type="critical">
+            <div class="error_display_item_text" id="error_display_item_critical_text">
+                致命的なエラーが発生しました<br>システム管理者に連絡してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_round_not_finished" data-error-type="round_not_finished">
+            <div class="error_display_item_text" id="error_display_item_round_not_finished_text">
+                ラウンドがまだ終了していません<br>ラウンドを終了してから確認してください
+            </div>
+        </div>
+    </div>
+
+    <div class="round_info" id="round_info">
+        <div class="round_info_item" id="round_info_room">
+            <div class="round_info_item_label">ルーム:</div>
+            <div class="round_info_item_value" id="round_info_room_value">-</div>
+        </div>
+        <div class="round_info_item" id="round_info_user">
+            <div class="round_info_item_label">ユーザID:</div>
+            <div class="round_info_item_value" id="round_info_user_value">-</div>
+        </div>
+        <div class="round_info_item" id="round_info_round">
+            <div class="round_info_item_label">ラウンドID:</div>
+            <div class="round_info_item_value" id="round_info_round_value">-</div>
+        </div>
+    </div>
+
+    <div class="statistics_info" id="statistics_info">
+        <div class="statistics_info_title">
+            <div class="statistics_info_title_text">ユーザ統計</div>
+        </div>
+        <div class="statistics_info_section" id="statistics_info_total">
+            <div class="statistics_info_section_title">累計</div>
+            <div class="statistics_info_item" id="statistics_info_total_score">
+                <div class="statistics_info_item_label">スコア:</div>
+                <div class="statistics_info_item_value" id="statistics_info_total_score_value">-</div>
+            </div>
+            <div class="statistics_info_item" id="statistics_info_total_rank">
+                <div class="statistics_info_item_label">ランク:</div>
+                <div class="statistics_info_item_value" id="statistics_info_total_rank_value">-</div>
+            </div>
+        </div>
+        <div class="statistics_info_section" id="statistics_info_max">
+            <div class="statistics_info_section_title">最大ラウンド</div>
+            <div class="statistics_info_item" id="statistics_info_max_score">
+                <div class="statistics_info_item_label">スコア:</div>
+                <div class="statistics_info_item_value" id="statistics_info_max_score_value">-</div>
+            </div>
+            <div class="statistics_info_item" id="statistics_info_max_rank">
+                <div class="statistics_info_item_label">ランク:</div>
+                <div class="statistics_info_item_value" id="statistics_info_max_rank_value">-</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="round_history" id="round_history">
+        <div class="round_history_title">
+            <div class="round_history_title_text">ラウンド履歴（新しい順）</div>
+        </div>
+        <div class="round_history_header" id="round_history_header">
+            <div class="round_history_header_round">ラウンドID</div>
+            <div class="round_history_header_score">スコア</div>
+            <div class="round_history_header_rank">ランク</div>
+            <div class="round_history_header_finished">終了日時</div>
+        </div>
+        <div class="round_history_list" id="round_history_list">
+            <!-- ラウンド履歴がここに表示される -->
+        </div>
+    </div>
+
+    <div class="actions" id="actions">
+        <div class="actions_row" id="actions_row_resume">
+            <button class="action_button resume_button" id="resume_button">
+                <div class="action_button_text" id="resume_button_text">
+                    ラウンド再開
+                </div>
+            </button>
+        </div>
+        <div class="actions_row" id="actions_row_finish_session">
+            <button class="action_button finish_session_button" id="finish_session_button">
+                <div class="action_button_text" id="finish_session_button_text">
+                    担当終了
+                </div>
+            </button>
+        </div>
+    </div>
+</body>
+
+</html>
