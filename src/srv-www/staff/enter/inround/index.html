@@ -20,6 +20,39 @@
         </div>
     </div>
 
+    <div class="error_display" id="error_display">
+        <div class="error_display_item" id="error_display_item_invalid" data-error-type="invalid">
+            <div class="error_display_item_text" id="error_display_item_invalid_text">
+                入力内容に不正があります<br>原因不明の場合は再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_network" data-error-type="network">
+            <div class="error_display_item_text" id="error_display_item_network_text">
+                ネットワークエラーが発生しました<br>接続を確認して再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_internal" data-error-type="internal">
+            <div class="error_display_item_text" id="error_display_item_internal_text">
+                内部エラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_unknown" data-error-type="unknown">
+            <div class="error_display_item_text" id="error_display_item_unknown_text">
+                不明なエラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_critical" data-error-type="critical">
+            <div class="error_display_item_text" id="error_display_item_critical_text">
+                致命的なエラーが発生しました<br>システム管理者に連絡してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_round_finished" data-error-type="round_finished">
+            <div class="error_display_item_text" id="error_display_item_round_finished_text">
+                ラウンドは既に終了済みです<br>新しいラウンドを開始してください
+            </div>
+        </div>
+    </div>
+
     <div class="round_info" id="round_info">
         <div class="round_info_item" id="round_info_room">
             <div class="round_info_item_label">ルーム:</div>
@@ -55,7 +88,7 @@
 
     <div class="answer_action" id="answer_action">
         <div class="answer_action_title">
-            <div class="answer_action_title_text">回答入力</div>
+            <div class="answer_action_title_text">回答結果</div>
         </div>
         <div class="answer_action_buttons" id="answer_action_buttons">
             <button class="answer_button correct_button" id="answer_correct_button">
@@ -83,34 +116,17 @@
     <div class="question_history" id="question_history">
         <div class="question_history_title" id="question_history_title">
             <div class="question_history_title_text" id="question_history_title_text">
-                回答履歴
+                回答履歴（編集可能）
             </div>
+        </div>
+        <div class="question_history_header" id="question_history_header">
+            <div class="question_history_header_number">回答番号</div>
+            <div class="question_history_header_result">結果</div>
+            <div class="question_history_header_edit">編集</div>
+            <div class="question_history_header_time">時刻</div>
         </div>
         <div class="question_history_list" id="question_history_list">
             <!-- 回答履歴がここに表示される -->
-        </div>
-    </div>
-
-    <div class="error_display" id="error_display">
-        <div class="error_display_item" id="error_display_item_network" data-error-type="network">
-            <div class="error_display_item_text" id="error_display_item_network_text">
-                ネットワークエラーが発生しました<br>接続を確認して再試行してください
-            </div>
-        </div>
-        <div class="error_display_item" id="error_display_item_internal" data-error-type="internal">
-            <div class="error_display_item_text" id="error_display_item_internal_text">
-                内部エラーが発生しました<br>再試行してください
-            </div>
-        </div>
-        <div class="error_display_item" id="error_display_item_unknown" data-error-type="unknown">
-            <div class="error_display_item_text" id="error_display_item_unknown_text">
-                不明なエラーが発生しました<br>再試行してください
-            </div>
-        </div>
-        <div class="error_display_item" id="error_display_item_critical" data-error-type="critical">
-            <div class="error_display_item_text" id="error_display_item_critical_text">
-                致命的なエラーが発生しました<br>システム管理者に連絡してください
-            </div>
         </div>
     </div>
 

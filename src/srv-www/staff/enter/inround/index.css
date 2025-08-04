@@ -18,7 +18,7 @@ html {
 
     body {
         position: relative;
-        padding: 2vh 3vw;
+        padding: 2vh 1vw;
         min-height: 100%;
         min-width: 100%;
 
@@ -29,12 +29,11 @@ html {
 
         .page_title {
             position: relative;
-            margin: 0 auto;
+            margin: 0 auto 2vh auto;
             padding: 1vh 6vw;
-            margin-bottom: 6vh;
             border: 1vw solid white;
             border-radius: 3vw;
-            max-width: 80vw;
+            max-width: 70vw;
 
             .page_title_text {
                 font-size: 7vw;
@@ -44,13 +43,34 @@ html {
             }
         }
 
+        .error_display {
+            position: relative;
+            margin: 1vh auto;
+            max-width: 80vw;
+
+            .error_display_item {
+                display: none;
+                margin: 0;
+                padding: 3vw;
+                background-color: #5a2a2a;
+                border: 0.5vw solid #8a4a4a;
+                border-radius: 2vw;
+
+                .error_display_item_text {
+                    font-size: 4vw;
+                    text-align: center;
+                    color: white;
+                }
+            }
+        }
+
         .round_info {
             position: relative;
-            margin: 0 auto 4vh auto;
+            margin: 0 auto 2vh auto;
             padding: 2vh 4vw;
             border: 0.5vw solid white;
             border-radius: 2vw;
-            max-width: 80vw;
+            max-width: 60vw;
             background-color: #222;
 
             .round_info_item {
@@ -74,7 +94,7 @@ html {
 
         .score_info {
             position: relative;
-            margin: 0 auto 4vh auto;
+            margin: 0 auto 2vh auto;
             padding: 2vh 4vw;
             border: 0.5vw solid #4a8a4a;
             border-radius: 2vw;
@@ -118,7 +138,7 @@ html {
             padding: 3vh 4vw;
             border: 0.5vw solid white;
             border-radius: 2vw;
-            max-width: 80vw;
+            max-width: 90vw;
             background-color: #111;
 
             .answer_action_title {
@@ -139,7 +159,7 @@ html {
 
                 .answer_button {
                     flex: 1;
-                    padding: 4vw;
+                    padding: 7vw 2vw;
                     font-size: 6vw;
                     font-weight: bold;
                     border-radius: 2vw;
@@ -188,12 +208,12 @@ html {
         .submit {
             position: relative;
             margin: 4vh auto;
-            max-width: 80vw;
+            max-width: 90vw;
 
             .submit_button {
                 width: 100%;
                 padding: 4vw;
-                font-size: 6vw;
+                font-size: 7vw;
                 font-weight: bold;
                 background-color: #2a4a8a;
                 color: white;
@@ -224,7 +244,7 @@ html {
         .actions {
             position: relative;
             margin: 4vh auto;
-            max-width: 80vw;
+            max-width: 90vw;
 
             .actions_row {
                 margin: 2vh 0;
@@ -275,10 +295,33 @@ html {
                 }
             }
 
+            .question_history_header {
+                display: grid;
+                grid-template-columns: 1fr 2fr 2fr 1.5fr;
+                gap: 1vw;
+                align-items: center;
+                padding: 2vw;
+                margin-bottom: 1vh;
+                background-color: #333;
+                border-radius: 1vw;
+                font-size: 3.5vw;
+                font-weight: bold;
+                color: #ccc;
+                border-bottom: 0.2vw solid #555;
+
+                .question_history_header_number,
+                .question_history_header_result,
+                .question_history_header_edit,
+                .question_history_header_time {
+                    text-align: center;
+                }
+            }
+
             .question_history_list {
                 .question_history_item {
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 2fr 2fr 1.5fr;
+                    gap: 1vw;
                     align-items: center;
                     padding: 2vw;
                     margin: 1vh 0;
@@ -286,8 +329,15 @@ html {
                     border-radius: 1vw;
                     font-size: 4vw;
 
+                    .question_history_item_number {
+                        font-weight: bold;
+                        color: #aaa;
+                        text-align: center;
+                    }
+
                     .question_history_item_result {
                         font-weight: bold;
+                        text-align: center;
 
                         &.correct {
                             color: #4a8a4a;
@@ -296,11 +346,36 @@ html {
                         &.incorrect {
                             color: #8a4a4a;
                         }
+
+                        &.pass {
+                            color: #8a8a4a;
+                        }
+                    }
+
+                    .question_history_item_edit {
+                        text-align: center;
+
+                        .edit_dropdown {
+                            width: 100%;
+                            padding: 1vw;
+                            font-size: 3.5vw;
+                            background-color: #333;
+                            color: white;
+                            border: 0.2vw solid #555;
+                            border-radius: 1vw;
+                            cursor: pointer;
+
+                            option {
+                                background-color: #333;
+                                color: white;
+                            }
+                        }
                     }
 
                     .question_history_item_time {
                         color: #ccc;
                         font-size: 3.5vw;
+                        text-align: center;
                     }
                 }
 
@@ -309,29 +384,10 @@ html {
                     color: #666;
                     font-size: 4vw;
                     padding: 2vh;
+                    grid-column: 1 / -1;
                 }
             }
         }
 
-        .error_display {
-            position: relative;
-            margin: 4vh auto;
-            max-width: 80vw;
-
-            .error_display_item {
-                display: none;
-                margin: 2vh 0;
-                padding: 3vw;
-                background-color: #5a2a2a;
-                border: 0.5vw solid #8a4a4a;
-                border-radius: 2vw;
-
-                .error_display_item_text {
-                    font-size: 4vw;
-                    text-align: center;
-                    color: white;
-                }
-            }
-        }
     }
 }
