@@ -45,8 +45,8 @@
   - GET: ユーザの統計を取得
     - レスポンス
       - ボディ
-        - `score_total`: 累積スコア
-        - `score_round_max`: 最大ラウンドスコア
+        - `total_score`: 累積スコア
+        - `round_max_score`: 最大ラウンドスコア
         - `total_rank`: 累積スコアのランキング順位
         - `round_max_rank`: 最大ラウンドスコアのランキング順位
 - `/users/:user_id/results`: ユーザの結果
@@ -93,6 +93,7 @@
       - ボディ
         - `score`: ラウンドのスコア
         - `rank`: ラウンドのランキング順位
+        - `finished`: ラウンドが終了済みか
 - `/users/:user_id/rounds/:round_id/results`: ラウンドの結果
   - GET: ラウンドの結果を取得
     - レスポンス

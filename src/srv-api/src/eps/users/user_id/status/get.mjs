@@ -43,9 +43,9 @@ export default async function (request, env) {
     }
 
     return new MyJsonResp({
-        total: score_total,
-        total_rank: totalRank,
-        round_max: score_round_max,
-        round_max_rank: roundMaxRank
+        total_score: score_total,
+        total_rank: Number(totalRank),
+        round_max_score: score_round_max,
+        round_max_rank: Number(roundMaxRank)
     });
 }

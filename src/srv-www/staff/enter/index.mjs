@@ -516,6 +516,9 @@ function onUserIdModeChange(mode) {
     } else {
         DomManagerC.setInputItemState(DomManagerC.elms.userId, 'ok');
     }
+    if (mode === 'create') {
+        DomManagerC.hideInputItem(DomManagerC.elms.roundId);
+    }
 }
 
 function onUserIdModeCreateEnterName() {
@@ -554,6 +557,7 @@ async function onUserIdModeExistingEnterId() {
         DomManagerC.setInputItemFieldModeOptionsItemState(DomManagerC.elms.userIdModeExistingOptionsId, 'error');
         DomManagerC.setInputItemState(DomManagerC.elms.userId, 'error');
         StateC.userId = null;
+        DomManagerC.hideInputItem(DomManagerC.elms.roundId);
         return;
     }
     StateC.userId = userId;
@@ -563,6 +567,7 @@ async function onUserIdModeExistingEnterId() {
         if (StateC.isValidUser()) {
             DomManagerC.setInputItemState(DomManagerC.elms.userId, 'empty');
         }
+        DomManagerC.hideInputItem(DomManagerC.elms.roundId);
         return;
     }
 
