@@ -58,7 +58,9 @@ export default async function (request, env) {
                 [roundDbId, nextAnswerId, isCorrect]
             );
 
-            return new MyJsonResp();
+            return new MyJsonResp({
+                answer_id: nextAnswerId,
+            });
         } catch (error) {
             if (i === 2) {
                 throw error;

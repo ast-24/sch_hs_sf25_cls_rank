@@ -292,6 +292,7 @@ class DomManagerC {
 
     static init() {
         this.#initElements();
+        this.#resetDom();
         this.#initRoomIdSelected();
         this.#initUserIdModeSelected();
         this.#initRoundIdModeSelected();
@@ -318,15 +319,18 @@ class DomManagerC {
         }
     }
 
+    static #resetDom() {
+        setTimeout(() => {
+            this.#elements.roomIdSelector.value = 'before_select';
+            this.#elements.userIdModeCreateOptionsNameInput.value = '';
+            this.#elements.userIdModeExistingOptionsIdInput.value = '';
+        }, 100);
+        // DOMContentLoadedのあとに自動復元が走るため
+    }
+
     static #initRoomIdSelected() {
-        // 存在した場合
-        const selected = Number(this.#elements.roomIdSelector.value);
-        if (ValidatorC.isValidRoomId(selected)) {
-            StateC.roomId = selected;
-        } else {
-            if (StateC.roomId) {
-                this.#elements.roomIdSelector.value = StateC.roomId;
-            }
+        if (StateC.roomId) {
+            this.#elements.roomIdSelector.value = StateC.roomId;
         }
     }
 
@@ -649,7 +653,7 @@ async function onSubmit() {
     }
 
     const query = StateC.intoQuery();
-    const url = new URL(window.location.href + './inround');
+    const url = new URL(window.location.href + './inround/');
     url.search = query.toString();
 
     window.location.href = url.toString();
