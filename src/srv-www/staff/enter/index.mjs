@@ -575,6 +575,8 @@ async function onUserIdModeExistingEnterId() {
             DomManagerC.setInputItemFieldModeOptionsItemState(DomManagerC.elms.userIdModeExistingOptionsId, 'error');
             DomManagerC.setInputItemState(DomManagerC.elms.userId, 'error');
             StateC.userId = null;
+
+            DomManagerC.hideInputItem(DomManagerC.elms.roundId);
             return;
         }
         throw e;
@@ -586,11 +588,16 @@ async function onUserIdModeExistingEnterId() {
         DomManagerC.setInputItemState(DomManagerC.elms.userId, 'ok');
     }
 
+    const noRoundElm = document.getElementById('input_item_user_id_field_mode_existing_options_id_no_round');
     if (activeRound) {
         DomManagerC.showInputItem(DomManagerC.elms.roundId);
-
+        if (noRoundElm) noRoundElm.style.display = 'none';
         const timeStr = activeRound.startedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
-        DomManagerC.elms.roundIdModeContinueExtraDesc.innerHTML = `[既存情報] ルームID: ${activeRound.roomId} 開始時刻: ${timeStr} `;
+        DomManagerC.elms.roundIdModeContinueExtraDesc.innerHTML = `[既存情報]<br>ルームID: ${activeRound.roomId}<br>開始時刻: ${timeStr} `;
+    } else {
+        if (noRoundElm) noRoundElm.style.display = 'block';
+        DomManagerC.hideInputItem(DomManagerC.elms.roundId);
+        DomManagerC.elms.roundIdModeContinueExtraDesc.innerHTML = '';
     }
 }
 
@@ -659,27 +666,30 @@ async function onSubmit() {
     window.location.href = url.toString();
 }
 
-function setupEventListeners() {
-    window.addEventListener('error', (event) => {
-        console.error('Global error caught:', event);
-        if (event instanceof Error) {
-            if (isThisError(CMN_ERRORS.fatal, event)) {
-                DomManagerC.showSubmitError('critical');
-            } else if (isThisError(CMN_ERRORS.serverFatal, event)) {
-                DomManagerC.showSubmitError('critical');
-            } else if (isThisError(CMN_ERRORS.serverTransient, event)) {
-                DomManagerC.showSubmitError('internal');
-            } else if (isThisError(CMN_ERRORS.network, event)) {
-                DomManagerC.showSubmitError('network');
-            } else if (isThisError(CMN_ERRORS.invalidInput, event)) {
-                DomManagerC.showSubmitError('invalid');
-            } else {
-                DomManagerC.showSubmitError('unknown');
-            }
+function onError(error) {
+    console.error('Global error caught:', error);
+    if (error instanceof Error) {
+        if (isThisError(CMN_ERRORS.fatal, error)) {
+            DomManagerC.showSubmitError('critical');
+        } else if (isThisError(CMN_ERRORS.serverFatal, error)) {
+            DomManagerC.showSubmitError('critical');
+        } else if (isThisError(CMN_ERRORS.serverTransient, error)) {
+            DomManagerC.showSubmitError('internal');
+        } else if (isThisError(CMN_ERRORS.network, error)) {
+            DomManagerC.showSubmitError('network');
+        } else if (isThisError(CMN_ERRORS.invalidInput, error)) {
+            DomManagerC.showSubmitError('invalid');
         } else {
             DomManagerC.showSubmitError('unknown');
         }
-    });
+    } else {
+        DomManagerC.showSubmitError('unknown');
+    }
+}
+
+function setupEventListeners() {
+    window.addEventListener('error', (event) => onError(event.error));
+    window.addEventListener('unhandledrejection', (event) => onError(event.reason));
 
     DomManagerC.elms.roomIdSelector.addEventListener('change', onRoomIdChange);
     DomManagerC.elms.roomIdSelector.addEventListener('blur', onRoomIdChange);

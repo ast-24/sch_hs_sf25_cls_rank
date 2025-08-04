@@ -4,6 +4,7 @@ const CMN_ERRORS = {
     serverTransient: 'CMN:ServerTransient',
     network: 'CMN:Network',
     invalidInput: 'CMN:InvalidInput',
+    roundFinished: 'CMN:RoundFinished',
     unknown: 'CMN:Unknown',
 }
 
@@ -41,62 +42,226 @@ class ApiClientC {
 
     /* -> { score_total: number, score_round_max: number, total_rank: number, round_max_rank: number } */
     static async getUserStatus(userId) {
-        const resp = await fetch(`${this.#baseUrl}/users/${userId}/status`);
-        if (!resp.ok) {
-            throw new Error(`Failed to get user status: ${resp.status}`);
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/users/${userId}/status`);
+        } catch (error) {
+            console.error('Failed to get user status:', error);
+            throw new Error(CMN_ERRORS.network);
         }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 404:
+                    console.error(new Error('User not found'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while getting user status'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while getting user status: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
         return await resp.json();
     }
 
     /* -> { score: number, rank: number } */
     static async getRoundStatus(userId, roundId) {
-        const resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/status`);
-        if (!resp.ok) {
-            throw new Error(`Failed to get round status: ${resp.status}`);
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/status`);
+        } catch (error) {
+            console.error('Failed to get round status:', error);
+            throw new Error(CMN_ERRORS.network);
         }
-        return await resp.json();
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 404:
+                    console.error(new Error('User or round not found'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while getting round status'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while getting round status: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
+        const body = await resp.json();
+        if (typeof body.rank === 'number') {
+            throw new Error(CMN_ERRORS.roundFinished);
+        }
+
+        return body;
     }
 
     /* -> { [answerId: string]: { is_correct: boolean|null, timestamp: string } } */
     static async getRoundResults(userId, roundId) {
-        const resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/results`);
-        if (!resp.ok) {
-            throw new Error(`Failed to get round results: ${resp.status}`);
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/results`);
+        } catch (error) {
+            console.error('Failed to get round results:', error);
+            throw new Error(CMN_ERRORS.network);
         }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 404:
+                    console.error(new Error('User or round not found'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while getting round results'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while getting round results: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
         return await resp.json();
     }
 
     /* -> { answer_id: number } */
     static async submitAnswer(userId, roundId, isCorrect) {
-        const resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/answers`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                is_correct: isCorrect  // true, false, nullのいずれかが可能
-            })
-        });
-        if (!resp.ok) {
-            throw new Error(`Failed to submit answer: ${resp.status}`);
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/answers`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    is_correct: isCorrect  // true, false, nullのいずれかが可能
+                })
+            });
+        } catch (error) {
+            console.error('Failed to submit answer:', error);
+            throw new Error(CMN_ERRORS.network);
         }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 404:
+                    console.error(new Error('User or round not found'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 409:
+                    console.error(new Error('Round already finished'));
+                    throw new Error(CMN_ERRORS.roundFinished);
+                case 422:
+                    console.error(new Error('Invalid input while submitting answer'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while submitting answer'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while submitting answer: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
         return await resp.json();
     }
 
     /* -> {} */
     static async finishRound(userId, roundId) {
-        const resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                finished: true
-            })
-        });
-        if (!resp.ok) {
-            throw new Error(`Failed to finish round: ${resp.status}`);
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    finished: true
+                })
+            });
+        } catch (error) {
+            console.error('Failed to finish round:', error);
+            throw new Error(CMN_ERRORS.network);
         }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 404:
+                    console.error(new Error('User or round not found'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 409:
+                    console.error(new Error('Round already finished'));
+                    throw new Error(CMN_ERRORS.roundFinished);
+                case 422:
+                    console.error(new Error('Invalid input while finishing round'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while finishing round'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while finishing round: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
+        return {};
+    }
+
+    /* -> {} */
+    static async updateRoundResults(userId, roundId, results) {
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/results`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(results)
+            });
+        } catch (error) {
+            console.error('Failed to update round results:', error);
+            throw new Error(CMN_ERRORS.network);
+        }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 404:
+                    console.error(new Error('User or round not found'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 409:
+                    console.error(new Error('Round already finished'));
+                    throw new Error(CMN_ERRORS.roundFinished);
+                case 422:
+                    console.error(new Error('Invalid input while updating round results'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while updating round results'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while updating round results: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
         return {};
     }
 }
@@ -193,28 +358,20 @@ class StateC {
     }
 
     static calculateScoreUpdate(isCorrect) {
-        console.log(isCorrect);
-
         const answersList = Object.entries(this.#state.answers)
             .sort((a, b) => Number(b[0]) - Number(a[0]))
             .map(([answerId, answer]) => answer);
 
         let consecutiveCount = 1;
 
-        console.log(answersList);
-
         for (let i = 0; i < answersList.length; i++) {
             const answer = answersList[i];
             if (answer.isCorrect === isCorrect) {
-                console.log(`Consecutive match: ${answer.isCorrect}`);
                 consecutiveCount++;
                 continue;
             }
-            console.log(`Consecutive break at: ${answer.isCorrect}`);
             break;
         }
-
-        console.log(consecutiveCount, isCorrect);
 
         return isCorrect ? 100 * consecutiveCount : -500 * consecutiveCount;
     }
@@ -301,134 +458,266 @@ class DomManagerC {
             return;
         }
 
-        Object.entries(answers)
-            .sort((a, b) => Number(b[0]) - Number(a[0]))
-            .forEach(([answerId, answer]) => {
-                const itemElm = document.createElement('div');
-                itemElm.className = 'question_history_item';
+        const sortedAnswers = Object.entries(answers)
+            .sort((a, b) => Number(b[0]) - Number(a[0]));
 
-                const resultElm = document.createElement('div');
-                resultElm.className = `question_history_item_result`;
-                if (answer.isCorrect === true) {
-                    resultElm.className += ' correct';
-                    resultElm.textContent = '正解';
-                } else if (answer.isCorrect === false) {
-                    resultElm.className += ' incorrect';
-                    resultElm.textContent = '不正解';
-                } else {
-                    resultElm.textContent = 'パス';
-                }
+        sortedAnswers.forEach(([answerId, answer], index) => {
+            const answerNumber = sortedAnswers.length - index;
 
-                const timeElm = document.createElement('div');
-                timeElm.className = 'question_history_item_time';
-                timeElm.textContent = new Date(answer.timestamp).toLocaleTimeString('ja-JP', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
+            const itemElm = document.createElement('div');
+            itemElm.className = 'question_history_item';
 
-                itemElm.appendChild(resultElm);
-                itemElm.appendChild(timeElm);
+            // 回答番号
+            const numberElm = document.createElement('div');
+            numberElm.className = 'question_history_item_number';
+            numberElm.textContent = `#${answerNumber}`;
 
-                listElm.appendChild(itemElm);
+            // 結果
+            const resultElm = document.createElement('div');
+            resultElm.className = `question_history_item_result`;
+            if (answer.isCorrect === true) {
+                resultElm.className += ' correct';
+                resultElm.textContent = '正解';
+            } else if (answer.isCorrect === false) {
+                resultElm.className += ' incorrect';
+                resultElm.textContent = '不正解';
+            } else {
+                resultElm.className += ' pass';
+                resultElm.textContent = 'パス';
+            }
+
+            // 編集ドロップダウン
+            const editElm = document.createElement('div');
+            editElm.className = 'question_history_item_edit';
+
+            const dropdown = document.createElement('select');
+            dropdown.className = 'edit_dropdown';
+            dropdown.dataset.answerId = answerId;
+
+            // オプション追加
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '変更する';
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            defaultOption.hidden = true;
+            dropdown.appendChild(defaultOption);
+
+            const correctOption = document.createElement('option');
+            correctOption.value = 'correct';
+            correctOption.textContent = '正解に変更';
+            dropdown.appendChild(correctOption);
+
+            const incorrectOption = document.createElement('option');
+            incorrectOption.value = 'incorrect';
+            incorrectOption.textContent = '不正解に変更';
+            dropdown.appendChild(incorrectOption);
+
+            const passOption = document.createElement('option');
+            passOption.value = 'pass';
+            passOption.textContent = 'パスに変更';
+            dropdown.appendChild(passOption);
+
+            // 現在の値と同じオプションを無効化
+            if (answer.isCorrect === true) {
+                correctOption.disabled = true;
+            } else if (answer.isCorrect === false) {
+                incorrectOption.disabled = true;
+            } else {
+                passOption.disabled = true;
+            }
+
+            // ドロップダウンの変更イベント
+            dropdown.addEventListener('change', async (event) => {
+                await onAnswerEdit(answerId, event.target.value);
+                // 選択をリセット
+                event.target.value = '';
             });
+
+            editElm.appendChild(dropdown);
+
+            // 時刻
+            const timeElm = document.createElement('div');
+            timeElm.className = 'question_history_item_time';
+            timeElm.textContent = new Date(answer.timestamp).toLocaleTimeString('ja-JP', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+
+            itemElm.appendChild(numberElm);
+            itemElm.appendChild(resultElm);
+            itemElm.appendChild(editElm);
+            itemElm.appendChild(timeElm);
+
+            listElm.appendChild(itemElm);
+        });
     }
+}
+
+// 回答編集処理
+async function onAnswerEdit(answerId, newResult) {
+    const oldAnswer = StateC.answers[answerId];
+    if (!oldAnswer) {
+        throw new Error('Answer not found');
+    }
+
+    let newIsCorrect;
+    if (newResult === 'correct') {
+        newIsCorrect = true;
+    } else if (newResult === 'incorrect') {
+        newIsCorrect = false;
+    } else if (newResult === 'pass') {
+        newIsCorrect = null;
+    } else {
+        throw new Error('Invalid result value');
+    }
+
+    // スコア差分計算
+    const oldScoreContribution = calculateAnswerScoreContribution(answerId, oldAnswer.isCorrect);
+    const newScoreContribution = calculateAnswerScoreContribution(answerId, newIsCorrect);
+    const scoreDiff = newScoreContribution - oldScoreContribution;
+
+    // API呼び出し用のデータ構築
+    const updateData = {};
+    updateData[answerId] = {
+        is_correct: newIsCorrect
+    };
+
+    await ApiClientC.updateRoundResults(StateC.userId, StateC.roundId, updateData);
+
+    // ローカル状態更新
+    StateC.answers[answerId].isCorrect = newIsCorrect;
+    StateC.scoreRoundCurrent += scoreDiff;
+    StateC.scoreTotal += scoreDiff;
+
+    // UI更新
+    DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
+    DomManagerC.renderAnswerHistory(StateC.answers);
+}
+
+// 特定の回答のスコア貢献度を計算
+function calculateAnswerScoreContribution(targetAnswerId, isCorrect) {
+    if (isCorrect === null) {
+        return 0; // パスはスコアに影響しない
+    }
+
+    const sortedAnswers = Object.entries(StateC.answers)
+        .sort((a, b) => Number(b[0]) - Number(a[0]));
+
+    const targetIndex = sortedAnswers.findIndex(([id]) => id === targetAnswerId);
+    if (targetIndex === -1) {
+        return 0;
+    }
+
+    // この回答から始まって同じ結果が何個連続するかを数える
+    let consecutiveCount = 1;
+    for (let i = targetIndex + 1; i < sortedAnswers.length; i++) {
+        const [, answer] = sortedAnswers[i];
+        if (answer.isCorrect === isCorrect) {
+            consecutiveCount++;
+        } else {
+            break;
+        }
+    }
+
+    return isCorrect ? 100 * consecutiveCount : -500 * consecutiveCount;
 }
 
 // 回答送信処理
 async function onAnswerSubmit(isCorrect) {
-    try {
-        const result = await ApiClientC.submitAnswer(StateC.userId, StateC.roundId, isCorrect);
-        console.log(result)
+    const result = await ApiClientC.submitAnswer(StateC.userId, StateC.roundId, isCorrect);
 
-        let scoreUpdate = 0;
-        if (isCorrect !== null) {
-            scoreUpdate = StateC.calculateScoreUpdate(isCorrect);
-        }
-
-        const timestamp = new Date().toISOString();
-        StateC.addAnswer(result.answer_id, isCorrect, timestamp);
-
-        if (isCorrect !== null) {
-            StateC.scoreRoundCurrent += scoreUpdate;
-            StateC.scoreTotal += scoreUpdate;
-        }
-
-        // scoreRoundMaxは進行中では更新しない（ラウンド終了時の最終スコアのみが対象）
-
-        DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
-        DomManagerC.renderAnswerHistory(StateC.answers);
-
-    } catch (error) {
-        throw error;
+    let scoreUpdate = 0;
+    if (isCorrect !== null) {
+        scoreUpdate = StateC.calculateScoreUpdate(isCorrect);
     }
+
+    const timestamp = new Date().toISOString();
+    StateC.addAnswer(result.answer_id, isCorrect, timestamp);
+
+    if (isCorrect !== null) {
+        StateC.scoreRoundCurrent += scoreUpdate;
+        StateC.scoreTotal += scoreUpdate;
+    }
+
+    // scoreRoundMaxは進行中では更新しない（ラウンド終了時の最終スコアのみが対象）
+
+    DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
+    DomManagerC.renderAnswerHistory(StateC.answers);
 }
 
 // ラウンド終了処理
 async function onFinish() {
-    try {
-        await ApiClientC.finishRound(StateC.userId, StateC.roundId);
+    await ApiClientC.finishRound(StateC.userId, StateC.roundId);
 
-        if (StateC.scoreRoundCurrent > StateC.scoreRoundMax) {
-            StateC.scoreRoundMax = StateC.scoreRoundCurrent;
-        }
-
-        const query = StateC.intoAfterroundQuery();
-        const url = new URL(window.location.href.replace('/inround', '/afterround'));
-        url.search = query.toString();
-        window.location.href = url.toString();
-    } catch (error) {
-        throw error;
+    if (StateC.scoreRoundCurrent > StateC.scoreRoundMax) {
+        StateC.scoreRoundMax = StateC.scoreRoundCurrent;
     }
+
+    const query = StateC.intoAfterroundQuery();
+    const url = new URL(window.location.href.replace('/inround', '/afterround'));
+    url.search = query.toString();
+    window.location.href = url.toString();
 }
 
 // 初期データ読み込み
 async function loadInitialData() {
-    try {
-        const userStatus = await ApiClientC.getUserStatus(StateC.userId);
-        const roundStatus = await ApiClientC.getRoundStatus(StateC.userId, StateC.roundId);
+    const userStatus = await ApiClientC.getUserStatus(StateC.userId);
+    const roundStatus = await ApiClientC.getRoundStatus(StateC.userId, StateC.roundId);
 
-        StateC.scoreTotal = (userStatus.score_total ?? 0) + (roundStatus.score ?? 0);
-        StateC.scoreRoundMax = userStatus.score_round_max ?? 0;
-        StateC.scoreRoundCurrent = roundStatus.score ?? 0;
+    StateC.scoreTotal = (userStatus.score_total ?? 0) + (roundStatus.score ?? 0);
+    StateC.scoreRoundMax = userStatus.score_round_max ?? 0;
+    StateC.scoreRoundCurrent = roundStatus.score ?? 0;
 
-        DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
+    DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
 
-        const roundResults = await ApiClientC.getRoundResults(StateC.userId, StateC.roundId);
+    const roundResults = await ApiClientC.getRoundResults(StateC.userId, StateC.roundId);
 
-        const answers = {};
-        Object.entries(roundResults).forEach(([answerId, result]) => {
-            answers[answerId] = {
-                isCorrect: result.is_correct,
-                timestamp: result.timestamp
-            };
-        });
-        StateC.answers = answers;
-        DomManagerC.renderAnswerHistory(answers);
-    } catch (error) {
-        throw error;
+    const answers = {};
+    Object.entries(roundResults).forEach(([answerId, result]) => {
+        // DBのtimestamp（例: '2025-08-04 12:34:56'）→ '2025-08-04T12:34:56Z' へ変換
+        let ts = result.timestamp;
+        if (typeof ts === 'string' && ts.includes(' ')) {
+            ts = ts.replace(' ', 'T') + 'Z';
+        }
+        answers[answerId] = {
+            isCorrect: result.is_correct,
+            timestamp: ts
+        };
+    });
+    StateC.answers = answers;
+    DomManagerC.renderAnswerHistory(answers);
+}
+
+function onError(error) {
+    console.error('Error occurred:', error);
+    if (error instanceof Error) {
+        if (isThisError(CMN_ERRORS.fatal, error)) {
+            DomManagerC.showError('critical');
+        } else if (isThisError(CMN_ERRORS.serverFatal, error)) {
+            DomManagerC.showError('critical');
+        } else if (isThisError(CMN_ERRORS.serverTransient, error)) {
+            DomManagerC.showError('internal');
+        } else if (isThisError(CMN_ERRORS.network, error)) {
+            DomManagerC.showError('network');
+        } else if (isThisError(CMN_ERRORS.invalidInput, error)) {
+            DomManagerC.showError('invalid');
+        } else if (isThisError(CMN_ERRORS.roundFinished, error)) {
+            DomManagerC.showError('round_finished');
+        } else {
+            DomManagerC.showError('unknown');
+        }
+    } else {
+        DomManagerC.showError('unknown');
     }
 }
 
 // イベントリスナー設定
 function setupEventListeners() {
-    window.addEventListener('error', (event) => {
-        console.error('Global error caught:', event);
-        if (event.error instanceof Error) {
-            if (isThisError(CMN_ERRORS.network, event.error)) {
-                DomManagerC.showError('network');
-            } else if (isThisError(CMN_ERRORS.serverFatal, event.error)) {
-                DomManagerC.showError('critical');
-            } else if (isThisError(CMN_ERRORS.serverTransient, event.error)) {
-                DomManagerC.showError('internal');
-            } else {
-                DomManagerC.showError('unknown');
-            }
-        } else {
-            DomManagerC.showError('unknown');
-        }
-    });
+    window.addEventListener('error', (event) => onError(event.error));
+    window.addEventListener('unhandledrejection', (event) => onError(event.reason));
 
     DomManagerC.elms.answerCorrectButton.addEventListener('click', () => onAnswerSubmit(true));
     DomManagerC.elms.answerIncorrectButton.addEventListener('click', () => onAnswerSubmit(false));
@@ -438,14 +727,9 @@ function setupEventListeners() {
 
 // 初期化処理
 document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        ApiClientC.init();
-        StateC.init();
-        DomManagerC.init();
-        setupEventListeners();
-        await loadInitialData();
-    } catch (error) {
-        console.error('Initialization error:', error);
-        throw error;
-    }
+    ApiClientC.init();
+    StateC.init();
+    DomManagerC.init();
+    setupEventListeners();
+    await loadInitialData();
 });

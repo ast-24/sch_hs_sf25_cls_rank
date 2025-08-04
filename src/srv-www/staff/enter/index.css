@@ -18,7 +18,7 @@ html {
 
     body {
         position: relative;
-        padding: 2vh 3vw;
+        padding: 2vh 1vw;
         min-height: 100%;
         min-width: 100%;
 
@@ -30,7 +30,8 @@ html {
         .input_item_field_mode_options_item_error_item,
         #input_item_round_id,
         .submit_error,
-        .submit_error_item_text {
+        .submit_error_item_text,
+        #input_item_user_id_field_mode_existing_options_id_no_round {
             display: none;
         }
 
@@ -41,105 +42,102 @@ html {
         .submit_error_item_text {
             font-size: 4vw;
             text-align: center;
-            color: red;
+            color: #8a4a4a;
         }
 
         .page_title {
             position: relative;
             margin: 0 auto;
             padding: 1vh 6vw;
-            border-radius: 5vw;
-            background-color: #222;
-            width: fit-content;
+            border: 1vw solid white;
+            border-radius: 3vw;
+            max-width: 70vw;
 
             .page_title_text {
-                position: relative;
-                margin: 0 auto;
-                font-size: 8vw;
+                font-size: 7vw;
+                font-weight: bold;
+                color: white;
+                line-height: 1.3;
             }
         }
 
         .input {
             position: relative;
-            margin: 2vh auto;
-            padding: 1vh 1vw;
-            border-radius: 1vw;
-            background-color: #222;
+            margin: 0 auto;
+            padding: 1vh 4vw;
 
             .input_item {
                 position: relative;
-                margin: 1vh auto;
-                padding: 1vh 2vw;
-                background-color: #333;
-                border-radius: 1vw;
-                width: 96%;
+                margin: 2vh auto;
+                padding: 3vh 4vw;
+                background-color: #222;
+                border-radius: 2vw;
+                width: 100%;
 
                 &.input_item_state_empty {
-                    border-color: #a88;
+                    border-color: #8a8a4a;
                     border-style: solid;
                     border-width: 0.5vw;
                 }
 
                 &.input_item_state_error {
-                    border-color: #f00;
+                    border-color: #8a4a4a;
                     border-style: solid;
-                    border-width: 0.8vw;
+                    border-width: 0.5vw;
                 }
 
                 &.input_item_state_ok {
-                    border-color: #8c8;
+                    border-color: #4a8a4a;
                     border-style: solid;
                     border-width: 0.5vw;
                 }
 
                 .input_item_title {
                     position: relative;
-                    margin: 0 auto;
+                    margin: 0 auto 2vh auto;
 
                     .input_item_title_text {
-                        position: relative;
-
-                        font-size: 7vw;
+                        font-size: 6vw;
+                        font-weight: bold;
+                        color: white;
                         text-align: center;
                     }
                 }
 
                 .input_item_desc {
                     position: relative;
-                    margin: 1.5vh auto 0 auto;
+                    margin: 2vh auto;
 
                     .input_item_desc_text {
-                        position: relative;
-
                         font-size: 4vw;
+                        color: #ccc;
                         text-align: center;
+                        line-height: 1.4;
                     }
                 }
 
                 .input_item_field {
                     position: relative;
-                    margin: 1.5vh auto 0 auto;
-                    padding: 0.5vh 1vw;
-
-                    border-color: #888;
-                    border-style: solid;
-                    border-width: 0.8vw;
+                    margin: 1vh auto;
+                    padding: 1vh 2vw;
+                    border: 0.5vw solid #555;
+                    border-radius: 2vw;
+                    background-color: #333;
 
                     .input_item_field_selector {
                         position: relative;
                         margin: 0 auto;
-                        width: fit-content;
-
-                        background-color: #333;
+                        width: 100%;
+                        padding: 2vw;
+                        background-color: #444;
                         color: white;
-
-                        font-size: 6vw;
-
+                        font-size: 5vw;
+                        border: 0.2vw solid #666;
+                        border-radius: 1vw;
                         outline: none;
 
-
                         .input_item_field_selector_option {
-                            background-color: #333;
+                            background-color: #444;
                             color: white;
                         }
                     }
@@ -147,116 +145,148 @@ html {
                     .input_item_field_mode {
                         position: relative;
                         margin: 0 auto;
-                        padding: 0.5vh 2vw;
-                        width: fit-content;
+                        padding: 1vh 2vw;
+                        width: 100%;
 
                         .input_item_field_mode_button {
                             position: relative;
                             margin: 0 auto;
-                            padding: 0.5vh 2vw;
-
-                            border-radius: 3vw;
+                            padding: 3vw 4vw;
+                            width: 100%;
+                            border-radius: 2vw;
                             color: white;
-
+                            font-size: 5vw;
+                            font-weight: bold;
                             outline: none;
+                            cursor: pointer;
+                            transition: all 0.3s;
 
                             &.input_item_field_mode_button_selected {
-                                background-color: #448;
-                                border-color: #88f;
-                                border-style: solid;
-                                border-width: 0.8vw;
+                                background-color: #2a4a8a;
+                                border: 0.5vw solid #4a6aaa;
                             }
 
                             &.input_item_field_mode_button_unselected {
-                                background-color: #333;
-                                border-color: #aaa;
-                                border-style: solid;
-                                border-width: 0.5vw;
+                                background-color: #444;
+                                border: 0.5vw solid #666;
+
+                                &:hover {
+                                    background-color: #555;
+                                }
                             }
 
                             .input_item_field_mode_button_text {
-                                position: relative;
-                                font-size: 5vw;
+                                font-size: inherit;
+                                font-weight: inherit;
                             }
                         }
 
                         .input_item_field_mode_options {
                             position: relative;
-                            margin: 1vh auto 0 auto;
+                            margin: 2vh auto;
 
                             .input_item_field_mode_options_item {
                                 position: relative;
-                                margin: 0.5vh auto;
-                                padding: 0.5vh 2vw;
+                                margin: 0 auto;
+                                padding: 2vh 3vw;
+                                border-radius: 2vw;
+                                background-color: #333;
 
                                 &.input_item_field_mode_options_item_state_empty {
-                                    border-color: #a88;
-                                    border-style: solid;
-                                    border-width: 0.5vw;
+                                    border: 0.5vw solid #8a8a4a;
                                 }
 
                                 &.input_item_field_mode_options_item_state_error {
-                                    border-color: #f00;
-                                    border-style: solid;
-                                    border-width: 0.8vw;
+                                    border: 0.5vw solid #8a4a4a;
 
                                     .input_item_field_mode_options_item_state_text {
-                                        color: red;
+                                        color: #8a4a4a;
                                     }
                                 }
 
                                 &.input_item_field_mode_options_item_state_ok {
-                                    border-color: #8c8;
-                                    border-style: solid;
-                                    border-width: 0.5vw;
+                                    border: 0.5vw solid #4a8a4a;
 
                                     .input_item_field_mode_options_item_state_text {
-                                        color: #8c8;
+                                        color: #4a8a4a;
                                     }
                                 }
 
                                 .input_item_field_mode_options_item_title {
                                     position: relative;
-                                    margin: 0.5vh auto;
+                                    margin: 0 auto 1vh auto;
 
-                                    font-size: 5vw;
+                                    .input_item_field_mode_options_item_title_text {
+                                        font-size: 5vw;
+                                        font-weight: bold;
+                                        color: white;
+                                    }
                                 }
 
                                 .input_item_field_mode_options_item_desc {
                                     position: relative;
-                                    margin: 0.5vh auto;
+                                    margin: 1vh auto;
 
-                                    font-size: 4vw;
-                                    text-align: center;
+                                    .input_item_field_mode_options_item_desc_text {
+                                        font-size: 4vw;
+                                        color: #ccc;
+                                        text-align: center;
+                                        line-height: 1.4;
+                                    }
                                 }
 
                                 .input_item_field_mode_options_item_input {
                                     position: relative;
-                                    margin: 1vh auto 0 auto;
+                                    margin: 2vh auto;
 
                                     .input_item_field_mode_options_item_input_element {
-                                        font-size: 6vw;
-                                        background-color: #333;
+                                        width: 100%;
+                                        padding: 2vw;
+                                        font-size: 5vw;
+                                        background-color: #444;
                                         color: white;
+                                        border: 0.2vw solid #666;
+                                        border-radius: 1vw;
+                                        outline: none;
 
-                                        border-color: #aaa;
-                                        border-style: solid;
-                                        border-width: 0.5vw;
+                                        &::placeholder {
+                                            color: #999;
+                                        }
+
+                                        &:focus {
+                                            border-color: #4a6aaa;
+                                        }
                                     }
                                 }
 
                                 .input_item_field_mode_options_item_error {
                                     position: relative;
-                                    margin: 1vh auto 0 auto;
+                                    margin: 2vh auto;
+                                    padding: 2vw;
+                                    background-color: #5a2a2a;
+                                    border: 0.5vw solid #8a4a4a;
+                                    border-radius: 1vw;
 
                                     .input_item_field_mode_options_item_error_item {
                                         position: relative;
                                         margin: 0 auto;
 
                                         .input_item_field_mode_options_item_error_item_text {
-                                            position: relative;
                                             font-size: 4vw;
+                                            color: white;
                                         }
+                                    }
+                                }
+
+                                /* 既存ラウンドがない場合の案内テキスト */
+                                .input_item_field_mode_options_item_no_round {
+                                    margin: 1vh auto 0 auto;
+                                    text-align: center;
+
+                                    .input_item_field_mode_options_item_no_round_text {
+                                        font-size: 3vw;
+                                        color: #aaa;
+                                        opacity: 0.8;
                                     }
                                 }
                             }
@@ -264,11 +294,16 @@ html {
 
                         .input_item_field_mode_extra_desc {
                             position: relative;
-                            margin: 1vh auto 0 auto;
+                            margin: 2vh auto;
+                            padding: 2vw;
+                            background-color: #2a3a2a;
+                            border: 0.5vw solid #4a6a4a;
+                            border-radius: 1vw;
 
                             .input_item_field_mode_extra_desc_text {
-                                position: relative;
                                 font-size: 4vw;
+                                color: #4a8a4a;
+                                line-height: 1.4;
                             }
                         }
                     }
@@ -276,15 +311,19 @@ html {
 
                 .input_item_error {
                     position: relative;
-                    margin: 1vh auto 0 auto;
+                    margin: 2vh auto;
+                    padding: 2vw;
+                    background-color: #5a2a2a;
+                    border: 0.5vw solid #8a4a4a;
+                    border-radius: 1vw;
 
                     .input_item_error_item {
                         position: relative;
                         margin: 0 auto;
 
                         .input_item_error_item_text {
-                            position: relative;
                             font-size: 4vw;
+                            color: white;
                         }
                     }
                 }
@@ -293,48 +332,51 @@ html {
 
         .submit {
             position: relative;
-            margin: 2vh auto;
-            width: fit-content;
+            margin: 1vh auto;
+            max-width: 90vw;
 
             .submit_button {
-                position: relative;
-                margin: 0 auto;
-                padding: 0.5vh 2vw;
-
-                font-size: 7vw;
-                border-radius: 3vw;
-                background-color: #333;
+                width: 100%;
+                padding: 4vw;
+                font-size: 6vw;
+                font-weight: bold;
+                background-color: #2a4a8a;
                 color: white;
-                border-color: #aaa;
-                border-style: solid;
-                border-width: 0.5vw;
-
+                border: 0.5vw solid #4a6aaa;
+                border-radius: 2vw;
+                cursor: pointer;
                 outline: none;
+                transition: all 0.3s;
+
+                &:hover {
+                    background-color: #3a5a9a;
+                }
+
+                .submit_button_text {
+                    font-size: inherit;
+                    font-weight: inherit;
+                }
             }
 
             .submit_error {
                 position: relative;
-                margin: 1vh auto 0 auto;
+                margin: 2vh auto;
 
                 .submit_error_item {
                     position: relative;
-                    margin: 0 auto;
+                    margin: 1vh auto;
+                    padding: 3vw;
+                    background-color: #5a2a2a;
+                    border: 0.5vw solid #8a4a4a;
+                    border-radius: 2vw;
 
                     .submit_error_item_text {
-                        position: relative;
                         font-size: 4vw;
+                        color: white;
+                        line-height: 1.4;
                     }
                 }
             }
         }
     }
-}
-
-
-.input {
-    position: relative;
-    margin: 2vh auto;
-    padding: 1vh 4vw;
-    border-radius: 3vw;
-    background-color: #222;
 }
