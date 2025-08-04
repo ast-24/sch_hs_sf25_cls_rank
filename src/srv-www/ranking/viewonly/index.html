@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ランキング（閲覧用） - 文化祭2-1用ランキングシステム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" src="./index.mjs"></script>
+</head>
+
+<body>
+    <div class="page_title" id="page_title">
+        <div class="page_title_text" id="page_title_text">
+            文化祭2-1企画 坂井の人事<br>ランキング
+        </div>
+    </div>
+
+    <div class="ranking_container" id="ranking_container">
+        <!-- 左側：Total Rankings -->
+        <div class="ranking_section" id="ranking_total">
+            <div class="ranking_section_title" id="ranking_total_title">
+                <div class="ranking_section_title_text" id="ranking_total_title_text">
+                    累積スコア
+                </div>
+            </div>
+            <div class="ranking_table_container" id="ranking_total_table_container">
+                <table class="ranking_table" id="ranking_total_table">
+                    <thead class="ranking_table_head" id="ranking_total_table_head">
+                        <tr class="ranking_table_row ranking_table_row_header" id="ranking_total_table_header_row">
+                            <th class="ranking_table_cell ranking_table_cell_rank" id="ranking_total_table_header_rank">
+                                順位</th>
+                            <th class="ranking_table_cell ranking_table_cell_name" id="ranking_total_table_header_name">
+                                ユーザー名</th>
+                            <th class="ranking_table_cell ranking_table_cell_score"
+                                id="ranking_total_table_header_score">スコア</th>
+                        </tr>
+                    </thead>
+                    <tbody class="ranking_table_body" id="ranking_total_table_body">
+                        <!-- データがJSで動的に挿入されます -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 右側：Round Rankings -->
+        <div class="ranking_section" id="ranking_round">
+            <div class="ranking_section_title" id="ranking_round_title">
+                <div class="ranking_section_title_text" id="ranking_round_title_text">
+                    ラウンド別スコア
+                </div>
+            </div>
+            <div class="ranking_table_container" id="ranking_round_table_container">
+                <table class="ranking_table" id="ranking_round_table">
+                    <thead class="ranking_table_head" id="ranking_round_table_head">
+                        <tr class="ranking_table_row ranking_table_row_header" id="ranking_round_table_header_row">
+                            <th class="ranking_table_cell ranking_table_cell_rank" id="ranking_round_table_header_rank">
+                                順位</th>
+                            <th class="ranking_table_cell ranking_table_cell_name" id="ranking_round_table_header_name">
+                                ユーザー名</th>
+                            <th class="ranking_table_cell ranking_table_cell_score"
+                                id="ranking_round_table_header_score">スコア</th>
+                        </tr>
+                    </thead>
+                    <tbody class="ranking_table_body" id="ranking_round_table_body">
+                        <!-- データがJSで動的に挿入されます -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="status" id="status">
+        <div class="status_text" id="status_text">
+            データを読み込み中...
+        </div>
+    </div>
+
+    <div class="error" id="error" style="display: none;">
+        <div class="error_text" id="error_text">
+            エラーが発生しました
+        </div>
+    </div>
+</body>
+
+</html>

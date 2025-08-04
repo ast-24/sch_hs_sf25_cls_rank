@@ -1,0 +1,214 @@
+/* デフォ値オーバーライド */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+html {
+    position: relative;
+    min-width: 100vw;
+    min-height: 100vh;
+    background-color: black;
+    color: white;
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+}
+
+body {
+    position: relative;
+    padding: 1vh 2vw;
+    min-height: 100%;
+    min-width: 100%;
+    overflow-x: auto;
+}
+
+/* Page Title */
+.page_title {
+    position: relative;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.page_title_text {
+    font-size: 3vw;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Ranking Container - 横長レイアウト */
+.ranking_container {
+    display: flex;
+    gap: 3vw;
+    max-width: 100%;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.ranking_section {
+    flex: 1;
+    min-width: 0;
+    /* flexアイテムの縮小を許可 */
+    margin-bottom: 3vh;
+}
+
+.ranking_section_title {
+    margin-bottom: 2vh;
+}
+
+.ranking_section_title_text {
+    font-size: 2.5vw;
+    font-weight: bold;
+    color: #00ff88;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Table Styles */
+.ranking_table_container {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ranking_table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.5vw;
+}
+
+.ranking_table_head {
+    background-color: rgba(0, 255, 136, 0.2);
+}
+
+.ranking_table_row_header .ranking_table_cell {
+    padding: 1vh 1vw;
+    font-weight: bold;
+    color: #00ff88;
+    border-bottom: 2px solid #00ff88;
+}
+
+.ranking_table_body .ranking_table_row {
+    transition: background-color 0.3s ease;
+}
+
+.ranking_table_body .ranking_table_row:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ranking_table_body .ranking_table_row:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.ranking_table_cell {
+    padding: 1.5vh 1vw;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.ranking_table_cell_rank {
+    width: 15%;
+    font-weight: bold;
+    color: #aaa;
+}
+
+.ranking_table_cell_name {
+    width: 50%;
+    text-align: left;
+    padding-left: 2vw;
+}
+
+.ranking_table_cell_round {
+    width: 20%;
+    color: #88ccff;
+}
+
+.ranking_table_cell_score {
+    width: 25%;
+    font-weight: bold;
+    color: #ff8888;
+}
+
+/* 特別な順位のスタイル */
+.ranking_table_row_rank_1 .ranking_table_cell_rank {
+    color: #ffd700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.ranking_table_row_rank_2 .ranking_table_cell_rank {
+    color: #c0c0c0;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.ranking_table_row_rank_3 .ranking_table_cell_rank {
+    color: #cd7f32;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Status and Error */
+.status {
+    position: fixed;
+    bottom: 2vh;
+    left: 2vw;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 1vh 2vw;
+    border-radius: 4px;
+    border-left: 4px solid #00ff88;
+}
+
+.status_text {
+    font-size: 1.5vw;
+    color: #00ff88;
+}
+
+.error {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(138, 74, 74, 0.9);
+    padding: 3vh 4vw;
+    border-radius: 8px;
+    border: 2px solid #ff4444;
+    z-index: 1000;
+}
+
+.error_text {
+    font-size: 2.5vw;
+    color: #ff4444;
+    font-weight: bold;
+}
+
+/* アニメーション効果 */
+.ranking_table_row_new {
+    animation: slideInFromRight 0.5s ease-out;
+}
+
+.ranking_table_row_updated {
+    animation: highlightUpdate 1s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes highlightUpdate {
+    0% {
+        background-color: rgba(0, 255, 136, 0.3);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
