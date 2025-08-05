@@ -173,9 +173,8 @@ class RankingViewC {
     static async #updateRankings() {
         const { rankings } = await ApiClientC.getRankings();
 
-        // 上位10件のみを表示するため、スライス
-        rankings.total = rankings.total.slice(0, 10);
-        rankings.round = rankings.round.slice(0, 10);
+        rankings.total = rankings.total.slice(0, 15);
+        rankings.round = rankings.round.slice(0, 15);
 
         // 差分更新のため、以前のデータと比較
         const prevTotal = this.#currentRankings.total;
