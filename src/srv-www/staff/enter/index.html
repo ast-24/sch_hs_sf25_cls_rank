@@ -3,12 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>スタッフ用結果入力ページ - 文化祭2-1用ランキングシステム</title>
+    <title>結果入力 - 文化祭2-1クラス企画用ランキングシステム</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="preload" href="./index.css" as="style">
     <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
-
     <link rel="stylesheet" href="./index.css">
     <script type="module" src="./index.mjs"></script>
 </head>
@@ -33,7 +31,6 @@
             </div>
             <div class="input_item_field" id="input_item_room_id_field">
                 <select class="input_item_field_selector" id="input_item_room_id_selector">
-                    <!--JSでクエリパラメータを取得し、設定済ならそれをselectedに-->
                     <option class="input_item_field_selector_option" id="input_item_room_id_selector_option_default"
                         value="before_select" hidden>
                         選択してください
@@ -63,22 +60,21 @@
         <div class="input_item input_item_state_empty" id="input_item_user_id">
             <div class="input_item_title" id="input_item_user_id_title">
                 <div class="input_item_title_text" id="input_item_user_id_title_text">
-                    担当ユーザ
+                    担当プレイヤー
                 </div>
             </div>
             <div class="input_item_desc" id="input_item_user_id_desc">
                 <div class="input_item_desc_text" id="input_item_user_id_desc_text">
-                    ユーザを新しく作成するか<br>既存のユーザIDを入力してください
+                    プレイヤーを新しく作成するか<br>既存のプレイヤーIDを入力してください
                 </div>
             </div>
             <div class="input_item_field" id="input_item_user_id_field">
                 <div class="input_item_field_mode" id="input_item_user_id_field_mode_create" data-mode="create">
-                    <!--実際の作成はsubmit時-->
                     <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
                         id="input_item_user_id_field_mode_create_button" data-mode="create">
                         <div class="input_item_field_mode_button_text"
                             id="input_item_user_id_field_mode_create_button_text">
-                            ユーザを新規作成
+                            プレイヤーを新規作成
                         </div>
                     </button>
                     <div class="input_item_field_mode_options" id="input_item_user_id_field_mode_create_options">
@@ -88,7 +84,7 @@
                                 id="input_item_user_id_field_mode_create_options_name_title">
                                 <div class="input_item_field_mode_options_item_title_text"
                                     id="input_item_user_id_field_mode_create_options_name_title_text">
-                                    ユーザ名(任意)
+                                    プレイヤー名(任意)
                                 </div>
                             </div>
                             <div class="input_item_field_mode_options_item_desc"
@@ -111,7 +107,7 @@
                                     data-error-type="invalid_format">
                                     <div class="input_item_field_mode_options_item_error_item_text"
                                         id="input_item_user_id_field_mode_create_options_name_error_item_invalid_format_text">
-                                        ユーザ名の形式が不正です
+                                        プレイヤー名の形式が不正です
                                     </div>
                                 </div>
                             </div>
@@ -119,12 +115,11 @@
                     </div>
                 </div>
                 <div class="input_item_field_mode" id="input_item_user_id_field_mode_existing" data-mode="existing">
-                    <!--roundと一緒に存在チェック-->
                     <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
                         id="input_item_user_id_field_mode_existing_button" data-mode="existing">
                         <div class="input_item_field_mode_button_text"
                             id="input_item_user_id_field_mode_existing_button_text">
-                            既存のユーザIDを入力
+                            既存のプレイヤーIDを入力
                         </div>
                     </button>
                     <div class="input_item_field_mode_options" id="input_item_user_id_field_mode_existing_options">
@@ -134,7 +129,7 @@
                                 id="input_item_user_id_field_mode_existing_options_id_title">
                                 <div class="input_item_field_mode_options_item_title_text"
                                     id="input_item_user_id_field_mode_existing_options_id_title_text">
-                                    ユーザID(必須)
+                                    プレイヤーID(必須)
                                 </div>
                             </div>
                             <div class="input_item_field_mode_options_item_desc"
@@ -157,7 +152,7 @@
                                     data-error-type="invalid_format">
                                     <div class="input_item_field_mode_options_item_error_item_text"
                                         id="input_item_user_id_field_mode_existing_options_id_error_item_invalid_format_text">
-                                        ユーザIDの形式が不正です
+                                        プレイヤーIDの形式が不正です
                                     </div>
                                 </div>
                                 <div class="input_item_field_mode_options_item_error_item"
@@ -165,7 +160,7 @@
                                     data-error-type="not_found">
                                     <div class="input_item_field_mode_options_item_error_item_text"
                                         id="input_item_user_id_field_mode_existing_options_id_error_item_not_found_text">
-                                        ユーザが見つかりません
+                                        プレイヤーが見つかりません
                                     </div>
                                 </div>
                                 <div class="input_item_field_mode_options_item_error_item"
@@ -197,7 +192,6 @@
             </div>
         </div>
         <div class="input_item input_item_state_empty" id="input_item_round_id">
-            <!--新規作成でない場合のみ表示-->
             <div class="input_item_title" id="input_item_round_id_title">
                 <div class="input_item_title_text" id="input_item_round_id_title_text">
                     対象ラウンド
@@ -210,7 +204,6 @@
             </div>
             <div class="input_item_field" id="input_item_round_id_field">
                 <div class="input_item_field_mode" id="input_item_round_id_field_mode_create">
-                    <!--実際の作成はsubmit時-->
                     <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
                         id="input_item_round_id_field_mode_create_button" data-mode="create">
                         <div class="input_item_field_mode_button_text"
@@ -220,7 +213,6 @@
                     </button>
                 </div>
                 <div class="input_item_field_mode" id="input_item_round_id_field_mode_continue">
-                    <!--submit時に存在チェック-->
                     <button class="input_item_field_mode_button input_item_field_mode_button_unselected"
                         id="input_item_round_id_field_mode_continue_button" data-mode="continue">
                         <div class="input_item_field_mode_button_text"
@@ -232,7 +224,7 @@
                         id="input_item_round_id_field_mode_continue_extra_desc">
                         <div class="input_item_field_mode_extra_desc_text"
                             id="input_item_round_id_field_mode_continue_extra_desc_text">
-                            <!--JSで既存ラウンドについての情報を挿入-->
+                            <!-- JSで既存ラウンドについての情報を挿入 -->
                         </div>
                     </div>
                 </div>
@@ -280,15 +272,6 @@
             </div>
         </button>
     </div>
-    <!--
-        構造ではなく役割ベースのクラスについて
-        - input_item_state_empty: input_itemに付与し、入力が未入力であることを示す
-        - input_item_state_error: input_itemに付与し入力がエラーであることを示す
-        - input_item_state_ok   : input_itemに付与し入力が正常であることを示す
-        - input_item_field_mode_options_item_state_empty: input_item_field_mode_options_itemに付与し、入力が未入力であることを示す
-        - input_item_field_mode_options_item_state_error: input_item_field_mode_options_itemに付与し、入力がエラーであることを示す
-        - input_item_field_mode_options_item_state_ok   : input_item_field_mode_options_itemに付与し、入力が正常である
-    -->
 </body>
 
 </html>

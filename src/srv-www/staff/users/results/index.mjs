@@ -227,7 +227,7 @@ class RoundResultsEditorC {
         if (answerList) {
             answerList.innerHTML = '';
 
-            const sortedAnswers = Object.entries(this.#currentResults).sort(([a], [b]) => parseInt(a) - parseInt(b));
+            const sortedAnswers = Object.entries(this.#currentResults).sort(([a], [b]) => parseInt(a, 10) - parseInt(b, 10));
 
             const firstInsertBtn = document.createElement('button');
             firstInsertBtn.type = 'button';
@@ -265,7 +265,7 @@ class RoundResultsEditorC {
                 insertBtn.type = 'button';
                 insertBtn.className = 'answer_insert_button';
                 insertBtn.textContent = `問題${answerId}の後に挿入`;
-                insertBtn.addEventListener('click', () => this.#handleInsert(parseInt(answerId) + 1));
+                insertBtn.addEventListener('click', () => this.#handleInsert(parseInt(answerId, 10) + 1));
                 answerList.appendChild(insertBtn);
             });
         }

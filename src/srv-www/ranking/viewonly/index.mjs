@@ -112,7 +112,6 @@ class RankingViewC {
         round: [],
     };
     static #pollInterval = 5 * 1000;
-    // >! 開発用に間隔短縮中
     static #pollTimeoutId = null;
 
     static async init() {
@@ -176,7 +175,7 @@ class RankingViewC {
         rankings.total = rankings.total.slice(0, 15);
         rankings.round = rankings.round.slice(0, 15);
 
-        // 差分更新のため、以前のデータと比較
+        // 差分更新のため以前のデータと比較
         const prevTotal = this.#currentRankings.total;
         const prevRound = this.#currentRankings.round;
 
@@ -190,7 +189,7 @@ class RankingViewC {
         const tbody = document.getElementById('ranking_total_table_body');
         const newData = this.#currentRankings.total;
 
-        // 以前のデータから変更されたアイテムを特定
+        // 変更されたアイテムを特定
         const changedItems = this.#findChangedItems(prevData, newData);
 
         tbody.innerHTML = '';
@@ -210,8 +209,6 @@ class RankingViewC {
 
             // 変更されたアイテムにアニメーションクラスを追加
             if (changedItems.has(item.user_id)) {
-                console.log(`Changed item: ${item.user_display_name} (Rank: ${rank})`);
-
                 if (prevData.length === 0) {
                     row.classList.add('ranking_table_row_new');
                 } else {
@@ -233,7 +230,7 @@ class RankingViewC {
         const tbody = document.getElementById('ranking_round_table_body');
         const newData = this.#currentRankings.round;
 
-        // 以前のデータから変更されたアイテムを特定
+        // 変更されたアイテムを特定
         const changedItems = this.#findChangedItems(prevData, newData, true);
 
         tbody.innerHTML = '';
@@ -254,8 +251,6 @@ class RankingViewC {
             // 変更されたアイテムにアニメーションクラスを追加
             const itemKey = `${item.user_id}_${item.round_id}`;
             if (changedItems.has(itemKey)) {
-                console.log(`Changed item: ${item.user_display_name} (Rank: ${rank})`);
-
                 if (prevData.length === 0) {
                     row.classList.add('ranking_table_row_new');
                 } else {
@@ -277,7 +272,7 @@ class RankingViewC {
         const changedItems = new Set();
 
         if (!prevData || prevData.length === 0) {
-            // 初回読み込みの場合、すべてを「新規」として扱う
+            // 初回読み込み時は全てを新規として扱う
             newData.forEach(item => {
                 if (isRound) {
                     changedItems.add(`${item.user_id}_${item.round_id}`);

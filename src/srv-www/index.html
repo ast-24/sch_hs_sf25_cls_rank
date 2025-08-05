@@ -3,54 +3,85 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>文化祭2-1用ランキングシステム</title>
+    <title>ホーム - 文化祭2-1クラス企画用ランキングシステム</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
-    <div class="title">文化祭2-1用ランキングシステム</div>
-    <div class="pages">
-        <div class="ranking">
-            <div class="title">ランキング</div>
-            <div class="list">
-                <div class="interactive">
-                    <div class="title">
-                        <a href="/ranking/interactive/">教室内掲示用(結果発表用)</a>
+    <div class="container">
+        <h1 class="main-title">ランキングシステム</h1>
+        <p class="subtitle">文化祭2-1企画</p>
+
+        <div class="sections">
+            <section class="section ranking-section">
+                <h2 class="section-title">
+                    <span class="section-icon">📊</span>
+                    ランキング表示
+                </h2>
+                <div class="page-list">
+                    <div class="page-item">
+                        <a href="/ranking/interactive/" class="page-link">
+                            <div class="page-title">教室内掲示用（結果発表）</div>
+                            <div class="page-description">
+                                スタッフによる結果発表に使用<br>
+                                Enterキーで次のページに遷移します
+                            </div>
+                        </a>
                     </div>
-                    <div class="desc">
-                        スタッフによる結果発表に使用<br>Enterで次のページに遷移します
-                    </div>
-                </div>
-                <div class="viewonly">
-                    <div class="title">
-                        <a href="/ranking/viewonly/">教室外掲示用(閲覧用)</a>
-                    </div>
-                    <div class="desc">
-                        掲示に使用<br>同じページを表示し続けます(内容は自動更新)
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="staff">
-            <div class="title">スタッフ用</div>
-            <div class="list">
-                <div class="enter">
-                    <div class="title">
-                        <a href="/staff/enter/">結果入力(ルームスタッフ用)</a>
-                    </div>
-                    <div class="desc">
-                        ルームを担当するスタッフによる入力に使用
+                    <div class="page-item">
+                        <a href="/ranking/viewonly/" class="page-link">
+                            <div class="page-title">教室外掲示用（閲覧専用）</div>
+                            <div class="page-description">
+                                常時掲示に使用<br>
+                                同じページを表示し続けます<br>
+                                （内容は自動更新）
+                            </div>
+                        </a>
                     </div>
                 </div>
-                <div class="users">
-                    <div class="title">
-                        <a href="/staff/users/">ユーザ管理</a>
+            </section>
+
+            <section class="section staff-section">
+                <h2 class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    スタッフ用管理
+                </h2>
+                <div class="page-list">
+                    <div class="page-item">
+                        <a href="/staff/enter/" class="page-link">
+                            <div class="page-title">結果入力（ルームスタッフ用）</div>
+                            <div class="page-description">
+                                各ルームを担当するスタッフによる<br>
+                                プレイヤーの解答結果入力
+                            </div>
+                        </a>
                     </div>
-                    <div class="desc">
-                        ユーザの統計や登録時刻の確認、ユーザ名の変更などを行うページ
+                    <div class="page-item">
+                        <a href="/staff/users/" class="page-link">
+                            <div class="page-title">プレイヤー管理</div>
+                            <div class="page-description">
+                                プレイヤーの統計情報確認や<br>
+                                プレイヤー名の変更、<br>
+                                過去の回答結果の編集などの管理機能
+                            </div>
+                        </a>
+                    </div>
+                    <div class="page-item">
+                        <a href="/staff/system/" class="page-link">
+                            <div class="page-title">システム管理</div>
+                            <div class="page-description">
+                                キャッシュクリアなど<br>
+                                システム中核への直接操作機能
+                            </div>
+                        </a>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 </body>
