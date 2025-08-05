@@ -1,15 +1,7 @@
 import { TidbClient } from '../../cmn/db/tidb_client.mjs';
 import { MyJsonResp } from '../../cmn/resp.mjs';
 
-/*
-{
-    "requestStartedAt": "2023-10-01T12:00:00Z",
-}
- */
-
 export default async function (request, env) {
-    const reqBody = await request.json();
-
     let apiStatus = {
         isActive: null
     }
