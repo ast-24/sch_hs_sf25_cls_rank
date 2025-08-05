@@ -2,7 +2,6 @@ const API_BASE = '{{API_ORIGIN}}';
 
 async function fetchHealth() {
     try {
-        const requestStartedAt = new Date().toISOString();
         const res = await fetch(API_BASE + '/health');
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
@@ -10,10 +9,10 @@ async function fetchHealth() {
         document.getElementById('api-status').textContent = data.api.isActive ? 'OK' : 'DOWN';
         document.getElementById('api-status').className = data.api.isActive ? 'status-ok' : 'status-down';
         // DBサーバ
-        document.getElementById('db-status').textContent = data.db.isActive ? (data.db.isNoHighLatency ? 'OK' : '高レイテンシ') : 'DOWN';
-        document.getElementById('db-status').className = data.db.isActive ? (data.db.isNoHighLatency ? 'status-ok' : 'status-latency') : 'status-down';
-        document.getElementById('db-latency').textContent = data.db.isActive ? (data.db.isNoHighLatency ? '正常' : '遅延あり') : '-';
-        document.getElementById('db-latency').className = data.db.isActive ? (data.db.isNoHighLatency ? '' : 'status-latency') : '';
+        document.getElementById('db-status').textContent = data.db.isActive ? 'OK' : 'DOWN';
+        document.getElementById('db-status').className = data.db.isActive ? 'status-ok' : 'status-down';
+        document.getElementById('db-latency').textContent = data.db.isActive ? (data.db.isNoHighLatency ? 'OK' : 'HighLatency') : '-';
+        document.getElementById('db-latency').className = data.db.isActive ? (data.db.isNoHighLatency ? 'status-ok' : 'status-latency') : 'status-down';
     } catch (error) {
         console.error(`Health check failed: ${error}`);
         document.getElementById('api-status').textContent = 'DOWN';
