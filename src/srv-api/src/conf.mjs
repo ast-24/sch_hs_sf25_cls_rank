@@ -12,7 +12,7 @@ export const CONF = {
         ENABLE: {
             TOTAL: true,
             ROUND: true,
-            ROUND_MAX: true,
+            ROUND_MAX: false,
             ROUND_LATEST: true,
         },
         COUNT_LIMIT: {

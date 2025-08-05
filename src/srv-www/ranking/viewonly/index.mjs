@@ -111,7 +111,7 @@ class RankingViewC {
         total: [],
         round: [],
     };
-    static #pollInterval = 5 * 1000;
+    static #pollInterval = 10 * 1000;
     static #pollTimeoutId = null;
 
     static async init() {
