@@ -5,7 +5,7 @@ const CMN_ERRORS = {
     network: 'CMN:Network',
     invalidInput: 'CMN:InvalidInput',
     unknown: 'CMN:Unknown',
-}
+};
 
 function isThisError(cmnError, error) {
     return error instanceof Error && error.message?.startsWith(cmnError);
@@ -44,7 +44,6 @@ class ApiClientC {
         }
     }
 
-    /* -> { rankings: { total: Array, round_latest: Array, round: Array } } */
     static async getRankings() {
         let resp;
         try {
@@ -87,7 +86,6 @@ class InteractiveRankingC {
     static #inactivityTimer = null;
     static #inactivityTimeout = 5 * 60 * 1000; // 5分
     static #pollInterval = 10 * 1000; // 10秒
-    // >! 開発用に間隔短縮中
     static #pollTimeoutId = null;
     static #currentRankings = {
         total: [],
@@ -155,7 +153,6 @@ class InteractiveRankingC {
     static #startPolling() {
         this.#pollTimeoutId = setTimeout(async () => {
             try {
-
                 await this.#updateRankings();
                 this.#startPolling();
             } catch (error) {
@@ -201,7 +198,7 @@ class InteractiveRankingC {
             card.innerHTML = `
                 <div class="round_latest_card_rank ${getRankClass(rank)}">${rank}位</div>
                 <div class="round_latest_card_room">ルーム ${item.room_id}</div>
-                <div class="round_latest_card_name">${item.user_display_name}</div>
+                <div class="round_latest_card_name">${this.#escapeHtml(item.user_display_name)}</div>
                 <div class="round_latest_card_score">${item.score}</div>
             `;
             container.appendChild(card);
@@ -209,64 +206,48 @@ class InteractiveRankingC {
     }
 
     static #updateTotalRanking() {
-        // 累積スコアランキング
-        const totalTbody = document.getElementById('ranking_total_table_body');
-        if (totalTbody) {
-            totalTbody.innerHTML = '';
-            const ranks = calculateRanks(this.#currentRankings.total);
+        this.#updateRankingTable('ranking_total_table_body', this.#currentRankings.total);
+        this.#updateRankingTable('ranking_round_table_body', this.#currentRankings.round);
+    }
 
-            this.#currentRankings.total.forEach((item, index) => {
-                const rank = ranks[index];
-                const row = document.createElement('tr');
-                row.className = 'ranking_table_row';
+    static #updateRankingTable(tableBodyId, rankingData) {
+        const tbody = document.getElementById(tableBodyId);
+        if (!tbody) return;
 
-                // ハイライト判定
-                const isHighlighted = this.#currentRankings.round_latest.some(
-                    roundItem => roundItem.user_id === item.user_id
-                );
-                if (isHighlighted) {
-                    row.classList.add('ranking_highlight');
-                }
+        tbody.innerHTML = '';
+        const ranks = calculateRanks(rankingData);
 
-                row.innerHTML = `
-                    <td class="ranking_table_cell ranking_table_cell_rank ${getRankClass(rank)}">${rank}位</td>
-                    <td class="ranking_table_cell ranking_table_cell_name">${item.user_display_name}</td>
-                    <td class="ranking_table_cell ranking_table_cell_score">${item.score}</td>
-                `;
-                totalTbody.appendChild(row);
-            });
-        }
+        rankingData.forEach((item, index) => {
+            const rank = ranks[index];
+            const row = document.createElement('tr');
+            row.className = 'ranking_table_row';
 
-        // ラウンドスコアランキング
-        const roundTbody = document.getElementById('ranking_round_table_body');
-        if (roundTbody) {
-            roundTbody.innerHTML = '';
-            const ranks = calculateRanks(this.#currentRankings.round);
+            const isHighlighted = this.#currentRankings.round_latest.some(
+                roundItem => roundItem.user_id === item.user_id
+            );
+            if (isHighlighted) {
+                row.classList.add('ranking_highlight');
+            }
 
-            this.#currentRankings.round.forEach((item, index) => {
-                const rank = ranks[index];
-                const row = document.createElement('tr');
-                row.className = 'ranking_table_row';
+            row.innerHTML = `
+                <td class="ranking_table_cell ranking_table_cell_rank ${getRankClass(rank)}">${rank}位</td>
+                <td class="ranking_table_cell ranking_table_cell_name">${this.#escapeHtml(item.user_display_name)}</td>
+                <td class="ranking_table_cell ranking_table_cell_score">${item.score}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 
-                // ハイライト判定
-                const isHighlighted = this.#currentRankings.round_latest.some(
-                    roundItem => roundItem.user_id === item.user_id
-                );
-                if (isHighlighted) {
-                    row.classList.add('ranking_highlight');
-                }
-                row.innerHTML = `
-                    <td class="ranking_table_cell ranking_table_cell_rank ${getRankClass(rank)}">${rank}位</td>
-                    <td class="ranking_table_cell ranking_table_cell_name">${item.user_display_name}</td>
-                    <td class="ranking_table_cell ranking_table_cell_score">${item.score}</td>
-                `;
-                roundTbody.appendChild(row);
-            });
-        }
+    static #escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 }
 
-// 初期化
 document.addEventListener('DOMContentLoaded', () => {
     InteractiveRankingC.init();
 });

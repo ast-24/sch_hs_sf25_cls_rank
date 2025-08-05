@@ -2,28 +2,19 @@
 
 ## 概要
 
-- 静的サーバ(surface)
-- 静的サーバ(assets)
+- 静的サーバ
 - APIサーバ
 - DBサーバ
 の3つのサーバで構成される
 
 ## 構成
 
-### 静的サーバ(serface)
+### 静的サーバ
 
 HTML/CSS/JavaScriptの置き場所
 
 静的コンテンツのデプロイと配信さえできればいいため、  
 Cloudflare Pagesの利用を検討
-
-こちらはブラウザと同じパスでアクセスされる
-
-### 静的サーバ(assets)
-
-静的サーバのSPAが利用する静的コンテンツの置き場所
-
-同じくCloudflare Pagesの利用を検討
 
 ### APIサーバ
 
@@ -35,7 +26,7 @@ Cloudflare Workersを利用
 
 #### APIエンドポイント
 
-[エンドポイント定義書.md](./docs/plan-be-ep.md)を参照
+[エンドポイント定義書](./endpoints.md)を参照
 
 タイムスタンプの設定はサーバ側で行う
 
@@ -49,4 +40,4 @@ APIサーバが利用するデータベース
 
 #### データベース設計
 
-[データベース設計書.md](./docs/database-design.md)を参照
+[データベース設計書](./database.md)を参照

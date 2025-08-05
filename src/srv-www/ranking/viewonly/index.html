@@ -3,12 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>ランキング（閲覧用） - 文化祭2-1用ランキングシステム</title>
+    <title>ランキング（観覧用） - 文化祭2-1クラス企画用ランキングシステム</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="preload" href="./index.css" as="style">
     <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
-
     <link rel="stylesheet" href="./index.css">
     <script type="module" src="./index.mjs"></script>
 </head>
@@ -16,16 +14,15 @@
 <body>
     <div class="page_title" id="page_title">
         <div class="page_title_text" id="page_title_text">
-            文化祭2-1企画 坂井の人事<br>ランキング
+            2-1クラス企画 [坂井の人事]
         </div>
     </div>
 
     <div class="ranking_container" id="ranking_container">
-        <!-- 左側：Total Rankings -->
         <div class="ranking_section" id="ranking_total">
             <div class="ranking_section_title" id="ranking_total_title">
                 <div class="ranking_section_title_text" id="ranking_total_title_text">
-                    累積スコア
+                    累積スコアランキング
                 </div>
             </div>
             <div class="ranking_table_container" id="ranking_total_table_container">
@@ -35,7 +32,7 @@
                             <th class="ranking_table_cell ranking_table_cell_rank" id="ranking_total_table_header_rank">
                                 順位</th>
                             <th class="ranking_table_cell ranking_table_cell_name" id="ranking_total_table_header_name">
-                                ユーザー名</th>
+                                プレイヤー名</th>
                             <th class="ranking_table_cell ranking_table_cell_score"
                                 id="ranking_total_table_header_score">スコア</th>
                         </tr>
@@ -47,11 +44,10 @@
             </div>
         </div>
 
-        <!-- 右側：Round Rankings -->
         <div class="ranking_section" id="ranking_round">
             <div class="ranking_section_title" id="ranking_round_title">
                 <div class="ranking_section_title_text" id="ranking_round_title_text">
-                    ラウンド別スコア
+                    ラウンド別スコアランキング
                 </div>
             </div>
             <div class="ranking_table_container" id="ranking_round_table_container">
@@ -61,7 +57,7 @@
                             <th class="ranking_table_cell ranking_table_cell_rank" id="ranking_round_table_header_rank">
                                 順位</th>
                             <th class="ranking_table_cell ranking_table_cell_name" id="ranking_round_table_header_name">
-                                ユーザー名</th>
+                                プレイヤー名</th>
                             <th class="ranking_table_cell ranking_table_cell_score"
                                 id="ranking_round_table_header_score">スコア</th>
                         </tr>

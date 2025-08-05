@@ -49,7 +49,7 @@ class ApiClientC {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    room_id: parseInt(roomId),
+                    room_id: parseInt(roomId, 10),
                     display_name: displayName
                 })
             });
@@ -128,7 +128,7 @@ class ApiClientC {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ room_id: parseInt(roomId) })
+                body: JSON.stringify({ room_id: parseInt(roomId, 10) })
             });
         } catch (error) {
             console.error('Failed to create round:', error);

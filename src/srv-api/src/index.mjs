@@ -19,6 +19,7 @@ import EpsUsersUserIdRoundsRoundIdResultsGet from './eps/users/user_id/rounds/ro
 import EpsUsersUserIdRoundsRoundIdResultsPatch from './eps/users/user_id/rounds/round_id/results/patch.mjs';
 import EpsUsersUserIdRoundsRoundIdStatusGet from './eps/users/user_id/rounds/round_id/status/get.mjs';
 import EpsUsersUserIdStatusGet from './eps/users/user_id/status/get.mjs';
+import EpsHealthGet from './eps/health/get.mjs';
 
 const router = IttyRouter();
 
@@ -40,6 +41,7 @@ router.get('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRound
 router.patch('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRoundIdResultsPatch);
 router.get('/users/:user_id/rounds/:round_id/status', EpsUsersUserIdRoundsRoundIdStatusGet);
 router.get('/users/:user_id/status', EpsUsersUserIdStatusGet);
+router.get('/health', EpsHealthGet);
 
 router.all('*', () => { throw new MyNotFoundError('Endpoint') });
 

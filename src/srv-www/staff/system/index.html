@@ -1,0 +1,57 @@
+<!--
+システム中核に直接干渉する手段の提供
+
+- キャッシュ管理
+  - ランキングキャッシュ再生成
+  - 各ランキングの最終キャッシュ時刻
+- システム状態チェック
+  - APIサーバの稼働状況
+  - DBサーバの稼働状況
+-->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>システム管理 - スタッフ</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <div class="main">
+    <h1>システム管理</h1>
+    <div class="section">
+      <div class="section-title">システム状態チェック</div>
+      <table class="status-table">
+        <tr>
+          <th>APIサーバ</th>
+          <td id="api-status">-</td>
+        </tr>
+        <tr>
+          <th>DBサーバ</th>
+          <td id="db-status">-</td>
+          <td id="db-latency">-</td>
+        </tr>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-title">キャッシュ管理</div>
+      <table class="cache-table">
+        <thead>
+          <tr>
+            <th>種別</th>
+            <th>最終生成時刻</th>
+          </tr>
+        </thead>
+        <tbody id="cache-table-body">
+          <!-- JSで埋める -->
+        </tbody>
+      </table>
+      <button id="regen-cache" class="button">ランキングキャッシュ再生成</button>
+    </div>
+  </div>
+  <script type="module" src="index.mjs"></script>
+</body>
+
+</html>

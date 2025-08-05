@@ -1,22 +1,9 @@
-<!--
-
-ユーザ自体の確認や操作を行うページ
-ユーザIDを入力させ、その存在を確認してから以下のコンポーネントを表示する
-
-- ユーザの統計(ランクやスコアなど)の確認
-- ユーザの登録時刻の確認
-- ユーザ名の変更
-- 回答履歴確認/編集ページへのアンカー(ラウンドリストから選択させてから飛ばす)
-
-縦長デバイス向けUI
-
--->
 <!DOCTYPE html>
 <html lang="ja">
 
 <head>
     <meta charset="UTF-8">
-    <title>ユーザ管理 - 文化祭2-1企画 坂井の人事</title>
+    <title>プレイヤー管理 - 文化祭2-1クラス企画用ランキングシステム</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preload" href="./index.css" as="style">
     <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
@@ -27,7 +14,7 @@
 <body>
     <div class="page_title" id="page_title">
         <div class="page_title_text" id="page_title_text">
-            スタッフ用<br>ユーザ管理
+            スタッフ用<br>プレイヤー管理
         </div>
     </div>
     <div class="error_display" id="error_display">
@@ -54,12 +41,12 @@
     </div>
 
     <div class="user_id_input_container">
-        <input type="text" id="user_id_input" class="user_edit_input" placeholder="ユーザIDを入力">
+        <input type="text" id="user_id_input" class="user_edit_input" placeholder="プレイヤーIDを入力">
         <button id="user_id_submit" class="user_edit_button">確認</button>
         <div id="user_id_error" style="color:#ff6666; font-size:3vw; margin-top:1vw;"></div>
     </div>
     <div class="user_info_container" id="user_info_container" style="display:none;">
-        <div class="user_info_title">ユーザ情報</div>
+        <div class="user_info_title">プレイヤー情報</div>
         <div class="user_info_item" id="user_display_name">表示名: </div>
         <div class="user_info_item" id="user_created_at">登録日時: </div>
         <div class="user_info_item" id="user_stats">統計: </div>

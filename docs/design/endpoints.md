@@ -1,5 +1,9 @@
 # エンドポイント定義書
 
+## エンドポイント一覧
+
+### ランキング関連
+
 - `/ranking`: ランキング
   - HEAD: ランキングの更新日時を取得
     - レスポンス
@@ -12,57 +16,64 @@
     - リクエスト
       - クエリパラメータ
         - `type`: ランキング種別（カンマ区切り文字列）
-          - `total`: ユーザ別の累積スコア
-          - `round`: ユーザ&ラウンド別の1ラウンド当たりのスコア
-          - `round_max`: ユーザ別の最大ラウンドのスコア
+          - `total`: プレイヤー別の累積スコア
+          - `round`: プレイヤー&ラウンド別の1ラウンド当たりのスコア
+          - `round_max`: プレイヤー別の最大ラウンドのスコア
           - `round_latest`: ルーム別の最新ラウンドのスコア
     - レスポンス
       - ボディ
         - `:rank_type`: ランキングの種類(`type`と同じ) 中身は配列
-          - `user_pub_id`: ユーザID
-          - `user_display_name`: 表示名
+          - `user_id`: プレイヤーID（公開用識別子）
+          - `user_display_name`: プレイヤー名（表示名）
           - `score`: スコア
-- `/users`: ユーザ
-  - POST: ユーザを登録
+
+### プレイヤー関連
+
+- `/users`: プレイヤー
+  - POST: プレイヤーを登録
     - リクエスト
       - ボディ
         - `room_id`: ルームID
-        - `display_name`: 表示名  
-          (オプショナル 省略で `User <user_id>` となる)  
+        - `display_name`: プレイヤー名（表示名）  
+          (オプショナル 省略で `Player <user_id>` となる)  
           20文字まで
     - レスポンス
       - ボディ
-        - `user_id`: ユーザID
-- `/users/:user_id`: ユーザ
-  - GET: ユーザ情報を取得
+        - `user_id`: プレイヤーID
+- `/users/:user_id`: プレイヤー
+  - GET: プレイヤー情報を取得
     - レスポンス
       - ボディ
-        - `display_name`: 表示名
-  - PATCH: ユーザを更新
-    - ボディ
-      - `display_name`: 表示名(オプショナル)
-- `/users/:user_id/status`: ユーザの統計
-  - GET: ユーザの統計を取得
+        - `display_name`: プレイヤー名（表示名）
+  - PATCH: プレイヤー情報を更新
+    - リクエスト
+      - ボディ
+        - `display_name`: プレイヤー名（表示名）(オプショナル)
+- `/users/:user_id/status`: プレイヤーの統計
+  - GET: プレイヤーの統計を取得
     - レスポンス
       - ボディ
         - `total_score`: 累積スコア
         - `round_max_score`: 最大ラウンドスコア
         - `total_rank`: 累積スコアのランキング順位
         - `round_max_rank`: 最大ラウンドスコアのランキング順位
-- `/users/:user_id/results`: ユーザの結果
-  - GET: ユーザの結果を取得
+- `/users/:user_id/results`: プレイヤーの結果
+  - GET: プレイヤーの結果を取得
     - レスポンス
       - ボディ
         - `[round_id]`: ラウンドIDをキーとした配列
           - `[answer_id]`: 回答IDをキーとした配列
             - `is_correct`: 回答結果(正解/不正解/パス(Null))
             - `timestamp`: 回答日時
-  - PATCH: ユーザの結果を更新
+  - PATCH: プレイヤーの結果を更新
     - リクエスト
       - ボディ
         - `[round_id]`: ラウンドIDをキーとした配列
           - `[answer_id]`: 回答IDをキーとした配列 中身がNullなら削除
             - `is_correct`: 回答結果(正解/不正解/パス(Null))
+
+### ラウンド関連
+
 - `/users/:user_id/rounds`: ラウンド
   - GET: ラウンドの一覧を取得
     - レスポンス
@@ -106,8 +117,31 @@
       - ボディ
         - `[answer_id]`: 回答IDをキーとした配列 Nullなら削除
           - `is_correct`: 回答結果(正解/不正解/パス(Null))
+
+### 回答関連
+
 - `/users/:user_id/rounds/:round_id/answers`: 回答
   - POST: 回答結果を登録
     - リクエスト
       - ボディ
         - `is_correct`: 回答結果(正解/不正解/パス(Null))
+
+### ヘルスチェック
+
+- `/health`: ヘルスチェック
+  - GET: サーバーのヘルスチェックを行う
+    - レスポンス
+      - ボディ
+        - `api`: APIのステータス
+          - `isActive`: APIがアクティブかどうか
+        - `db`: データベースのステータス
+          - `isActive`: データベースがアクティブかどうか
+          - `isNoHighLatency`: データベースに高レイテンシがないか
+
+## 認証・エラーハンドリング
+
+### 認証
+
+現在は認証機能は実装していない
+URL自体が非公開であることを前提としている
+(固定APIキーの導入は検討中)
