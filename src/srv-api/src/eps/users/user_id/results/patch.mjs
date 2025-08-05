@@ -19,7 +19,7 @@ export default async function (request, env) {
                 throw new MyValidationError('Invalid results format');
             }
             for (const answer of Object.values(round)) {
-                if ((typeof answer === 'object' && typeof answer?.is_correct !== 'boolean') && answer !== null) {
+                if ((typeof answer === 'object' && typeof answer?.is_correct !== 'boolean' && answer?.is_correct !== null) && answer !== null) {
                     throw new MyValidationError('Invalid results format');
                 }
             }

@@ -19,7 +19,7 @@ export default async function (request, env) {
         }
         newAnswers = body;
         for (const answer of Object.values(newAnswers)) {
-            if ((typeof answer === 'object' && typeof answer?.is_correct !== 'boolean') && answer !== null) {
+            if ((typeof answer === 'object' && typeof answer?.is_correct !== 'boolean' && typeof answer?.is_correct !== null) && answer !== null) {
                 throw new MyValidationError('Invalid results format');
             }
         }

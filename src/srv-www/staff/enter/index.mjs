@@ -178,7 +178,7 @@ class StateC {
 
     static #initRoomId() {
         const urlParams = new URLSearchParams(window.location.search);
-        const roomId = urlParams.get('room_id');
+        const roomId = Number(urlParams.get('room_id'));
         if (ValidatorC.isValidRoomId(roomId)) {
             this.#state.roomId = roomId;
         } else {
@@ -292,10 +292,14 @@ class DomManagerC {
 
     static init() {
         this.#initElements();
-        this.#resetDom();
-        this.#initRoomIdSelected();
-        this.#initUserIdModeSelected();
-        this.#initRoundIdModeSelected();
+
+        setTimeout(() => {
+            this.#resetDom();
+            this.#initRoomIdSelected();
+            this.#initUserIdModeSelected();
+            this.#initRoundIdModeSelected();
+        }, 100);
+        // DOMContentLoadedのあとに自動復元が走るため
     }
 
     static #initElements() {
@@ -320,12 +324,9 @@ class DomManagerC {
     }
 
     static #resetDom() {
-        setTimeout(() => {
-            this.#elements.roomIdSelector.value = 'before_select';
-            this.#elements.userIdModeCreateOptionsNameInput.value = '';
-            this.#elements.userIdModeExistingOptionsIdInput.value = '';
-        }, 100);
-        // DOMContentLoadedのあとに自動復元が走るため
+        this.#elements.roomIdSelector.value = 'before_select';
+        this.#elements.userIdModeCreateOptionsNameInput.value = '';
+        this.#elements.userIdModeExistingOptionsIdInput.value = '';
     }
 
     static #initRoomIdSelected() {
@@ -665,7 +666,7 @@ async function onSubmit() {
     }
 
     const query = StateC.intoQuery();
-    const url = new URL(window.location.href + './inround/');
+    const url = new URL('inround/', window.location.href);
     url.search = query.toString();
 
     window.location.href = url.toString();

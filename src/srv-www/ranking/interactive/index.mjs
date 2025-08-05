@@ -155,6 +155,7 @@ class InteractiveRankingC {
     static #startPolling() {
         this.#pollTimeoutId = setTimeout(async () => {
             try {
+
                 await this.#updateRankings();
                 this.#startPolling();
             } catch (error) {
