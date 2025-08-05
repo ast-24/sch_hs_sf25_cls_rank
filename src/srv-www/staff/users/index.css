@@ -1,0 +1,177 @@
+/* デフォ値オーバーライド */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+html {
+    position: relative;
+    min-width: 100vw;
+    min-height: 100vh;
+    background-color: black;
+    color: white;
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+}
+
+body {
+    position: relative;
+    padding: 2vh 1vw;
+    min-height: 100%;
+    min-width: 100%;
+}
+
+/* 初期状態で非表示にする要素 */
+.error_display_item {
+    display: none;
+}
+
+/* エラー表示 */
+.error_display {
+    position: relative;
+    margin: 1vh auto;
+    max-width: 80vw;
+}
+
+.error_display_item {
+    margin: 0.5vh 0;
+    padding: 1vh 2vw;
+    border: 0.5vw solid #8a4a4a;
+    border-radius: 2vw;
+    background-color: #2a0a0a;
+}
+
+.error_display_item_text {
+    font-size: 4vw;
+    color: #ff6666;
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* Page Title */
+.page_title {
+    position: relative;
+    margin: 0 auto 2vh auto;
+    padding: 1vh 6vw;
+    border: 1vw solid white;
+    border-radius: 3vw;
+    max-width: 70vw;
+}
+
+.page_title_text {
+    font-size: 7vw;
+    font-weight: bold;
+    color: white;
+    line-height: 1.3;
+}
+
+/* ユーザID入力エリア */
+.user_id_input_container {
+    margin: 3vh auto;
+    max-width: 80vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2vw;
+}
+
+/* ユーザ情報表示エリア */
+.user_info_container {
+    margin: 2vh auto;
+    max-width: 80vw;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2vw;
+    padding: 3vw;
+    color: #fff;
+    backdrop-filter: blur(5px);
+}
+
+.user_info_title {
+    font-size: 5vw;
+    font-weight: bold;
+    margin-bottom: 2vw;
+    color: #ffe066;
+}
+
+.user_info_item {
+    margin: 2vw 0;
+    font-size: 4vw;
+    text-align: left;
+    padding: 1vw 2vw;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1vw;
+}
+
+/* フォーム要素 */
+.user_edit_form {
+    margin-top: 3vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2vw;
+}
+
+.user_edit_input {
+    font-size: 4vw;
+    padding: 2vw;
+    border-radius: 1vw;
+    border: 1px solid #888;
+    width: 60vw;
+    max-width: 300px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #222;
+    text-align: center;
+}
+
+.user_edit_button {
+    font-size: 4vw;
+    padding: 2vw 4vw;
+    border-radius: 1vw;
+    background: #ffe066;
+    color: #222;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.user_edit_button:hover {
+    background: #ffcc33;
+}
+
+.user_edit_button:active {
+    background: #e6b800;
+}
+
+/* ラウンドリスト */
+.round_list {
+    margin-top: 3vw;
+}
+
+.round_list_title {
+    font-size: 4vw;
+    font-weight: bold;
+    margin-bottom: 2vw;
+    color: #ffe066;
+}
+
+.round_list_item {
+    font-size: 3vw;
+    margin: 1vw 0;
+    padding: 1.5vw;
+    cursor: pointer;
+    color: #ccccff;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1vw;
+    transition: background-color 0.3s;
+    text-align: left;
+}
+
+.round_list_item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}

@@ -1,0 +1,94 @@
+<!--
+
+3ページ(div)用意して待機画面/最新ラウンド内ランキング画面/全体ランキング画面(viewonlyと大体同じ)をenterで切り替えられるページ
+ランキング内容はポーリングしてキャッシュしておく
+待機画面→最新ラウンド内ランキング画面→全体ランキング画面の順で切り替わるようにして、5分間無操作で待機画面に戻す
+待機画面→最新ラウンド内ランキング画面では、左右の下からクラッカーのようなエフェクトを発生
+最新ラウンド内ランキング画面→全体ランキング画面では、ラウンド内ランキングに含まれるユーザが全体ランキング画面に含まれていた場合にハイライトし、上から紙吹雪のようなエフェクトを発生させる
+
+横長デバイス向けUI
+
+-->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ランキング（インタラクティブ） - 文化祭2-1企画 坂井の人事</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" src="./index.mjs"></script>
+</head>
+
+<body>
+    <div class="page_title" id="page_title">
+        <div class="page_title_text" id="page_title_text">
+            文化祭2-1企画 坂井の人事
+        </div>
+    </div>
+    <!-- 待機画面 -->
+    <div class="page_switch active" id="page_wait">
+        <div class="wait_message">
+            Enterキーでランキング表示<br>
+            <small>5分間無操作で自動的にこの画面に戻ります</small>
+        </div>
+    </div>
+    <!-- 最新ラウンド内ランキング画面 -->
+    <div class="page_switch" id="page_round">
+        <div class="round_latest_title">
+            <div class="round_latest_title_text">最新ラウンドランキング</div>
+        </div>
+        <div class="round_latest_container" id="ranking_round_latest_container">
+            <!-- JSで挿入 -->
+        </div>
+    </div>
+    <!-- 全体ランキング画面 -->
+    <div class="page_switch" id="page_total">
+        <div class="ranking_container" id="ranking_total_container">
+            <!-- 左側：累積スコアランキング -->
+            <div class="ranking_section" id="ranking_total_score">
+                <div class="ranking_section_title">
+                    <div class="ranking_section_title_text">累積スコア</div>
+                </div>
+                <div class="ranking_table_container">
+                    <table class="ranking_table" id="ranking_total_table">
+                        <thead class="ranking_table_head">
+                            <tr class="ranking_table_row ranking_table_row_header">
+                                <th class="ranking_table_cell ranking_table_cell_rank">順位</th>
+                                <th class="ranking_table_cell ranking_table_cell_name">ユーザー名</th>
+                                <th class="ranking_table_cell ranking_table_cell_score">スコア</th>
+                            </tr>
+                        </thead>
+                        <tbody class="ranking_table_body" id="ranking_total_table_body">
+                            <!-- JSで挿入 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- 右側：ラウンドスコアランキング -->
+            <div class="ranking_section" id="ranking_round">
+                <div class="ranking_section_title">
+                    <div class="ranking_section_title_text">ラウンド別スコア</div>
+                </div>
+                <div class="ranking_table_container">
+                    <table class="ranking_table" id="ranking_round_table">
+                        <thead class="ranking_table_head">
+                            <tr class="ranking_table_row ranking_table_row_header">
+                                <th class="ranking_table_cell ranking_table_cell_rank">順位</th>
+                                <th class="ranking_table_cell ranking_table_cell_name">ユーザー名</th>
+                                <th class="ranking_table_cell ranking_table_cell_score">スコア</th>
+                            </tr>
+                        </thead>
+                        <tbody class="ranking_table_body" id="ranking_round_table_body">
+                            <!-- JSで挿入 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

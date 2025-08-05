@@ -1,0 +1,78 @@
+<!--
+
+ユーザ自体の確認や操作を行うページ
+ユーザIDを入力させ、その存在を確認してから以下のコンポーネントを表示する
+
+- ユーザの統計(ランクやスコアなど)の確認
+- ユーザの登録時刻の確認
+- ユーザ名の変更
+- 回答履歴確認/編集ページへのアンカー(ラウンドリストから選択させてから飛ばす)
+
+縦長デバイス向けUI
+
+-->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザ管理 - 文化祭2-1企画 坂井の人事</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" src="./index.mjs"></script>
+</head>
+
+<body>
+    <div class="page_title" id="page_title">
+        <div class="page_title_text" id="page_title_text">
+            スタッフ用<br>ユーザ管理
+        </div>
+    </div>
+    <div class="error_display" id="error_display">
+        <div class="error_display_item" id="error_display_item_invalid" data-error-type="invalid">
+            <div class="error_display_item_text" id="error_display_item_invalid_text">
+                入力内容に不正があります<br>原因不明の場合は再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_network" data-error-type="network">
+            <div class="error_display_item_text" id="error_display_item_network_text">
+                ネットワークエラーが発生しました<br>接続を確認して再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_internal" data-error-type="internal">
+            <div class="error_display_item_text" id="error_display_item_internal_text">
+                内部エラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_unknown" data-error-type="unknown">
+            <div class="error_display_item_text" id="error_display_item_unknown_text">
+                不明なエラーが発生しました<br>再試行してください
+            </div>
+        </div>
+    </div>
+
+    <div class="user_id_input_container">
+        <input type="text" id="user_id_input" class="user_edit_input" placeholder="ユーザIDを入力">
+        <button id="user_id_submit" class="user_edit_button">確認</button>
+        <div id="user_id_error" style="color:#ff6666; font-size:3vw; margin-top:1vw;"></div>
+    </div>
+    <div class="user_info_container" id="user_info_container" style="display:none;">
+        <div class="user_info_title">ユーザ情報</div>
+        <div class="user_info_item" id="user_display_name">表示名: </div>
+        <div class="user_info_item" id="user_created_at">登録日時: </div>
+        <div class="user_info_item" id="user_stats">統計: </div>
+        <form class="user_edit_form" id="user_edit_form">
+            <input type="text" id="user_edit_name" class="user_edit_input" placeholder="新しい表示名(20文字まで)">
+            <button type="submit" class="user_edit_button">表示名変更</button>
+            <span id="user_edit_error" style="color:#ff6666; font-size:3vw; margin-left:2vw;"></span>
+        </form>
+        <div class="round_list" id="round_list">
+            <div class="round_list_title">ラウンド履歴</div>
+            <div id="round_list_items"></div>
+        </div>
+    </div>
+</body>
+
+</html>

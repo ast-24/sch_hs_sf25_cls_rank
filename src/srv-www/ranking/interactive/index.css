@@ -1,0 +1,252 @@
+/* デフォ値オーバーライド */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+html {
+    position: relative;
+    min-width: 100vw;
+    min-height: 100vh;
+    background-color: black;
+    color: white;
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+}
+
+body {
+    position: relative;
+    padding: 1vh 2vw;
+    min-height: 100%;
+    min-width: 100%;
+    overflow-x: auto;
+}
+
+/* Page Title */
+.page_title {
+    position: relative;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.page_title_text {
+    font-size: 3vw;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ページ切り替え用 */
+.page_switch {
+    display: none;
+}
+
+.page_switch.active {
+    display: block;
+}
+
+/* 待機画面 */
+.wait_message {
+    font-size: 4vw;
+    margin-top: 15vh;
+    color: #cccccc;
+    animation: pulse 2s infinite;
+    line-height: 1.6;
+}
+
+.wait_message small {
+    font-size: 2.5vw;
+    color: #888888;
+    display: block;
+    margin-top: 2vh;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* 最新ラウンドランキング用 */
+.round_latest_title {
+    margin-bottom: 3vh;
+    text-align: center;
+}
+
+.round_latest_title_text {
+    font-size: 3vw;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.round_latest_container {
+    padding: 10vh 0 0 0;
+    display: flex;
+    gap: 4vw;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 3vh;
+}
+
+.round_latest_card {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 1.5vw;
+    padding: 4vh 3vw;
+    backdrop-filter: blur(8px);
+    min-width: 25vw;
+    min-height: 50vh;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5vh;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.round_latest_card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.round_latest_card_rank {
+    font-size: 5vw;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.round_latest_card_room {
+    margin: 5vh 0 0 0;
+    font-size: 2.5vw;
+    color: #cccccc;
+    font-weight: 500;
+}
+
+.round_latest_card_name {
+    margin: 5vh 0 0 0;
+    font-size: 2.5vw;
+    font-weight: bold;
+    word-break: break-word;
+    line-height: 1.2;
+    color: #ffffff;
+}
+
+.round_latest_card_score {
+    margin: 5vh 0 0 0;
+    font-size: 4vw;
+    color: #ffd700;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* メダル表示 */
+.medal_gold {
+    color: #ffd700;
+}
+
+.medal_silver {
+    color: #c0c0c0;
+}
+
+.medal_bronze {
+    color: #cd7f32;
+}
+
+/* Ranking Container - 横長レイアウト */
+.ranking_container {
+    display: flex;
+    gap: 3vw;
+    max-width: 100%;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.ranking_section {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 3vh;
+}
+
+.ranking_section_title {
+    margin-bottom: 2vh;
+}
+
+.ranking_section_title_text {
+    font-size: 2.5vw;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* テーブルスタイル */
+.ranking_table_container {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1vw;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+}
+
+.ranking_table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ranking_table_cell {
+    padding: 1vh 1vw;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 1.2vw;
+}
+
+.ranking_table_row_header .ranking_table_cell {
+    background-color: rgba(255, 255, 255, 0.2);
+    font-weight: bold;
+    font-size: 2vw;
+}
+
+.ranking_table_cell_rank {
+    width: 15%;
+}
+
+.ranking_table_cell_name {
+    width: 55%;
+    text-align: left;
+}
+
+.ranking_table_cell_score {
+    width: 30%;
+}
+
+/* メダル表示共通 */
+.medal_gold {
+    color: #ffd700;
+}
+
+.medal_silver {
+    color: #c0c0c0;
+}
+
+.medal_bronze {
+    color: #cd7f32;
+}
+
+/* ハイライト用 */
+.ranking_highlight {
+    background: linear-gradient(90deg, #ffe066 0%, #fffbe6 100%) !important;
+    color: #222 !important;
+    font-weight: bold !important;
+}
+
+.ranking_highlight .ranking_table_cell {
+    color: #222;
+}
