@@ -1,13 +1,9 @@
-const API_BASE = '/api';
+const API_BASE = '{{API_ORIGIN}}';
 
 async function fetchHealth() {
     try {
         const requestStartedAt = new Date().toISOString();
-        const res = await fetch(API_BASE + '/health', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ requestStartedAt })
-        });
+        const res = await fetch(API_BASE + '/health');
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         // APIサーバ
@@ -18,11 +14,10 @@ async function fetchHealth() {
         document.getElementById('db-status').className = data.db.isActive ? (data.db.isNoHighLatency ? 'status-ok' : 'status-latency') : 'status-down';
         document.getElementById('db-latency').textContent = data.db.isActive ? (data.db.isNoHighLatency ? '正常' : '遅延あり') : '-';
         document.getElementById('db-latency').className = data.db.isActive ? (data.db.isNoHighLatency ? '' : 'status-latency') : '';
-    } catch {
+    } catch (error) {
+        console.error(`Health check failed: ${error}`);
         document.getElementById('api-status').textContent = 'DOWN';
         document.getElementById('api-status').className = 'status-down';
-        document.getElementById('api-latency').textContent = '-';
-        document.getElementById('api-latency').className = '';
         document.getElementById('db-status').textContent = '-';
         document.getElementById('db-status').className = '';
         document.getElementById('db-latency').textContent = '-';
