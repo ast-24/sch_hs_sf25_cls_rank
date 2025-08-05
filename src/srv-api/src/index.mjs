@@ -43,6 +43,8 @@ router.get('/users/:user_id/rounds/:round_id/status', EpsUsersUserIdRoundsRoundI
 router.get('/users/:user_id/status', EpsUsersUserIdStatusGet);
 router.get('/health', EpsHealthGet);
 
+router.option('*', () => new Response(null, { status: 204 }));
+
 router.all('*', () => { throw new MyNotFoundError('Endpoint') });
 
 export default {
