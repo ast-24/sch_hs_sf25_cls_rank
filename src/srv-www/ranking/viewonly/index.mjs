@@ -11,6 +11,15 @@ function isThisError(cmnError, error) {
     return error instanceof Error && error.message?.startsWith(cmnError);
 }
 
+function getRankClass(rank) {
+    switch (rank) {
+        case 1: return 'ranking_rank_1st';
+        case 2: return 'ranking_rank_2nd';
+        case 3: return 'ranking_rank_3rd';
+        default: return '';
+    }
+}
+
 class ApiClientC {
     static #baseUrl;
 
@@ -187,8 +196,11 @@ class RankingViewC {
 
         tbody.innerHTML = '';
 
+        // 同スコア同順位のロジック
+        const uniqueScores = Array.from(new Set(newData.map(item => item.score))).sort((a, b) => b - a);
+
         newData.forEach((item, index) => {
-            const rank = index + 1;
+            const rank = uniqueScores.indexOf(item.score) + 1;
             const row = document.createElement('tr');
             row.className = 'ranking_table_row';
 
@@ -209,7 +221,7 @@ class RankingViewC {
             }
 
             row.innerHTML = `
-                <td class="ranking_table_cell ranking_table_cell_rank">${rank}</td>
+                <td class="ranking_table_cell ranking_table_cell_rank ${getRankClass(rank)}">${rank}位</td>
                 <td class="ranking_table_cell ranking_table_cell_name">${this.#escapeHtml(item.user_display_name)}</td>
                 <td class="ranking_table_cell ranking_table_cell_score">${item.score}</td>
             `;
@@ -227,8 +239,11 @@ class RankingViewC {
 
         tbody.innerHTML = '';
 
+        // 同スコア同順位のロジック
+        const uniqueScores = Array.from(new Set(newData.map(item => item.score))).sort((a, b) => b - a);
+
         newData.forEach((item, index) => {
-            const rank = index + 1;
+            const rank = uniqueScores.indexOf(item.score) + 1;
             const row = document.createElement('tr');
             row.className = 'ranking_table_row';
 
@@ -250,7 +265,7 @@ class RankingViewC {
             }
 
             row.innerHTML = `
-                <td class="ranking_table_cell ranking_table_cell_rank">${rank}</td>
+                <td class="ranking_table_cell ranking_table_cell_rank ${getRankClass(rank)}">${rank}位</td>
                 <td class="ranking_table_cell ranking_table_cell_name">${this.#escapeHtml(item.user_display_name)}</td>
                 <td class="ranking_table_cell ranking_table_cell_score">${item.score}</td>
             `;
