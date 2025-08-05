@@ -1,0 +1,67 @@
+<!--
+
+指定ラウンドの結果(統計/各回答)取得及び変更を行うページ
+入力ページの下部と大体同じだが、回答のアップデートに加えインサートやデリートも行えるようにする
+(インサートの場合は後続要素全てをずらす必要がある　なお回答番号は連番とは限らないうえ、指定がないレコードはそのままになるため注意(挿入位置以降は全要素が必ずnullか{is_cottect:bool}としてリクエストに含まれる必要がある))
+編集し次第、統計も更新する
+なお編集は1項目づつアップデートするのではなく、アップデートボタンでまとめて行う
+
+縦長デバイス向けUI
+
+-->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ラウンド結果編集 - 文化祭2-1企画 坂井の人事</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" href="./index.css" as="style">
+    <link rel="preload" href="./index.mjs" as="script" crossorigin="anonymous">
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" src="./index.mjs"></script>
+</head>
+
+<body>
+    <div class="page_title" id="page_title">
+        <div class="page_title_text" id="page_title_text">
+            スタッフ用<br>ラウンド結果編集
+        </div>
+    </div>
+    <div class="error_display" id="error_display">
+        <div class="error_display_item" id="error_display_item_invalid" data-error-type="invalid">
+            <div class="error_display_item_text" id="error_display_item_invalid_text">
+                入力内容に不正があります<br>原因不明の場合は再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_network" data-error-type="network">
+            <div class="error_display_item_text" id="error_display_item_network_text">
+                ネットワークエラーが発生しました<br>接続を確認して再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_internal" data-error-type="internal">
+            <div class="error_display_item_text" id="error_display_item_internal_text">
+                内部エラーが発生しました<br>再試行してください
+            </div>
+        </div>
+        <div class="error_display_item" id="error_display_item_unknown" data-error-type="unknown">
+            <div class="error_display_item_text" id="error_display_item_unknown_text">
+                不明なエラーが発生しました<br>再試行してください
+            </div>
+        </div>
+    </div>
+
+    <div class="round_results_container" id="round_results_container">
+        <div class="round_results_title">ラウンド結果</div>
+        <div class="round_results_stats" id="round_results_stats">統計: </div>
+        <form id="answer_update_form">
+            <button type="submit" class="answer_edit_button">アップデート</button>
+            <div class="answer_list" id="answer_list">
+                <!-- JSで回答リスト挿入 -->
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
