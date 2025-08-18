@@ -187,7 +187,7 @@ class RankingViewC {
 
     static #renderTotalRanking(prevData) {
         const tbody = document.getElementById('ranking_total_table_body');
-        const newData = this.#currentRankings.total;
+        const newData = this.#currentRankings.total.map(item => item.score < 0 ? { ...item, score: 0 } : item);
 
         // 変更されたアイテムを特定
         const changedItems = this.#findChangedItems(prevData, newData);
@@ -228,7 +228,7 @@ class RankingViewC {
 
     static #renderRoundRanking(prevData) {
         const tbody = document.getElementById('ranking_round_table_body');
-        const newData = this.#currentRankings.round;
+        const newData = this.#currentRankings.round.map(item => item.score < 0 ? { ...item, score: 0 } : item);
 
         // 変更されたアイテムを特定
         const changedItems = this.#findChangedItems(prevData, newData, true);

@@ -279,8 +279,8 @@ class UserManagementC {
 
         if (statsEl) {
             statsEl.innerHTML = `
-                累積スコア: ${userStatus.total_score} (順位: ${userStatus.total_rank}位)<br>
-                最大ラウンドスコア: ${userStatus.round_max_score} (順位: ${userStatus.round_max_rank}位)
+                累積スコア: ${Math.max(0, userStatus.total_score)} (順位: ${userStatus.total_rank}位)<br>
+                最大ラウンドスコア: ${Math.max(0, userStatus.round_max_score)} (順位: ${userStatus.round_max_rank}位)
             `;
         }
 

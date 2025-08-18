@@ -188,7 +188,9 @@ class InteractiveRankingC {
 
         container.innerHTML = '';
 
-        const displaySorted = [...this.#currentRankings.round_latest].sort((a, b) => a.room_id - b.room_id);
+        const displaySorted = [...this.#currentRankings.round_latest]
+            .map(item => item.score < 0 ? { ...item, score: 0 } : item)
+            .sort((a, b) => a.room_id - b.room_id);
         const scores = displaySorted.map(item => item.score);
         const uniqueScores = Array.from(new Set(scores)).sort((a, b) => b - a);
         displaySorted.forEach((item) => {
@@ -211,6 +213,7 @@ class InteractiveRankingC {
     }
 
     static #updateRankingTable(tableBodyId, rankingData) {
+        rankingData = rankingData.map(item => item.score < 0 ? { ...item, score: 0 } : item);
         const tbody = document.getElementById(tableBodyId);
         if (!tbody) return;
 

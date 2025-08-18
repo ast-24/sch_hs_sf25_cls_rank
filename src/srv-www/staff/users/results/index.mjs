@@ -216,7 +216,7 @@ class RoundResultsEditorC {
         const statsEl = document.getElementById('round_results_stats');
         if (statsEl) {
             statsEl.innerHTML = `
-                スコア: ${this.#currentStatus.score} | 
+                スコア: ${Math.max(0, this.#currentStatus.score)} | 
                 順位: ${this.#currentStatus.rank}位 | 
                 状態: ${this.#currentStatus.finished ? '終了済み' : '進行中'}
             `;

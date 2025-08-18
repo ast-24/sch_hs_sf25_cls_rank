@@ -593,7 +593,7 @@ async function onAnswerEdit(answerId, newResult) {
     StateC.scoreTotal += scoreDiff;
 
     // UI更新
-    DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
+    DomManagerC.updateScores(Math.max(0, StateC.scoreTotal), Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), Math.max(0, StateC.scoreRoundCurrent));
     DomManagerC.renderAnswerHistory(StateC.answers);
 }
 
@@ -644,7 +644,7 @@ async function onAnswerSubmit(isCorrect) {
 
     // scoreRoundMaxは進行中では更新しない（ラウンド終了時の最終スコアのみが対象）
 
-    DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
+    DomManagerC.updateScores(Math.max(0, StateC.scoreTotal), Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), Math.max(0, StateC.scoreRoundCurrent));
     DomManagerC.renderAnswerHistory(StateC.answers);
 }
 
@@ -671,7 +671,7 @@ async function loadInitialData() {
     StateC.scoreRoundMax = userStatus.score_round_max ?? 0;
     StateC.scoreRoundCurrent = roundStatus.score ?? 0;
 
-    DomManagerC.updateScores(StateC.scoreTotal, Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), StateC.scoreRoundCurrent);
+    DomManagerC.updateScores(Math.max(0, StateC.scoreTotal), Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), Math.max(0, StateC.scoreRoundCurrent));
 
     const roundResults = await ApiClientC.getRoundResults(StateC.userId, StateC.roundId);
 

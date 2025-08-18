@@ -285,9 +285,9 @@ class StatisticsInfoC {
     }
 
     static set(userStatus) {
-        this.#totalScoreValue.textContent = userStatus.total_score ?? '-';
+        this.#totalScoreValue.textContent = userStatus.total_score < 0 ? 0 : userStatus.total_score ?? '-';
         this.#totalRankValue.textContent = userStatus.total_rank ? `${userStatus.total_rank}位` : '-';
-        this.#maxScoreValue.textContent = userStatus.round_max_score ?? '-';
+        this.#maxScoreValue.textContent = userStatus.round_max_score < 0 ? 0 : userStatus.round_max_score ?? '-';
         this.#maxRankValue.textContent = userStatus.round_max_rank ? `${userStatus.round_max_rank}位` : '-';
     }
 }
@@ -317,7 +317,7 @@ class RoundHistoryC {
             if (round.finished_at) {
                 try {
                     const roundStatus = await ApiClientC.getRoundStatus(userId, roundId);
-                    score = roundStatus.score;
+                    score = Math.max(0, roundStatus.score);
                     rank = `${roundStatus.rank}位`;
                 } catch (error) {
                     console.warn(`Failed to get round status for round ${roundId}:`, error);
