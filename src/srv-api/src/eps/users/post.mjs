@@ -44,7 +44,7 @@ export default async function (request, env) {
                 `, [roomId * 1000, roomId]
             );
             const nextUserId = rows[0].next_user_id;
-            displayName = displayName || `Player ${String(nextUserId).padStart(4, '0')}`;
+            displayName = displayName || `No.${String(nextUserId).padStart(4, '0')}`;
 
             await tidbCl.query(`
                 INSERT INTO users (user_id, room_id, display_name) VALUES (?, ?, ?)

@@ -119,7 +119,6 @@ class RankingViewC {
             ApiClientC.init();
             await this.#updateRankings();
             this.#startPolling();
-            this.#updateStatus('自動更新中...');
         } catch (error) {
             console.error('Failed to initialize ranking view:', error);
             this.#showError('初期化に失敗しました');
@@ -133,7 +132,6 @@ class RankingViewC {
                 this.#startPolling(); // 次のポーリングをスケジュール
             } catch (error) {
                 console.error('Polling error:', error);
-                this.#updateStatus('更新エラー - 再試行中...');
                 // エラーが発生してもポーリングを続ける
                 this.#startPolling();
             }
@@ -165,7 +163,6 @@ class RankingViewC {
         if (needsUpdate) {
             this.#lastModified = lastModified;
             await this.#updateRankings();
-            this.#updateStatus(`最終更新: ${new Date().toLocaleTimeString()}`);
         }
     }
 
