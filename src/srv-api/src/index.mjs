@@ -20,6 +20,7 @@ import EpsUsersUserIdRoundsRoundIdResultsPatch from './eps/users/user_id/rounds/
 import EpsUsersUserIdRoundsRoundIdStatusGet from './eps/users/user_id/rounds/round_id/status/get.mjs';
 import EpsUsersUserIdStatusGet from './eps/users/user_id/status/get.mjs';
 import EpsHealthGet from './eps/health/get.mjs';
+import DevClearAllGet from './eps/dev-clear-all/get.mjs';
 
 const router = IttyRouter();
 
@@ -42,6 +43,7 @@ router.patch('/users/:user_id/rounds/:round_id/results', EpsUsersUserIdRoundsRou
 router.get('/users/:user_id/rounds/:round_id/status', EpsUsersUserIdRoundsRoundIdStatusGet);
 router.get('/users/:user_id/status', EpsUsersUserIdStatusGet);
 router.get('/health', EpsHealthGet);
+router.get('/dev-clear-all', DevClearAllGet);
 
 router.options('*', () => new Response(null, { status: 204 }));
 
