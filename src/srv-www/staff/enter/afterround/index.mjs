@@ -27,6 +27,39 @@ class ValidatorC {
 }
 
 class ApiClientC {
+    /**
+     * ラウンドの全解答データを取得
+     * @param {number} userId
+     * @param {number} roundId
+     * @returns {Promise<Object>} answer_idごとの {is_correct, timestamp}
+     */
+    static async getRoundResults(userId, roundId) {
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/users/${userId}/rounds/${roundId}/results`);
+        } catch (error) {
+            console.error('Failed to get round results:', error);
+            throw new Error(CMN_ERRORS.network);
+        }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 404:
+                    console.error(new Error('User or round not found'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while getting round results'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while getting round results: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+        return await resp.json();
+    }
     static #baseUrl;
 
     static init() {
@@ -272,6 +305,16 @@ class RoundInfoC {
 }
 
 class StatisticsInfoC {
+    /**
+     * ラウンド結果サマリーを表示する
+     * @param {Object} summary - { correct, incorrect, pass, total }
+     */
+    static setRoundResultSummary(summary) {
+        document.getElementById('round_result_correct').textContent = summary.correct ?? '-';
+        document.getElementById('round_result_incorrect').textContent = summary.incorrect ?? '-';
+        document.getElementById('round_result_pass').textContent = summary.pass ?? '-';
+        document.getElementById('round_result_total').textContent = summary.total ?? '-';
+    }
     static #totalScoreValue;
     static #totalRankValue;
     static #maxScoreValue;
@@ -438,6 +481,28 @@ class AppC {
             // ユーザ統計を取得・表示
             const userStatus = await ApiClientC.getUserStatus(userId);
             StatisticsInfoC.set(userStatus);
+
+
+            // ラウンドの全解答データを取得しクライアント側で集計
+            try {
+                const results = await ApiClientC.getRoundResults(userId, roundId);
+                let correct = 0, incorrect = 0, pass = 0, total = 0;
+                for (const ansId in results) {
+                    const ans = results[ansId];
+                    if (ans.is_correct === null) {
+                        pass++;
+                    } else if (ans.is_correct === true) {
+                        correct++;
+                    } else if (ans.is_correct === false) {
+                        incorrect++;
+                    }
+                    total++;
+                }
+                StatisticsInfoC.setRoundResultSummary({ correct, incorrect, pass, total });
+            } catch (error) {
+                // サマリー取得失敗時はデフォルト値
+                StatisticsInfoC.setRoundResultSummary({ correct: '-', incorrect: '-', pass: '-', total: '-' });
+            }
 
             // ラウンド履歴を取得・表示
             const rounds = await ApiClientC.getUserRounds(userId);

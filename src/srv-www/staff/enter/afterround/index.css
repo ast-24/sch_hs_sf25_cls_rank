@@ -91,6 +91,34 @@ html {
             }
         }
 
+        .round_result_summary {
+            position: relative;
+            margin: 2vh auto;
+            padding: 1vh 2vw;
+            border: 0.5vw solid white;
+            border-radius: 2vw;
+            max-width: 80vw;
+
+            .round_result_summary_item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 0.5vh 0;
+                font-size: 3.5vw;
+
+                .round_result_summary_label {
+                    font-weight: bold;
+                    text-align: left;
+                }
+
+                .round_result_summary_value {
+                    font-family: monospace;
+                    color: #66ff66;
+                    text-align: right;
+                }
+            }
+        }
+
         .statistics_info {
             position: relative;
             margin: 2vh auto;
