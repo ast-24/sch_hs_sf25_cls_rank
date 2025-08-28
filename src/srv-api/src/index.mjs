@@ -60,14 +60,14 @@ export default {
                     return new MyJsonResp(response);
                 }
             })
-            .catch((error) => {
+            .catch(async (error) => {
                 if (error instanceof MyError) {
-                    return error
-                        .logging()
+                    return (await error
+                        .logging(env))
                         .intoResp();
                 } else {
-                    return new MyFatalError(`Unexpected error: ${error.message}`)
-                        .logging()
+                    return (await new MyFatalError(`Unexpected error: ${error.message}`)
+                        .logging(env))
                         .intoResp();
                 }
             });

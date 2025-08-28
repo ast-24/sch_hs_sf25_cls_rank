@@ -1,3 +1,4 @@
+import { logError } from "./log-error.mjs";
 import {
     MyBadRequestResp,
     MyFatalResp,
@@ -31,7 +32,8 @@ export class MyError extends Error {
         return this.resp || new MyFatalResp(`An error occurred`);
     }
 
-    logging() {
+    async logging(env) {
+        await logError(this, env);
         console.error(`[Error] ${this.intoString()}`);
         return this;
     }
