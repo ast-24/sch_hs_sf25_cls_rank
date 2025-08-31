@@ -389,5 +389,35 @@ html {
             }
         }
 
+        /* 送信完了ポップアップ */
+        .submit_popup {
+            position: fixed;
+            bottom: 4vh;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+
+            &.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .submit_popup_content {
+                padding: 3vw 8vw;
+                background-color: rgba(42, 138, 42, 0.95);
+                color: white;
+                border: 0.3vw solid #4a8a4a;
+                border-radius: 2vw;
+                font-size: 5vw;
+                font-weight: bold;
+                text-align: center;
+                box-shadow: 0 0.5vw 2vw rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(0.5vw);
+            }
+        }
+
     }
 }

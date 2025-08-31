@@ -385,6 +385,66 @@ class StateC {
     }
 }
 
+class SubmitPopupManagerC {
+    static #isShowing = false;
+    static #popupQueue = [];
+    static #currentTimeout = null;
+
+    static showPopup(resultType) {
+        const resultText = this.#getResultText(resultType);
+        const message = `送信完了(${resultText})`;
+
+        this.#popupQueue.push(message);
+        this.#processQueue();
+    }
+
+    static #getResultText(resultType) {
+        switch (resultType) {
+            case true:
+                return '正解';
+            case false:
+                return '不正解';
+            case null:
+                return 'パス';
+            default:
+                return '不明';
+        }
+    }
+
+    static async #processQueue() {
+        if (this.#isShowing || this.#popupQueue.length === 0) {
+            return;
+        }
+
+        const message = this.#popupQueue.shift();
+        await this.#displayPopup(message);
+
+        // 次のポップアップがある場合は0.2秒待ってから表示
+        if (this.#popupQueue.length > 0) {
+            setTimeout(() => this.#processQueue(), 200);
+        }
+    }
+
+    static async #displayPopup(message) {
+        this.#isShowing = true;
+
+        const popupElement = DomManagerC.elms.submitPopup;
+        const contentElement = DomManagerC.elms.submitPopupContent;
+
+        contentElement.textContent = message;
+        popupElement.classList.add('show');
+
+        return new Promise((resolve) => {
+            this.#currentTimeout = setTimeout(() => {
+                popupElement.classList.remove('show');
+                this.#isShowing = false;
+                this.#currentTimeout = null;
+                resolve();
+            }, 1000);
+        });
+    }
+}
+
 class DomManagerC {
     static #elements = {};
 
@@ -407,6 +467,8 @@ class DomManagerC {
             finishButton: document.getElementById('finish_button'),
             questionHistoryList: document.getElementById('question_history_list'),
             errorDisplay: document.getElementById('error_display'),
+            submitPopup: document.getElementById('submit_popup'),
+            submitPopupContent: document.getElementById('submit_popup_content'),
         }
     }
 
@@ -595,6 +657,9 @@ async function onAnswerEdit(answerId, newResult) {
     // UI更新
     DomManagerC.updateScores(Math.max(0, StateC.scoreTotal), Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), Math.max(0, StateC.scoreRoundCurrent));
     DomManagerC.renderAnswerHistory(StateC.answers);
+
+    // 送信完了ポップアップを表示
+    SubmitPopupManagerC.showPopup(newIsCorrect);
 }
 
 // 特定の回答のスコア貢献度を計算
@@ -646,6 +711,9 @@ async function onAnswerSubmit(isCorrect) {
 
     DomManagerC.updateScores(Math.max(0, StateC.scoreTotal), Math.max(StateC.scoreRoundMax, StateC.scoreRoundCurrent), Math.max(0, StateC.scoreRoundCurrent));
     DomManagerC.renderAnswerHistory(StateC.answers);
+
+    // 送信完了ポップアップを表示
+    SubmitPopupManagerC.showPopup(isCorrect);
 }
 
 // ラウンド終了処理
@@ -719,10 +787,37 @@ function setupEventListeners() {
     window.addEventListener('error', (event) => onError(event.error));
     window.addEventListener('unhandledrejection', (event) => onError(event.reason));
 
-    DomManagerC.elms.answerCorrectButton.addEventListener('click', () => onAnswerSubmit(true));
-    DomManagerC.elms.answerIncorrectButton.addEventListener('click', () => onAnswerSubmit(false));
-    DomManagerC.elms.answerPassButton.addEventListener('click', () => onAnswerSubmit(null));
-    DomManagerC.elms.finishButton.addEventListener('click', onFinish);
+    DomManagerC.elms.answerCorrectButton.addEventListener('click', async () => {
+        try {
+            await onAnswerSubmit(true);
+        } catch (error) {
+            onError(error);
+        }
+    });
+
+    DomManagerC.elms.answerIncorrectButton.addEventListener('click', async () => {
+        try {
+            await onAnswerSubmit(false);
+        } catch (error) {
+            onError(error);
+        }
+    });
+
+    DomManagerC.elms.answerPassButton.addEventListener('click', async () => {
+        try {
+            await onAnswerSubmit(null);
+        } catch (error) {
+            onError(error);
+        }
+    });
+
+    DomManagerC.elms.finishButton.addEventListener('click', async () => {
+        try {
+            await onFinish();
+        } catch (error) {
+            onError(error);
+        }
+    });
 }
 
 // 初期化処理
