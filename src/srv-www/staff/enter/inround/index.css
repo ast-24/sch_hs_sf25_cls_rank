@@ -395,6 +395,8 @@ html {
             bottom: 4vh;
             left: 50%;
             transform: translateX(-50%);
+            width: 80vw;
+            max-width: 800px;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
@@ -406,7 +408,9 @@ html {
             }
 
             .submit_popup_content {
-                padding: 3vw 8vw;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 3vw 0;
                 background-color: rgba(42, 138, 42, 0.95);
                 color: white;
                 border: 0.3vw solid #4a8a4a;
