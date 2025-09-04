@@ -39,6 +39,11 @@ body {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* 待機画面のときはタイトルを非表示 */
+#page_wait.active + .page_title {
+    display: none;
+}
+
 /* ページ切り替え用 */
 .page_switch {
     display: none;
@@ -49,6 +54,25 @@ body {
 }
 
 /* 待機画面 */
+.wait_image_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.wait_image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
 .wait_message {
     font-size: 4vw;
     margin-top: 15vh;
