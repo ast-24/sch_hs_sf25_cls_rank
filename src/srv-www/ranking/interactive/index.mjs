@@ -174,8 +174,8 @@ class InteractiveRankingC {
         try {
             const { rankings } = await ApiClientC.getRankings();
             const splitedRankings = {
-                total: rankings.total.slice(0, 15),
-                round: rankings.round.slice(0, 15),
+                total: rankings.total.slice(0, 5),
+                round: rankings.round.slice(0, 5),
                 round_latest: rankings.round_latest,
             };
             this.#currentRankings = splitedRankings;

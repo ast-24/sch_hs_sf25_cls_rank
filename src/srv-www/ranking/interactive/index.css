@@ -207,7 +207,7 @@ body {
 }
 
 .ranking_section_title_text {
-    font-size: 2.5vw;
+    font-size: 4vw;
     font-weight: bold;
     color: #ffffff;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -229,13 +229,13 @@ body {
 .ranking_table_cell {
     padding: 1vh 1vw;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 1.2vw;
+    font-size: 3vw;
 }
 
 .ranking_table_row_header .ranking_table_cell {
     background-color: rgba(255, 255, 255, 0.2);
     font-weight: bold;
-    font-size: 2vw;
+    font-size: 3.5vw;
 }
 
 .ranking_table_cell_rank {
