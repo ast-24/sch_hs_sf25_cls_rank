@@ -227,7 +227,7 @@ body {
 }
 
 .ranking_table_cell {
-    padding: 4vh 1vw;
+    padding: 3vh 1vw;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     font-size: 3vw;
 }
