@@ -227,7 +227,7 @@ body {
 }
 
 .ranking_table_cell {
-    padding: 2vh 1vw;
+    padding: 4vh 1vw;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     font-size: 3vw;
 }
@@ -239,16 +239,16 @@ body {
 }
 
 .ranking_table_cell_rank {
-    width: 15%;
+    width: 25%;
 }
 
 .ranking_table_cell_name {
-    width: 55%;
+    width: 40%;
     text-align: left;
 }
 
 .ranking_table_cell_score {
-    width: 30%;
+    width: 35%;
 }
 
 /* メダル表示共通 */
