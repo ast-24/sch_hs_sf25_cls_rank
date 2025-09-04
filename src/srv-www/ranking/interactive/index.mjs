@@ -20,6 +20,14 @@ function getRankClass(rank) {
     }
 }
 
+function roomNameConv(room_id) {
+    switch (room_id) {
+        case 1: return '戦闘';
+        case 2: return '筋肉';
+        case 3: return '科学';
+    }
+}
+
 function calculateRanks(items) {
     const ranks = [];
     let currentRank = 1;
@@ -199,7 +207,7 @@ class InteractiveRankingC {
             card.className = 'round_latest_card';
             card.innerHTML = `
                 <div class="round_latest_card_rank ${getRankClass(rank)}">${rank}位</div>
-                <div class="round_latest_card_room">ルーム ${item.room_id}</div>
+                <div class="round_latest_card_room">${roomNameConv(item.room_id)}</div>
                 <div class="round_latest_card_name">${this.#escapeHtml(item.user_display_name)}</div>
                 <div class="round_latest_card_score">${item.score}</div>
             `;
