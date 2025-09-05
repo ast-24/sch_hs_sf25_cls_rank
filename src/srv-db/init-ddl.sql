@@ -18,8 +18,8 @@ CREATE TABLE users (
     user_id             SMALLINT UNSIGNED NOT NULL,     -- ユーザID
     room_id             TINYINT  UNSIGNED NOT NULL,     -- ルームID
     display_name        VARCHAR(255)      NOT NULL,     -- 表示名
-    score_total         INT,                            -- 累積スコア(キャッシュ)
-    score_round_max     INT,                            -- 最大ラウンドスコア(キャッシュ)
+    score_total         BIGINT UNSIGNED,                -- 累積スコア(キャッシュ)
+    score_round_max     BIGINT UNSIGNED,                -- 最大ラウンドスコア(キャッシュ)
 
     UNIQUE INDEX idx__users__user_id (user_id),
            INDEX idx__users__room_id__user_id (room_id, user_id),
@@ -40,7 +40,7 @@ CREATE TABLE users_rounds (
     round_id            TINYINT UNSIGNED  NOT NULL,      -- ラウンドID
     room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID
     finished_at         DATETIME,                        -- ラウンド終了日時(未終了はNULL)
-    score               INT,                             -- スコア(キャッシュ)
+    score               BIGINT UNSIGNED,                 -- スコア(キャッシュ)
 
     FOREIGN KEY(user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
 
