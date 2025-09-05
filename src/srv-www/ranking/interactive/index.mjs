@@ -92,7 +92,7 @@ class InteractiveRankingC {
     static #pages = ['wait', 'round', 'total'];
     static #currentPageIndex = 0;
     static #inactivityTimer = null;
-    static #inactivityTimeout = 5 * 60 * 1000; // 5分
+    static #inactivityTimeout = 2 * 60 * 1000; // 2分
     static #pollInterval = 10 * 1000; // 10秒
     static #pollTimeoutId = null;
     static #currentRankings = {
@@ -105,12 +105,25 @@ class InteractiveRankingC {
         try {
             ApiClientC.init();
             this.#initKeyboardListener();
+            this.#initClickListener();
             this.#showPage('wait');
             await this.#updateRankings();
             this.#startPolling();
             this.#resetInactivityTimer();
         } catch (error) {
             console.error('Failed to initialize interactive ranking:', error);
+        }
+    }
+
+    static #initClickListener() {
+        // タイトル部分クリックでページ遷移
+        const title = document.getElementById('page_title');
+        if (title) {
+            title.style.cursor = 'pointer';
+            title.addEventListener('click', () => {
+                this.#nextPage();
+                this.#resetInactivityTimer();
+            });
         }
     }
 
