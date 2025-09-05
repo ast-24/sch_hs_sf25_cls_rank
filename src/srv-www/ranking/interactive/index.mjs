@@ -129,7 +129,7 @@ class InteractiveRankingC {
 
     static #initKeyboardListener() {
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
+            if (event.key === 'ArrowRight') {
                 event.preventDefault();
                 this.#nextPage();
                 this.#resetInactivityTimer();
