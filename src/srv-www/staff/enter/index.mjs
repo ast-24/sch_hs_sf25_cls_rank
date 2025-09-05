@@ -33,8 +33,7 @@ class TimerManager {
 
     async fetchTimerStatus() {
         try {
-            const response = await fetch('/progress/timemng');
-            const data = await response.json();
+            const data = await ApiClientC.getTimerStatus();
             this.updateTimerDisplay(data);
         } catch (error) {
             console.error('タイマー情報の取得失敗:', error);
@@ -80,8 +79,7 @@ class TimerManager {
 
     async fetchReadyStatus() {
         try {
-            const response = await fetch('/progress/ready');
-            const data = await response.json();
+            const data = await ApiClientC.getReadyStatus();
             this.updateReadyStatusDisplay(data.ready_status);
         } catch (error) {
             console.error('準備状況の取得失敗:', error);
@@ -115,21 +113,8 @@ class TimerManager {
         if (!this.currentRoomId) return;
 
         try {
-            const response = await fetch('/progress/ready', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    room_id: this.currentRoomId
-                })
-            });
-
-            if (response.ok) {
-                this.fetchReadyStatus();
-            } else {
-                alert('準備完了の設定に失敗しました');
-            }
+            await ApiClientC.setRoomReady(this.currentRoomId);
+            this.fetchReadyStatus();
         } catch (error) {
             console.error('準備完了設定エラー:', error);
             alert('準備完了の設定に失敗しました');
@@ -140,21 +125,8 @@ class TimerManager {
         if (!this.currentRoomId) return;
 
         try {
-            const response = await fetch('/progress/ready', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    room_id: this.currentRoomId
-                })
-            });
-
-            if (response.ok) {
-                this.fetchReadyStatus();
-            } else {
-                alert('準備解除に失敗しました');
-            }
+            await ApiClientC.clearRoomReady(this.currentRoomId);
+            this.fetchReadyStatus();
         } catch (error) {
             console.error('準備解除エラー:', error);
             alert('準備解除に失敗しました');
@@ -339,9 +311,142 @@ class ApiClientC {
         return {
             roundId: respBody.round_id,
         }
-
     }
-};
+
+    /* -> { ready_status: object } */
+    static async getReadyStatus() {
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/progress/ready`);
+        } catch (error) {
+            console.error('Failed to get ready status:', error);
+            throw new Error(CMN_ERRORS.network);
+        }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 500:
+                    console.error(new Error('Server error while getting ready status'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while getting ready status: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
+        const respBody = await resp.json();
+        return respBody;
+    }
+
+    /* -> { start_time: string|null, duration_seconds: number|null } */
+    static async getTimerStatus() {
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/progress/timemng`);
+        } catch (error) {
+            console.error('Failed to get timer status:', error);
+            throw new Error(CMN_ERRORS.network);
+        }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 500:
+                    console.error(new Error('Server error while getting timer status'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while getting timer status: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
+        const respBody = await resp.json();
+        return respBody;
+    }
+
+    /* -> { success: boolean } */
+    static async setRoomReady(roomId) {
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/progress/ready`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    room_id: parseInt(roomId, 10)
+                })
+            });
+        } catch (error) {
+            console.error('Failed to set room ready:', error);
+            throw new Error(CMN_ERRORS.network);
+        }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 422:
+                    console.error(new Error('Invalid input while setting room ready'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while setting room ready'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while setting room ready: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
+        const respBody = await resp.json();
+        return respBody;
+    }
+
+    /* -> { success: boolean } */
+    static async clearRoomReady(roomId) {
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/progress/ready`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    room_id: parseInt(roomId, 10)
+                })
+            });
+        } catch (error) {
+            console.error('Failed to clear room ready:', error);
+            throw new Error(CMN_ERRORS.network);
+        }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 422:
+                    console.error(new Error('Invalid input while clearing room ready'));
+                    throw new Error(CMN_ERRORS.invalidInput);
+                case 500:
+                    console.error(new Error('Server error while clearing room ready'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while clearing room ready: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
+        const respBody = await resp.json();
+        return respBody;
+    }
+}
 
 class StateC {
     static #state = {
