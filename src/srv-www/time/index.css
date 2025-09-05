@@ -95,6 +95,7 @@ body {
         transform: scale(1);
         box-shadow: 0 10px 30px rgba(255, 68, 68, 0.5);
     }
+
     100% {
         transform: scale(1.05);
         box-shadow: 0 15px 40px rgba(255, 68, 68, 0.8);
@@ -106,11 +107,11 @@ body {
     .container {
         padding: 10px;
     }
-    
+
     .decorative-time {
         font-size: clamp(1.5rem, 6vw, 4rem);
     }
-    
+
     .timer-display {
         font-size: clamp(1rem, 4vw, 2.5rem);
         padding: 20px;
@@ -125,13 +126,13 @@ body {
         min-height: 100vh;
         justify-content: center;
     }
-    
+
     .decorative-time-section,
     .timer-section {
         flex: none;
         margin: 20px 0;
     }
-    
+
     .decorative-time-section {
         border-bottom: none;
         margin-bottom: 10px;

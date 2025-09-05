@@ -51,7 +51,7 @@ export default async function (request, env) {
         let selectCols = '';
         let limit = '';
         let where = '';
-        
+
         if (type === 'total') {
             selectCols = 'user_pub_id AS user_id, score, user_display_name';
             limit = `LIMIT ${CONF.RANKING.COUNT_LIMIT.TOTAL}`;
@@ -63,27 +63,27 @@ export default async function (request, env) {
             limit = `LIMIT ${CONF.RANKING.COUNT_LIMIT.ROUND}`;
         } else if (type === 'round_latest') {
             selectCols = 'room_id, round_id, user_pub_id AS user_id, score, user_display_name, finished_at';
-            
+
             // タイマーベースのフィルタリングを追加
             let whereConditions = [];
-            
+
             // 既存の5分ルール
             whereConditions.push(`finished_at >= DATE_SUB(NOW(), INTERVAL ${CONF.RANKING.ROUND_LATEST_BORDER_MIN} MINUTE)`);
-            
+
             // タイマーがセットされている場合の追加フィルタリング
             if (timerInfo && timerInfo.start_time && timerInfo.duration_seconds) {
                 const startTime = new Date(timerInfo.start_time);
                 const endTime = new Date(startTime.getTime() + (timerInfo.duration_seconds * 1000));
                 const filterTime = new Date(endTime.getTime() - (30 * 1000)); // 30秒前
-                
+
                 const filterTimeStr = filterTime.toISOString().slice(0, 19).replace('T', ' ');
                 whereConditions.push(`finished_at >= '${filterTimeStr}'`);
             }
-            
+
             where = `WHERE ${whereConditions.join(' AND ')}`;
             limit = '';
         }
-        
+
         result[type] = await tidbCl.query(
             `SELECT ${selectCols} FROM ${table} ${where} ORDER BY score DESC ${limit}`
         );

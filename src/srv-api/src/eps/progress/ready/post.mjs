@@ -5,7 +5,7 @@ import { getTidbClient } from '../../../cmn/db/tidb_client.mjs';
  * POST /progress/ready
  * 部屋の準備完了状態をセット
  */
-export default async function(request, env, ctx) {
+export default async function (request, env, ctx) {
     const body = await request.json();
     const { room_id } = body;
 

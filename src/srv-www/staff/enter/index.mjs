@@ -57,7 +57,7 @@ class TimerManager {
             // 開始前
             const diff = startTime - now;
             const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
-            
+
             if (diff <= 5000) {
                 this.timerDisplayEl.className = 'timer_display countdown-urgent';
                 this.timerDisplayEl.textContent = `開始まで: ${timeStr}`;
@@ -99,9 +99,9 @@ class TimerManager {
 
         const roomKey = `room_${this.currentRoomId}`;
         const isReady = readyStatus[roomKey] || false;
-        
+
         this.readyStatusEl.textContent = `部屋${this.currentRoomId}: ${isReady ? '準備完了' : '未完了'}`;
-        
+
         if (isReady) {
             this.readyBtnEl.style.display = 'none';
             this.notReadyBtnEl.style.display = 'inline-block';
@@ -688,7 +688,7 @@ function onRoomIdChange() {
     DomManagerC.hideInputItemError(DomManagerC.elms.roomId);
 
     StateC.roomId = newRoomId;
-    
+
     // タイマーマネージャーに部屋IDを通知
     if (window.timerManager) {
         window.timerManager.setCurrentRoom(newRoomId);
@@ -910,7 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
     StateC.init();
     DomManagerC.init();
     setupEventListeners();
-    
+
     // タイマーマネージャーを初期化
     window.timerManager = new TimerManager();
 });

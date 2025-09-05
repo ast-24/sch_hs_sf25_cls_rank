@@ -4,7 +4,7 @@ import { getTidbClient } from '../../../cmn/db/tidb_client.mjs';
  * DELETE /progress/timemng
  * タイマーを中止
  */
-export default async function(request, env, ctx) {
+export default async function (request, env, ctx) {
     const tidb = await getTidbClient(env);
 
     try {

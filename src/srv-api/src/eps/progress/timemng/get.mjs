@@ -4,7 +4,7 @@ import { getTidbClient } from '../../../cmn/db/tidb_client.mjs';
  * GET /progress/timemng
  * 次のタイマー開始時刻を取得
  */
-export default async function(request, env, ctx) {
+export default async function (request, env, ctx) {
     const tidb = await getTidbClient(env);
 
     try {
@@ -17,7 +17,7 @@ export default async function(request, env, ctx) {
         `);
 
         if (results.rows.length === 0) {
-            return { 
+            return {
                 start_time: null,
                 duration_seconds: null
             };
@@ -25,7 +25,7 @@ export default async function(request, env, ctx) {
 
         const timer = results.rows[0];
         const startTime = new Date(timer.start_time);
-        
+
         return {
             start_time: startTime.toISOString(),
             duration_seconds: timer.duration_seconds

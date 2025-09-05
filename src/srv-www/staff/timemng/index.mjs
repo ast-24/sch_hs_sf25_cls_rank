@@ -4,7 +4,7 @@ class TimerManager {
         this.timerCheckInterval = null;
         this.currentTimer = null;
         this.timerState = 'idle'; // idle, countdown, running, finished
-        
+
         this.initializeElements();
         this.bindEvents();
         this.startRoomStatusPolling();
@@ -27,7 +27,7 @@ class TimerManager {
         this.startBtn.addEventListener('click', () => this.startTimer());
         this.stopBtn.addEventListener('click', () => this.stopTimer());
         this.resetBtn.addEventListener('click', () => this.resetTimer());
-        
+
         // 予測開始時刻の更新
         this.minutesEl.addEventListener('input', () => this.updatePredictedStart());
         this.secondsEl.addEventListener('input', () => this.updatePredictedStart());
@@ -46,7 +46,7 @@ class TimerManager {
 
     updateRoomStatusDisplay(readyStatus) {
         this.roomStatusEl.innerHTML = '';
-        
+
         if (!readyStatus || Object.keys(readyStatus).length === 0) {
             this.roomStatusEl.textContent = '部屋情報がありません';
             return;
@@ -88,7 +88,7 @@ class TimerManager {
             this.timerState = 'countdown';
             const diff = startTime - now;
             const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
-            
+
             if (diff <= 5000) {
                 this.timerDisplayEl.className = 'timer-display countdown-urgent';
                 this.timerDisplayEl.textContent = `開始まで: ${timeStr}`;
@@ -124,7 +124,7 @@ class TimerManager {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-        
+
         if (hours > 0) {
             return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         } else {
@@ -136,16 +136,16 @@ class TimerManager {
         const now = new Date();
         const currentSeconds = now.getSeconds();
         const nextTenSecondMark = Math.ceil((currentSeconds + 1) / 10) * 10;
-        
+
         const startTime = new Date(now);
         startTime.setSeconds(nextTenSecondMark + 10, 0);
-        
+
         if (startTime.getSeconds() >= 60) {
             startTime.setMinutes(startTime.getMinutes() + 1);
             startTime.setSeconds(0, 0);
         }
 
-        const timeStr = startTime.toLocaleTimeString('ja-JP', { 
+        const timeStr = startTime.toLocaleTimeString('ja-JP', {
             hour12: false,
             hour: '2-digit',
             minute: '2-digit',

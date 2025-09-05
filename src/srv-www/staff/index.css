@@ -70,15 +70,15 @@ h1 {
     .menu-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .menu-item {
         padding: 20px;
     }
-    
+
     .menu-item h2 {
         font-size: 20px;
     }
-    
+
     .menu-item p {
         font-size: 14px;
     }

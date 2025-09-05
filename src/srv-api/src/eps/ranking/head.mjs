@@ -28,19 +28,19 @@ export default async function (request, env) {
     const headers = new Headers();
     for (const row of rows) {
         let updatedAt = row.ranking_updated_at;
-        
+
         // round_latestの場合、タイマー終了30秒前より前に更新されている場合は現在時刻を使用
         if (row.ranking_type === 'round_latest' && timerInfo && timerInfo.start_time && timerInfo.duration_seconds) {
             const startTime = new Date(timerInfo.start_time);
             const endTime = new Date(startTime.getTime() + (timerInfo.duration_seconds * 1000));
             const filterTime = new Date(endTime.getTime() - (30 * 1000)); // 30秒前
             const lastUpdated = new Date(row.ranking_updated_at);
-            
+
             if (lastUpdated < filterTime) {
                 updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
             }
         }
-        
+
         headers.set(
             `X-Ranking-Last-Modified-${row.ranking_type.replaceAll('_', '-').toUpperCase()}`,
             updatedAt

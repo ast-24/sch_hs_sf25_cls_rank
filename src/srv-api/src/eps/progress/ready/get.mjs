@@ -4,7 +4,7 @@ import { getTidbClient } from '../../../cmn/db/tidb_client.mjs';
  * GET /progress/ready
  * 現在の準備完了状態を取得
  */
-export default async function(request, env, ctx) {
+export default async function (request, env, ctx) {
     const tidb = await getTidbClient(env);
 
     try {

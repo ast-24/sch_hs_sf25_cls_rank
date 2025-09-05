@@ -2,11 +2,11 @@ class TimeDisplayManager {
     constructor() {
         this.decorativeTimeEl = document.getElementById('decorativeTime');
         this.timerDisplayEl = document.getElementById('timerDisplay');
-        
+
         this.decorativeInterval = null;
         this.timerInterval = null;
         this.clearTimerTimeout = null;
-        
+
         this.startDecorativeTime();
         this.startTimerPolling();
     }
@@ -22,14 +22,14 @@ class TimeDisplayManager {
         const now = new Date();
         // 現在時刻 + 100年後の日時を表示
         const future = new Date(now.getTime() + (100 * 365.25 * 24 * 60 * 60 * 1000));
-        
+
         const year = future.getFullYear();
         const month = (future.getMonth() + 1).toString().padStart(2, '0');
         const day = future.getDate().toString().padStart(2, '0');
         const hours = future.getHours().toString().padStart(2, '0');
         const minutes = future.getMinutes().toString().padStart(2, '0');
         const seconds = future.getSeconds().toString().padStart(2, '0');
-        
+
         this.decorativeTimeEl.textContent = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
     }
 
@@ -63,7 +63,7 @@ class TimeDisplayManager {
             // 開始前のカウントダウン
             const diff = startTime - now;
             const diffSeconds = Math.max(0, Math.floor(diff / 1000));
-            
+
             if (diffSeconds <= 5) {
                 // 5秒前から1秒ごとのカウントダウン
                 this.timerDisplayEl.className = 'timer-display countdown-urgent';
@@ -85,7 +85,7 @@ class TimeDisplayManager {
             // 終了
             this.timerDisplayEl.className = 'timer-display timer-finished';
             this.timerDisplayEl.textContent = '終了';
-            
+
             // 10秒後にクリア
             this.setClearTimerTimeout();
         }
@@ -93,7 +93,7 @@ class TimeDisplayManager {
 
     setClearTimerTimeout() {
         if (this.clearTimerTimeout) return; // 既に設定済み
-        
+
         this.clearTimerTimeout = setTimeout(() => {
             this.timerDisplayEl.textContent = '';
             this.timerDisplayEl.className = 'timer-display';

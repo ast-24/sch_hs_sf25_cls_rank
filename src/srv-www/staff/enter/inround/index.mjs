@@ -50,7 +50,7 @@ class TimerManager {
             // 開始前
             const diff = startTime - now;
             const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
-            
+
             if (diff <= 5000) {
                 this.timerDisplayEl.className = 'timer_display countdown-urgent';
                 this.timerDisplayEl.textContent = `開始まで: ${timeStr}`;
@@ -906,7 +906,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     DomManagerC.init();
     setupEventListeners();
     await loadInitialData();
-    
+
     // タイマーマネージャーを初期化
     window.timerManager = new TimerManager();
 });
