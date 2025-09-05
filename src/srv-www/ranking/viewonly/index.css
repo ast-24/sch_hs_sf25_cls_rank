@@ -104,7 +104,7 @@ body {
 }
 
 .ranking_table_cell {
-    padding: 1vh 1vw;
+    padding: 0.5vh 1vw;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
 }
