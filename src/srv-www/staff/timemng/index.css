@@ -1,0 +1,158 @@
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.room-status {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.room-item {
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.room-ready {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.room-not-ready {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.timer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.time-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.time-input label {
+    font-weight: bold;
+}
+
+.time-input input {
+    width: 80px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.predicted-start {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-primary, .btn-danger, .btn-secondary, .btn-back {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.btn-back {
+    background-color: #6c757d;
+    color: white;
+    margin-top: 20px;
+}
+
+.btn-back:hover {
+    background-color: #545b62;
+}
+
+.timer-display {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: white;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.countdown {
+    color: #007bff;
+}
+
+.countdown-urgent {
+    color: #dc3545;
+    animation: blink 1s infinite;
+}
+
+.timer-running {
+    color: #28a745;
+}
+
+.timer-finished {
+    color: #6c757d;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+.navigation {
+    text-align: center;
+}

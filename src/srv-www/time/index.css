@@ -1,0 +1,139 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #000000, #1a1a1a, #333333);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* 装飾用時計セクション */
+.decorative-time-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 2px solid #444;
+    margin-bottom: 20px;
+}
+
+.decorative-time {
+    font-size: clamp(2rem, 8vw, 6rem);
+    font-weight: bold;
+    text-align: center;
+    color: #00aaff;
+    text-shadow: 0 0 20px rgba(0, 170, 255, 0.5);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.1em;
+}
+
+/* タイマーセクション */
+.timer-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-display {
+    font-size: clamp(1.5rem, 6vw, 4rem);
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.2;
+    padding: 40px;
+    border-radius: 20px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.timer-display.countdown {
+    background: linear-gradient(135deg, #ff8800, #ffaa44);
+    color: white;
+    box-shadow: 0 10px 30px rgba(255, 136, 0, 0.3);
+}
+
+.timer-display.countdown-urgent {
+    background: linear-gradient(135deg, #ff4444, #ff6666);
+    color: white;
+    box-shadow: 0 10px 30px rgba(255, 68, 68, 0.5);
+    animation: pulse 1s infinite alternate;
+}
+
+.timer-display.timer-running {
+    background: linear-gradient(135deg, #44ff44, #66ff66);
+    color: white;
+    box-shadow: 0 10px 30px rgba(68, 255, 68, 0.3);
+}
+
+.timer-display.timer-finished {
+    background: linear-gradient(135deg, #666666, #888888);
+    color: white;
+    box-shadow: 0 10px 30px rgba(102, 102, 102, 0.2);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 10px 30px rgba(255, 68, 68, 0.5);
+    }
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(255, 68, 68, 0.8);
+    }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .decorative-time {
+        font-size: clamp(1.5rem, 6vw, 4rem);
+    }
+    
+    .timer-display {
+        font-size: clamp(1rem, 4vw, 2.5rem);
+        padding: 20px;
+        min-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        justify-content: center;
+    }
+    
+    .decorative-time-section,
+    .timer-section {
+        flex: none;
+        margin: 20px 0;
+    }
+    
+    .decorative-time-section {
+        border-bottom: none;
+        margin-bottom: 10px;
+    }
+}

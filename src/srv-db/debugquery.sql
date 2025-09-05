@@ -27,3 +27,9 @@ DELETE FROM rankings_cache_updated;
 DELETE FROM users_rounds_answers;
 DELETE FROM users_rounds;
 DELETE FROM users;
+DELETE FROM timer_management;
+DELETE FROM room_ready_status;
+INSERT INTO room_ready_status (room_id, is_ready) VALUES
+(1, FALSE),
+(2, FALSE),
+(3, FALSE);

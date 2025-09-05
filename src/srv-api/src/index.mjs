@@ -21,6 +21,12 @@ import EpsUsersUserIdRoundsRoundIdStatusGet from './eps/users/user_id/rounds/rou
 import EpsUsersUserIdStatusGet from './eps/users/user_id/status/get.mjs';
 import EpsHealthGet from './eps/health/get.mjs';
 import DevClearAllGet from './eps/dev-clear-all/get.mjs';
+import EpsProgressReadyGet from './eps/progress/ready/get.mjs';
+import EpsProgressReadyPost from './eps/progress/ready/post.mjs';
+import EpsProgressReadyDelete from './eps/progress/ready/delete.mjs';
+import EpsProgressTimemngGet from './eps/progress/timemng/get.mjs';
+import EpsProgressTimemngPost from './eps/progress/timemng/post.mjs';
+import EpsProgressTimemngDelete from './eps/progress/timemng/delete.mjs';
 
 const router = IttyRouter();
 
@@ -44,6 +50,12 @@ router.get('/users/:user_id/rounds/:round_id/status', EpsUsersUserIdRoundsRoundI
 router.get('/users/:user_id/status', EpsUsersUserIdStatusGet);
 router.get('/health', EpsHealthGet);
 router.get('/dev-clear-all', DevClearAllGet);
+router.get('/progress/ready', EpsProgressReadyGet);
+router.post('/progress/ready', EpsProgressReadyPost);
+router.delete('/progress/ready', EpsProgressReadyDelete);
+router.get('/progress/timemng', EpsProgressTimemngGet);
+router.post('/progress/timemng', EpsProgressTimemngPost);
+router.delete('/progress/timemng', EpsProgressTimemngDelete);
 
 router.options('*', () => new Response(null, { status: 204 }));
 

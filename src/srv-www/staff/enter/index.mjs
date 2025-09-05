@@ -11,6 +11,188 @@ function isThisError(cmnError, error) {
     return error instanceof Error && error.message?.startsWith(cmnError);
 }
 
+// タイマー管理クラス
+class TimerManager {
+    constructor() {
+        this.timerInterval = null;
+        this.currentRoomId = null;
+        this.initElements();
+        this.startTimerPolling();
+        this.startReadyStatusPolling();
+    }
+
+    initElements() {
+        this.timerDisplayEl = document.getElementById('timer_display');
+        this.readyStatusEl = document.getElementById('ready_status');
+        this.readyBtnEl = document.getElementById('ready_button_ready');
+        this.notReadyBtnEl = document.getElementById('ready_button_not_ready');
+
+        this.readyBtnEl.addEventListener('click', () => this.setReady());
+        this.notReadyBtnEl.addEventListener('click', () => this.clearReady());
+    }
+
+    async fetchTimerStatus() {
+        try {
+            const response = await fetch('/progress/timemng');
+            const data = await response.json();
+            this.updateTimerDisplay(data);
+        } catch (error) {
+            console.error('タイマー情報の取得失敗:', error);
+            this.timerDisplayEl.textContent = 'タイマー情報取得失敗';
+        }
+    }
+
+    updateTimerDisplay(timerData) {
+        if (!timerData.start_time) {
+            this.timerDisplayEl.textContent = 'タイマーは設定されていません';
+            this.timerDisplayEl.className = 'timer_display';
+            return;
+        }
+
+        const now = new Date();
+        const startTime = new Date(timerData.start_time);
+        const endTime = new Date(startTime.getTime() + (timerData.duration_seconds * 1000));
+
+        if (now < startTime) {
+            // 開始前
+            const diff = startTime - now;
+            const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
+            
+            if (diff <= 5000) {
+                this.timerDisplayEl.className = 'timer_display countdown-urgent';
+                this.timerDisplayEl.textContent = `開始まで: ${timeStr}`;
+            } else {
+                this.timerDisplayEl.className = 'timer_display countdown';
+                this.timerDisplayEl.textContent = `開始まで: ${timeStr}`;
+            }
+        } else if (now < endTime) {
+            // ラウンド中
+            const diff = endTime - now;
+            const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
+            this.timerDisplayEl.className = 'timer_display timer-running';
+            this.timerDisplayEl.textContent = `残り時間: ${timeStr}`;
+        } else {
+            // 終了
+            this.timerDisplayEl.className = 'timer_display timer-finished';
+            this.timerDisplayEl.textContent = 'タイマー終了';
+        }
+    }
+
+    async fetchReadyStatus() {
+        try {
+            const response = await fetch('/progress/ready');
+            const data = await response.json();
+            this.updateReadyStatusDisplay(data.ready_status);
+        } catch (error) {
+            console.error('準備状況の取得失敗:', error);
+            this.readyStatusEl.textContent = '準備状況取得失敗';
+        }
+    }
+
+    updateReadyStatusDisplay(readyStatus) {
+        if (!this.currentRoomId) {
+            this.readyStatusEl.textContent = '部屋が選択されていません';
+            this.readyBtnEl.style.display = 'none';
+            this.notReadyBtnEl.style.display = 'none';
+            return;
+        }
+
+        const roomKey = `room_${this.currentRoomId}`;
+        const isReady = readyStatus[roomKey] || false;
+        
+        this.readyStatusEl.textContent = `部屋${this.currentRoomId}: ${isReady ? '準備完了' : '未完了'}`;
+        
+        if (isReady) {
+            this.readyBtnEl.style.display = 'none';
+            this.notReadyBtnEl.style.display = 'inline-block';
+        } else {
+            this.readyBtnEl.style.display = 'inline-block';
+            this.notReadyBtnEl.style.display = 'none';
+        }
+    }
+
+    async setReady() {
+        if (!this.currentRoomId) return;
+
+        try {
+            const response = await fetch('/progress/ready', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    room_id: this.currentRoomId
+                })
+            });
+
+            if (response.ok) {
+                this.fetchReadyStatus();
+            } else {
+                alert('準備完了の設定に失敗しました');
+            }
+        } catch (error) {
+            console.error('準備完了設定エラー:', error);
+            alert('準備完了の設定に失敗しました');
+        }
+    }
+
+    async clearReady() {
+        if (!this.currentRoomId) return;
+
+        try {
+            const response = await fetch('/progress/ready', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    room_id: this.currentRoomId
+                })
+            });
+
+            if (response.ok) {
+                this.fetchReadyStatus();
+            } else {
+                alert('準備解除に失敗しました');
+            }
+        } catch (error) {
+            console.error('準備解除エラー:', error);
+            alert('準備解除に失敗しました');
+        }
+    }
+
+    setCurrentRoom(roomId) {
+        this.currentRoomId = roomId;
+        this.fetchReadyStatus();
+    }
+
+    formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    startTimerPolling() {
+        this.fetchTimerStatus();
+        this.timerInterval = setInterval(() => {
+            this.fetchTimerStatus();
+        }, 10000); // 10秒ごと
+    }
+
+    startReadyStatusPolling() {
+        this.fetchReadyStatus();
+        setInterval(() => {
+            this.fetchReadyStatus();
+        }, 10000); // 10秒ごと
+    }
+
+    destroy() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
+    }
+}
+
 class ValidatorC {
     static isValidRoomId(roomId) {
         return roomId && [1, 2, 3].includes(roomId);
@@ -506,6 +688,11 @@ function onRoomIdChange() {
     DomManagerC.hideInputItemError(DomManagerC.elms.roomId);
 
     StateC.roomId = newRoomId;
+    
+    // タイマーマネージャーに部屋IDを通知
+    if (window.timerManager) {
+        window.timerManager.setCurrentRoom(newRoomId);
+    }
 }
 
 function onUserIdModeChange(mode) {
@@ -723,4 +910,14 @@ document.addEventListener('DOMContentLoaded', () => {
     StateC.init();
     DomManagerC.init();
     setupEventListeners();
+    
+    // タイマーマネージャーを初期化
+    window.timerManager = new TimerManager();
+});
+
+// ページアンロード時のクリーンアップ
+window.addEventListener('beforeunload', () => {
+    if (window.timerManager) {
+        window.timerManager.destroy();
+    }
 });

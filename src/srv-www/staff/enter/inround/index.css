@@ -423,5 +423,46 @@ html {
             }
         }
 
+        /* タイマーセクション */
+        .timer_section {
+            position: relative;
+            margin: 3vh auto;
+            padding: 2vh 4vw;
+            max-width: 90vw;
+            background-color: #1a1a1a;
+            border: 0.5vw solid #444;
+            border-radius: 2vw;
+
+            .timer_display {
+                font-size: 5vw;
+                font-weight: bold;
+                color: #00aaff;
+                text-align: center;
+                line-height: 1.2;
+            }
+
+            .timer_display.countdown {
+                color: #ffaa00;
+            }
+
+            .timer_display.countdown-urgent {
+                color: #ff4444;
+                animation: blink 1s infinite;
+            }
+
+            .timer_display.timer-running {
+                color: #44ff44;
+            }
+
+            .timer_display.timer-finished {
+                color: #999;
+            }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
     }
 }

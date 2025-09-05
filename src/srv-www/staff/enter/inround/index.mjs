@@ -12,6 +12,85 @@ function isThisError(cmnError, error) {
     return error instanceof Error && error.message?.startsWith(cmnError);
 }
 
+// タイマー管理クラス（inround用）
+class TimerManager {
+    constructor() {
+        this.timerInterval = null;
+        this.initElements();
+        this.startTimerPolling();
+    }
+
+    initElements() {
+        this.timerDisplayEl = document.getElementById('timer_display');
+    }
+
+    async fetchTimerStatus() {
+        try {
+            const response = await fetch('/progress/timemng');
+            const data = await response.json();
+            this.updateTimerDisplay(data);
+        } catch (error) {
+            console.error('タイマー情報の取得失敗:', error);
+            this.timerDisplayEl.textContent = 'タイマー情報取得失敗';
+        }
+    }
+
+    updateTimerDisplay(timerData) {
+        if (!timerData.start_time) {
+            this.timerDisplayEl.textContent = 'タイマーは設定されていません';
+            this.timerDisplayEl.className = 'timer_display';
+            return;
+        }
+
+        const now = new Date();
+        const startTime = new Date(timerData.start_time);
+        const endTime = new Date(startTime.getTime() + (timerData.duration_seconds * 1000));
+
+        if (now < startTime) {
+            // 開始前
+            const diff = startTime - now;
+            const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
+            
+            if (diff <= 5000) {
+                this.timerDisplayEl.className = 'timer_display countdown-urgent';
+                this.timerDisplayEl.textContent = `開始まで: ${timeStr}`;
+            } else {
+                this.timerDisplayEl.className = 'timer_display countdown';
+                this.timerDisplayEl.textContent = `開始まで: ${timeStr}`;
+            }
+        } else if (now < endTime) {
+            // ラウンド中
+            const diff = endTime - now;
+            const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
+            this.timerDisplayEl.className = 'timer_display timer-running';
+            this.timerDisplayEl.textContent = `残り時間: ${timeStr}`;
+        } else {
+            // 終了
+            this.timerDisplayEl.className = 'timer_display timer-finished';
+            this.timerDisplayEl.textContent = 'タイマー終了';
+        }
+    }
+
+    formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    startTimerPolling() {
+        this.fetchTimerStatus();
+        this.timerInterval = setInterval(() => {
+            this.fetchTimerStatus();
+        }, 10000); // 10秒ごと
+    }
+
+    destroy() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
+    }
+}
+
 class ValidatorC {
     static isValidRoomId(roomId) {
         return roomId && [1, 2, 3].includes(Number(roomId));
@@ -827,4 +906,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     DomManagerC.init();
     setupEventListeners();
     await loadInitialData();
+    
+    // タイマーマネージャーを初期化
+    window.timerManager = new TimerManager();
+});
+
+// ページアンロード時のクリーンアップ
+window.addEventListener('beforeunload', () => {
+    if (window.timerManager) {
+        window.timerManager.destroy();
+    }
 });

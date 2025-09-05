@@ -378,5 +378,102 @@ html {
                 }
             }
         }
+
+        /* タイマーセクション */
+        .timer_section {
+            position: relative;
+            margin: 3vh auto;
+            padding: 2vh 4vw;
+            max-width: 90vw;
+            background-color: #1a1a1a;
+            border: 0.5vw solid #444;
+            border-radius: 2vw;
+
+            .timer_display {
+                font-size: 5vw;
+                font-weight: bold;
+                color: #00aaff;
+                text-align: center;
+                line-height: 1.2;
+            }
+
+            .timer_display.countdown {
+                color: #ffaa00;
+            }
+
+            .timer_display.countdown-urgent {
+                color: #ff4444;
+                animation: blink 1s infinite;
+            }
+
+            .timer_display.timer-running {
+                color: #44ff44;
+            }
+
+            .timer_display.timer-finished {
+                color: #999;
+            }
+        }
+
+        /* 準備完了セクション */
+        .ready_section {
+            position: relative;
+            margin: 3vh auto;
+            padding: 2vh 4vw;
+            max-width: 90vw;
+            background-color: #1a1a1a;
+            border: 0.5vw solid #444;
+            border-radius: 2vw;
+
+            .ready_status {
+                font-size: 4vw;
+                color: white;
+                margin-bottom: 2vh;
+                text-align: center;
+            }
+
+            .ready_buttons {
+                display: flex;
+                gap: 2vw;
+                justify-content: center;
+
+                .ready_button {
+                    padding: 2vh 4vw;
+                    font-size: 4vw;
+                    font-weight: bold;
+                    border: 0.5vw solid;
+                    border-radius: 2vw;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .ready_button_ready {
+                    background-color: #28a745;
+                    color: white;
+                    border-color: #28a745;
+                }
+
+                .ready_button_ready:hover {
+                    background-color: #218838;
+                    border-color: #1e7e34;
+                }
+
+                .ready_button_not_ready {
+                    background-color: #dc3545;
+                    color: white;
+                    border-color: #dc3545;
+                }
+
+                .ready_button_not_ready:hover {
+                    background-color: #c82333;
+                    border-color: #bd2130;
+                }
+            }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
     }
 }

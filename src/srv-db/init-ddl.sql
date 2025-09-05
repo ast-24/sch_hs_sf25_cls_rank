@@ -18,8 +18,8 @@ CREATE TABLE users (
     user_id             SMALLINT UNSIGNED NOT NULL,     -- ユーザID
     room_id             TINYINT  UNSIGNED NOT NULL,     -- ルームID
     display_name        VARCHAR(255)      NOT NULL,     -- 表示名
-    score_total         BIGINT UNSIGNED,                -- 累積スコア(キャッシュ)
-    score_round_max     BIGINT UNSIGNED,                -- 最大ラウンドスコア(キャッシュ)
+    score_total         BIGINT,                -- 累積スコア(キャッシュ)
+    score_round_max     BIGINT,                -- 最大ラウンドスコア(キャッシュ)
 
     UNIQUE INDEX idx__users__user_id (user_id),
            INDEX idx__users__room_id__user_id (room_id, user_id),
@@ -40,7 +40,7 @@ CREATE TABLE users_rounds (
     round_id            TINYINT UNSIGNED  NOT NULL,      -- ラウンドID
     room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID
     finished_at         DATETIME,                        -- ラウンド終了日時(未終了はNULL)
-    score               BIGINT UNSIGNED,                 -- スコア(キャッシュ)
+    score               BIGINT,                 -- スコア(キャッシュ)
 
     FOREIGN KEY(user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
 
@@ -164,3 +164,33 @@ CREATE TABLE rankings_cache_round_latest (
            INDEX idx__rankings_cache_round_latest__score__desc (score DESC)
 );
 ALTER TABLE rankings_cache_round_latest SET TIFLASH REPLICA 1;
+
+-- ==========================================
+-- 部屋準備完了状態テーブル
+-- ==========================================
+CREATE TABLE room_ready_status (
+    id                  BIGINT            PRIMARY KEY AUTO_RANDOM,
+    created_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    room_id             TINYINT UNSIGNED  NOT NULL,      -- ルームID
+    is_ready            BOOLEAN           NOT NULL DEFAULT FALSE, -- 準備完了フラグ
+
+    UNIQUE INDEX idx__room_ready_status__room_id (room_id)
+);
+ALTER TABLE room_ready_status SET TIFLASH REPLICA 1;
+
+-- ==========================================
+-- タイマー管理テーブル
+-- ==========================================
+CREATE TABLE timer_management (
+    id                  BIGINT            PRIMARY KEY AUTO_RANDOM,
+    created_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    start_time          DATETIME,                        -- タイマー開始時刻（JSTでの想定）
+    duration_seconds    INT UNSIGNED,                    -- タイマー継続時間（秒）
+
+    INDEX idx__timer_management__start_time (start_time)
+);
+ALTER TABLE timer_management SET TIFLASH REPLICA 1;

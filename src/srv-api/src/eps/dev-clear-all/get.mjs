@@ -3,6 +3,7 @@ import { TidbClient } from "../../cmn/db/tidb_client.mjs";
 const SAFE_KEY = 'CM9h2NugsTxitUZtX9EPGpCTJvbRvi';
 
 export default async function (request, env) {
+    throw new Error('removed');
     if ((new URL(request.url)).searchParams.get('safe_key') === SAFE_KEY) {
         await (new TidbClient(env)).execInTx(async (cl) => {
             await cl.query('DELETE FROM rankings_cache_round_latest');

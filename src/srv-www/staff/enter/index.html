@@ -17,6 +17,14 @@
             スタッフ用<br>結果入力ページ
         </div>
     </div>
+    
+    <!-- タイマー表示セクション -->
+    <div class="timer_section" id="timer_section">
+        <div class="timer_display" id="timer_display">
+            タイマー情報を取得中...
+        </div>
+    </div>
+    
     <div class="input" id="input">
         <div class="input_item input_item_state_empty" id="input_item_room_id">
             <div class="input_item_title" id="input_item_room_id_title">
@@ -238,6 +246,22 @@
             </div>
         </div>
     </div>
+    
+    <!-- 準備完了ボタンセクション -->
+    <div class="ready_section" id="ready_section">
+        <div class="ready_status" id="ready_status">
+            準備状態を確認中...
+        </div>
+        <div class="ready_buttons" id="ready_buttons">
+            <button class="ready_button ready_button_ready" id="ready_button_ready" style="display: none;">
+                準備完了
+            </button>
+            <button class="ready_button ready_button_not_ready" id="ready_button_not_ready" style="display: none;">
+                準備解除
+            </button>
+        </div>
+    </div>
+    
     <div class="submit" id="submit">
         <div class="submit_error" id="submit_error">
             <div class="submit_error_item" id="submit_error_item_invalid" data-error-type="invalid">
