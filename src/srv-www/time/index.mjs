@@ -118,8 +118,8 @@ class TimeDisplayManager {
             const diffSeconds = Math.max(0, Math.floor(diff / 1000));
 
             if (diffSeconds <= 5) {
-                // 5秒前から1秒ごとのカウントダウン (文字色変更)
-                this.timerDisplayEl.className = 'timer-display countdown-urgent';
+                // 5秒前から1秒ごとのカウントダウン (赤点滅)
+                this.timerDisplayEl.className = 'timer-display countdown urgent-blink';
                 this.timerDisplayEl.textContent = `開始まで ${diffSeconds} 秒`;
             } else {
                 // 6秒前以前は「もうすぐ開始します」
@@ -134,8 +134,8 @@ class TimeDisplayManager {
             const timeStr = this.formatTime(diffSeconds);
 
             if (diffSeconds <= 5) {
-                // 残り5秒以下は文字色変更
-                this.timerDisplayEl.className = 'timer-display timer-running urgent';
+                // 残り5秒以下は赤点滅
+                this.timerDisplayEl.className = 'timer-display timer-running urgent-blink';
                 this.timerDisplayEl.textContent = `残り時間 ${timeStr}`;
             } else {
                 this.timerDisplayEl.className = 'timer-display timer-running';

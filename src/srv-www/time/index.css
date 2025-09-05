@@ -27,10 +27,18 @@ body {
 .decorative-time-section {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     border-bottom: 2px solid #444;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
+    gap: 20px;
+}
+
+.decorative-time-label {
+    font-size: clamp(1rem, 3vw, 2rem);
+    color: #888;
+    font-weight: 500;
 }
 
 .decorative-time {
@@ -47,8 +55,16 @@ body {
 .timer-section {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 20px;
+}
+
+.timer-label {
+    font-size: clamp(1rem, 3vw, 2rem);
+    color: #888;
+    font-weight: 500;
 }
 
 .timer-display {
@@ -57,48 +73,44 @@ body {
     text-align: center;
     line-height: 1.2;
     padding: 40px;
-    border-radius: 20px;
     min-height: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    background: transparent;
+    /* 背景なし */
+    color: white;
 }
 
 .timer-display.countdown {
-    background: linear-gradient(135deg, #ff8800, #ffaa44);
-    color: white;
-    box-shadow: 0 10px 30px rgba(255, 136, 0, 0.3);
-}
-
-.timer-display.countdown-urgent {
-    background: linear-gradient(135deg, #ff4444, #ff6666);
-    color: white;
-    box-shadow: 0 10px 30px rgba(255, 68, 68, 0.5);
-    animation: pulse 1s infinite alternate;
+    color: #ffaa44;
 }
 
 .timer-display.timer-running {
-    background: linear-gradient(135deg, #44ff44, #66ff66);
-    color: white;
-    box-shadow: 0 10px 30px rgba(68, 255, 68, 0.3);
+    color: #44ff44;
 }
 
 .timer-display.timer-finished {
-    background: linear-gradient(135deg, #666666, #888888);
-    color: white;
-    box-shadow: 0 10px 30px rgba(102, 102, 102, 0.2);
+    color: #888888;
 }
 
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 10px 30px rgba(255, 68, 68, 0.5);
+/* 緊急時の赤点滅 */
+.timer-display.urgent-blink {
+    color: #ff0000 !important;
+    animation: urgent-blink 0.5s infinite;
+}
+
+@keyframes urgent-blink {
+
+    0%,
+    50% {
+        opacity: 1;
     }
 
+    51%,
     100% {
-        transform: scale(1.05);
-        box-shadow: 0 15px 40px rgba(255, 68, 68, 0.8);
+        opacity: 0.3;
     }
 }
 
@@ -106,6 +118,11 @@ body {
 @media (max-width: 768px) {
     .container {
         padding: 10px;
+    }
+
+    .decorative-time-label,
+    .timer-label {
+        font-size: clamp(0.8rem, 2.5vw, 1.5rem);
     }
 
     .decorative-time {
@@ -136,5 +153,10 @@ body {
     .decorative-time-section {
         border-bottom: none;
         margin-bottom: 10px;
+        gap: 10px;
+    }
+
+    .timer-section {
+        gap: 10px;
     }
 }

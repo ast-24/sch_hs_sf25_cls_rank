@@ -166,7 +166,7 @@ class TimerManager {
             this.timerState = 'finished';
             this.timerDisplayEl.className = 'timer-display timer-finished';
             this.timerDisplayEl.textContent = 'タイマー終了';
-            this.showButtons(['reset']);
+            this.showButtons(['stop']); // resetではなくstop（中止）ボタンを表示
         }
     }
 

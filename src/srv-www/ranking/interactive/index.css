@@ -245,6 +245,8 @@ body {
 .ranking_table_cell_name {
     width: 40%;
     text-align: left;
+    font-size: 2.5vw;
+    /* 他のセルより少し小さく */
 }
 
 .ranking_table_cell_score {
