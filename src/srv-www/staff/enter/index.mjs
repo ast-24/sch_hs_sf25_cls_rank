@@ -22,6 +22,11 @@ class TimerManager {
         this.startTimerPolling();
         this.startDisplayUpdate();
         this.startReadyStatusPolling();
+
+        // 既に設定されている部屋IDがあれば適用
+        if (StateC.roomId) {
+            this.setCurrentRoom(StateC.roomId);
+        }
     }
 
     initElements() {
@@ -634,6 +639,8 @@ class DomManagerC {
     static #initRoomIdSelected() {
         if (StateC.roomId) {
             this.#elements.roomIdSelector.value = StateC.roomId;
+            // 値を設定した後にonRoomIdChangeを呼び出してUIの状態を更新
+            onRoomIdChange();
         }
     }
 
@@ -1028,11 +1035,12 @@ function setupEventListeners() {
 document.addEventListener('DOMContentLoaded', () => {
     ApiClientC.init();
     StateC.init();
+
+    // タイマーマネージャーを先に初期化
+    window.timerManager = new TimerManager();
+
     DomManagerC.init();
     setupEventListeners();
-
-    // タイマーマネージャーを初期化
-    window.timerManager = new TimerManager();
 });
 
 // ページアンロード時のクリーンアップ
