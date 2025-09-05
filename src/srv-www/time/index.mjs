@@ -58,6 +58,7 @@ class TimeDisplayManager {
         this.displayInterval = null;
         this.clearTimerTimeout = null;
         this.lastTimerData = null;
+        this.previousState = null; // 前回の状態を記録
 
         this.startDecorativeTime();
         this.startTimerPolling();
@@ -105,15 +106,18 @@ class TimeDisplayManager {
             this.timerDisplayEl.textContent = '';
             this.timerDisplayEl.className = 'timer-display';
             this.clearClearTimerTimeout();
+            this.previousState = 'idle';
             return;
         }
 
         const now = new Date();
         const startTime = new Date(timerData.start_time);
         const endTime = new Date(startTime.getTime() + (timerData.duration_seconds * 1000));
+        let currentState;
 
         if (now < startTime) {
             // 開始前のカウントダウン
+            currentState = 'countdown';
             const diff = startTime - now;
             const diffSeconds = Math.max(0, Math.floor(diff / 1000));
 
@@ -129,6 +133,7 @@ class TimeDisplayManager {
             this.clearClearTimerTimeout();
         } else if (now < endTime) {
             // ラウンド中（残り時間表示）
+            currentState = 'running';
             const diff = endTime - now;
             const diffSeconds = Math.max(0, Math.floor(diff / 1000));
             const timeStr = this.formatTime(diffSeconds);
@@ -144,12 +149,17 @@ class TimeDisplayManager {
             this.clearClearTimerTimeout();
         } else {
             // 終了
+            currentState = 'finished';
             this.timerDisplayEl.className = 'timer-display timer-finished';
             this.timerDisplayEl.textContent = '終了';
 
-            // 10秒後にクリア
-            this.setClearTimerTimeout();
+            // 前回の状態が終了でなかった場合のみ10秒タイマーを設定
+            if (this.previousState !== 'finished') {
+                this.setClearTimerTimeout();
+            }
         }
+
+        this.previousState = currentState;
     }
 
     setClearTimerTimeout() {
