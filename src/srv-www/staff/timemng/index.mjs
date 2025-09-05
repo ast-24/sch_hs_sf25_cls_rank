@@ -55,7 +55,9 @@ class ApiClient {
 class TimerManager {
     constructor() {
         this.roomStatusInterval = null;
-        this.timerCheckInterval = null;
+        this.timerPollingInterval = null;
+        this.displayUpdateInterval = null;
+        this.lastTimerData = null;
         this.currentTimer = null;
         this.timerState = 'idle'; // idle, countdown, running, finished
 
@@ -63,6 +65,7 @@ class TimerManager {
         this.bindEvents();
         this.startRoomStatusPolling();
         this.startTimerPolling();
+        this.startDisplayUpdate();
         this.updatePredictedStart();
     }
 
@@ -116,6 +119,7 @@ class TimerManager {
     async fetchTimerStatus() {
         try {
             const data = await ApiClient.getTimerStatus();
+            this.lastTimerData = data;
             this.updateTimerDisplay(data);
         } catch (error) {
             console.error('タイマー状況の取得に失敗:', error);
@@ -198,12 +202,18 @@ class TimerManager {
         }
 
         const timeStr = startTime.toLocaleTimeString('ja-JP', {
-            hour12: false,
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
+            second: '2-digit',
+            hour12: false
         });
-        this.predictedStartEl.textContent = timeStr;
+
+        // カウントダウン計算
+        const diffMs = startTime.getTime() - now.getTime();
+        const diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
+
+        this.predictedStartEl.textContent = `${timeStr} (${diffSeconds}秒後)`;
+        return startTime;
     }
 
     async startTimer() {
@@ -251,17 +261,29 @@ class TimerManager {
 
     startTimerPolling() {
         this.fetchTimerStatus();
-        this.timerCheckInterval = setInterval(() => {
+        this.timerPollingInterval = setInterval(() => {
             this.fetchTimerStatus();
-        }, 1000); // 1秒ごと
+        }, 10000); // 10秒ごと
+    }
+
+    startDisplayUpdate() {
+        this.displayUpdateInterval = setInterval(() => {
+            if (this.lastTimerData) {
+                this.updateTimerDisplay(this.lastTimerData);
+            }
+            this.updatePredictedStart();
+        }, 1000); // 1秒ごとに表示更新
     }
 
     destroy() {
         if (this.roomStatusInterval) {
             clearInterval(this.roomStatusInterval);
         }
-        if (this.timerCheckInterval) {
-            clearInterval(this.timerCheckInterval);
+        if (this.timerPollingInterval) {
+            clearInterval(this.timerPollingInterval);
+        }
+        if (this.displayUpdateInterval) {
+            clearInterval(this.displayUpdateInterval);
         }
     }
 }

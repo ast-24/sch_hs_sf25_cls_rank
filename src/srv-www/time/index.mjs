@@ -55,10 +55,13 @@ class TimeDisplayManager {
 
         this.decorativeInterval = null;
         this.timerInterval = null;
+        this.displayInterval = null;
         this.clearTimerTimeout = null;
+        this.lastTimerData = null;
 
         this.startDecorativeTime();
         this.startTimerPolling();
+        this.startDisplayUpdate();
     }
 
     startDecorativeTime() {
@@ -86,6 +89,7 @@ class TimeDisplayManager {
     async fetchTimerStatus() {
         try {
             const data = await ApiClient.getTimerStatus();
+            this.lastTimerData = data;
             this.updateTimerDisplay(data);
         } catch (error) {
             console.error('タイマー情報の取得失敗:', error);
@@ -114,9 +118,9 @@ class TimeDisplayManager {
             const diffSeconds = Math.max(0, Math.floor(diff / 1000));
 
             if (diffSeconds <= 5) {
-                // 5秒前から1秒ごとのカウントダウン
+                // 5秒前から1秒ごとのカウントダウン (文字色変更)
                 this.timerDisplayEl.className = 'timer-display countdown-urgent';
-                this.timerDisplayEl.textContent = `${diffSeconds}`;
+                this.timerDisplayEl.textContent = `開始まで ${diffSeconds} 秒`;
             } else {
                 // 6秒前以前は「もうすぐ開始します」
                 this.timerDisplayEl.className = 'timer-display countdown';
@@ -126,9 +130,17 @@ class TimeDisplayManager {
         } else if (now < endTime) {
             // ラウンド中（残り時間表示）
             const diff = endTime - now;
-            const timeStr = this.formatTime(Math.max(0, Math.floor(diff / 1000)));
-            this.timerDisplayEl.className = 'timer-display timer-running';
-            this.timerDisplayEl.textContent = `残り ${timeStr}`;
+            const diffSeconds = Math.max(0, Math.floor(diff / 1000));
+            const timeStr = this.formatTime(diffSeconds);
+
+            if (diffSeconds <= 5) {
+                // 残り5秒以下は文字色変更
+                this.timerDisplayEl.className = 'timer-display timer-running urgent';
+                this.timerDisplayEl.textContent = `残り時間 ${timeStr}`;
+            } else {
+                this.timerDisplayEl.className = 'timer-display timer-running';
+                this.timerDisplayEl.textContent = `残り時間 ${timeStr}`;
+            }
             this.clearClearTimerTimeout();
         } else {
             // 終了
@@ -167,7 +179,15 @@ class TimeDisplayManager {
         this.fetchTimerStatus();
         this.timerInterval = setInterval(() => {
             this.fetchTimerStatus();
-        }, 1000); // 1秒ごと（リアルタイム性重視）
+        }, 10000); // 10秒ごと
+    }
+
+    startDisplayUpdate() {
+        this.displayInterval = setInterval(() => {
+            if (this.lastTimerData) {
+                this.updateTimerDisplay(this.lastTimerData);
+            }
+        }, 1000); // 1秒ごとに表示更新
     }
 
     destroy() {
@@ -176,6 +196,9 @@ class TimeDisplayManager {
         }
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
+        }
+        if (this.displayInterval) {
+            clearInterval(this.displayInterval);
         }
         this.clearClearTimerTimeout();
     }

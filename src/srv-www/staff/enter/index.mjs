@@ -15,9 +15,12 @@ function isThisError(cmnError, error) {
 class TimerManager {
     constructor() {
         this.timerInterval = null;
+        this.displayInterval = null;
         this.currentRoomId = null;
+        this.lastTimerData = null;
         this.initElements();
         this.startTimerPolling();
+        this.startDisplayUpdate();
         this.startReadyStatusPolling();
     }
 
@@ -34,6 +37,7 @@ class TimerManager {
     async fetchTimerStatus() {
         try {
             const data = await ApiClientC.getTimerStatus();
+            this.lastTimerData = data;
             this.updateTimerDisplay(data);
         } catch (error) {
             console.error('タイマー情報の取得失敗:', error);
@@ -151,6 +155,14 @@ class TimerManager {
         }, 10000); // 10秒ごと
     }
 
+    startDisplayUpdate() {
+        this.displayInterval = setInterval(() => {
+            if (this.lastTimerData) {
+                this.updateTimerDisplay(this.lastTimerData);
+            }
+        }, 1000); // 1秒ごとに表示更新
+    }
+
     startReadyStatusPolling() {
         this.fetchReadyStatus();
         setInterval(() => {
@@ -161,6 +173,9 @@ class TimerManager {
     destroy() {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
+        }
+        if (this.displayInterval) {
+            clearInterval(this.displayInterval);
         }
     }
 }
