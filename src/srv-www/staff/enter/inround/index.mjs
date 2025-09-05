@@ -26,8 +26,7 @@ class TimerManager {
 
     async fetchTimerStatus() {
         try {
-            const response = await fetch('/progress/timemng');
-            const data = await response.json();
+            const data = await ApiClientC.getTimerStatus();
             this.updateTimerDisplay(data);
         } catch (error) {
             console.error('タイマー情報の取得失敗:', error);
@@ -342,6 +341,33 @@ class ApiClientC {
         }
 
         return {};
+    }
+
+    /* -> { start_time: string|null, duration_seconds: number } */
+    static async getTimerStatus() {
+        let resp;
+        try {
+            resp = await fetch(`${this.#baseUrl}/progress/timemng`);
+        } catch (error) {
+            console.error('Failed to get timer status:', error);
+            throw new Error(CMN_ERRORS.network);
+        }
+
+        if (!resp.ok) {
+            switch (resp.status) {
+                case 500:
+                    console.error(new Error('Server error while getting timer status'));
+                    throw new Error(CMN_ERRORS.serverFatal);
+                case 503:
+                    console.error(new Error('Server is temporarily unavailable'));
+                    throw new Error(CMN_ERRORS.serverTransient);
+                default:
+                    console.error(new Error(`Unexpected error while getting timer status: ${resp.status}`));
+                    throw new Error(CMN_ERRORS.unknown);
+            }
+        }
+
+        return await resp.json();
     }
 }
 

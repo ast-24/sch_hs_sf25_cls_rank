@@ -1,3 +1,57 @@
+// API Client クラス
+class ApiClient {
+    static #baseUrl;
+
+    static init() {
+        this.#baseUrl = '{{API_ORIGIN}}';
+        if (!this.#baseUrl) {
+            throw new Error('API_ORIGIN is not set');
+        }
+    }
+
+    static async getReadyStatus() {
+        const response = await fetch(`${this.#baseUrl}/progress/ready`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    static async getTimerStatus() {
+        const response = await fetch(`${this.#baseUrl}/progress/timemng`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    static async startTimer(durationSeconds) {
+        const response = await fetch(`${this.#baseUrl}/progress/timemng`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                duration_seconds: durationSeconds
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    static async stopTimer() {
+        const response = await fetch(`${this.#baseUrl}/progress/timemng`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+}
+
 class TimerManager {
     constructor() {
         this.roomStatusInterval = null;
@@ -35,8 +89,7 @@ class TimerManager {
 
     async fetchRoomStatus() {
         try {
-            const response = await fetch('/progress/ready');
-            const data = await response.json();
+            const data = await ApiClient.getReadyStatus();
             this.updateRoomStatusDisplay(data.ready_status);
         } catch (error) {
             console.error('部屋状況の取得に失敗:', error);
@@ -62,8 +115,7 @@ class TimerManager {
 
     async fetchTimerStatus() {
         try {
-            const response = await fetch('/progress/timemng');
-            const data = await response.json();
+            const data = await ApiClient.getTimerStatus();
             this.updateTimerDisplay(data);
         } catch (error) {
             console.error('タイマー状況の取得に失敗:', error);
@@ -165,22 +217,8 @@ class TimerManager {
         }
 
         try {
-            const response = await fetch('/progress/timemng', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    duration_seconds: totalSeconds
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                this.fetchTimerStatus(); // 状態を更新
-            } else {
-                alert('タイマーの開始に失敗しました');
-            }
+            await ApiClient.startTimer(totalSeconds);
+            this.fetchTimerStatus(); // 状態を更新
         } catch (error) {
             console.error('タイマー開始エラー:', error);
             alert('タイマーの開始に失敗しました');
@@ -189,15 +227,8 @@ class TimerManager {
 
     async stopTimer() {
         try {
-            const response = await fetch('/progress/timemng', {
-                method: 'DELETE'
-            });
-
-            if (response.ok) {
-                this.fetchTimerStatus(); // 状態を更新
-            } else {
-                alert('タイマーの停止に失敗しました');
-            }
+            await ApiClient.stopTimer();
+            this.fetchTimerStatus(); // 状態を更新
         } catch (error) {
             console.error('タイマー停止エラー:', error);
             alert('タイマーの停止に失敗しました');
@@ -237,6 +268,7 @@ class TimerManager {
 
 // ページ読み込み時に初期化
 document.addEventListener('DOMContentLoaded', () => {
+    ApiClient.init();
     new TimerManager();
 });
 
