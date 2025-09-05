@@ -20,7 +20,7 @@ export const CONF = {
             ROUND: 30,
             ROUND_MAX: 30,
         },
-        // 4分以上前のラウンドは最新ラウンドとして扱わない
-        ROUND_LATEST_BORDER_MIN: 4,
+        // 3分以上前のラウンドは最新ラウンドとして扱わない
+        ROUND_LATEST_BORDER_MIN: 3,
     }
 }

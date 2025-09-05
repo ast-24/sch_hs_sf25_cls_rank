@@ -1,6 +1,6 @@
 // スコア計算設定
 const SCORE_CORRECT = 100;
-const SCORE_INCORRECT = -500;
+const SCORE_INCORRECT = -100;
 
 /**
  * 正解かどうかの配列からスコアを計算する関数
