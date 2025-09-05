@@ -1,33 +1,42 @@
-import { MyBadRequestError } from '../../../cmn/errors.mjs';
-import { getTidbClient } from '../../../cmn/db/tidb_client.mjs';
+import { TidbClient } from '../../../cmn/db/tidb_client.mjs';
+import { MyValidationError } from '../../../cmn/errors.mjs';
+import { MyJsonResp } from '../../../cmn/resp.mjs';
 
 /**
  * POST /progress/ready
  * 部屋の準備完了状態をセット
  */
 export default async function (request, env, ctx) {
-    const body = await request.json();
-    const { room_id } = body;
-
-    // バリデーション
-    if (!room_id || typeof room_id !== 'number' || room_id < 1 || room_id > 255) {
-        throw new MyBadRequestError('Invalid room_id');
+    let roomId;
+    {
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            throw new MyValidationError('Invalid JSON body');
+        }
+        roomId = body.room_id;
+        if (!roomId) {
+            throw new MyValidationError('Room ID is required');
+        }
+        if (typeof roomId !== 'number' || roomId <= 0 || !Number.isInteger(roomId)) {
+            throw new MyValidationError('Invalid Room ID');
+        }
+        if (roomId < 1 || roomId > 255) {
+            throw new MyValidationError('Room ID must be between 1 and 255');
+        }
     }
 
-    const tidb = await getTidbClient(env);
+    const tidbCl = new TidbClient(env);
 
-    try {
-        // 部屋の準備完了状態を設定（UPSERT）
-        await tidb.execute(`
-            INSERT INTO room_ready_status (room_id, is_ready)
-            VALUES (?, TRUE)
-            ON DUPLICATE KEY UPDATE 
-                is_ready = TRUE,
-                updated_at = CURRENT_TIMESTAMP
-        `, [room_id]);
+    // 部屋の準備完了状態を設定（UPSERT）
+    await tidbCl.query(`
+        INSERT INTO room_ready_status (room_id, is_ready)
+        VALUES (?, TRUE)
+        ON DUPLICATE KEY UPDATE 
+            is_ready = TRUE,
+            updated_at = CURRENT_TIMESTAMP
+    `, [roomId]);
 
-        return { success: true };
-    } finally {
-        await tidb.close();
-    }
+    return new MyJsonResp({ success: true });
 }

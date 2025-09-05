@@ -1,31 +1,40 @@
-import { MyBadRequestError } from '../../../cmn/errors.mjs';
-import { getTidbClient } from '../../../cmn/db/tidb_client.mjs';
+import { TidbClient } from '../../../cmn/db/tidb_client.mjs';
+import { MyValidationError } from '../../../cmn/errors.mjs';
+import { MyJsonResp } from '../../../cmn/resp.mjs';
 
 /**
  * DELETE /progress/ready
  * 部屋の準備完了状態を解除
  */
 export default async function (request, env, ctx) {
-    const body = await request.json();
-    const { room_id } = body;
-
-    // バリデーション
-    if (!room_id || typeof room_id !== 'number' || room_id < 1 || room_id > 255) {
-        throw new MyBadRequestError('Invalid room_id');
+    let roomId;
+    {
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            throw new MyValidationError('Invalid JSON body');
+        }
+        roomId = body.room_id;
+        if (!roomId) {
+            throw new MyValidationError('Room ID is required');
+        }
+        if (typeof roomId !== 'number' || roomId <= 0 || !Number.isInteger(roomId)) {
+            throw new MyValidationError('Invalid Room ID');
+        }
+        if (roomId < 1 || roomId > 255) {
+            throw new MyValidationError('Room ID must be between 1 and 255');
+        }
     }
 
-    const tidb = await getTidbClient(env);
+    const tidbCl = new TidbClient(env);
 
-    try {
-        // 部屋の準備完了状態を解除
-        const result = await tidb.execute(`
-            UPDATE room_ready_status 
-            SET is_ready = FALSE, updated_at = CURRENT_TIMESTAMP
-            WHERE room_id = ?
-        `, [room_id]);
+    // 部屋の準備完了状態を解除
+    await tidbCl.query(`
+        UPDATE room_ready_status 
+        SET is_ready = FALSE, updated_at = CURRENT_TIMESTAMP
+        WHERE room_id = ?
+    `, [roomId]);
 
-        return { success: true };
-    } finally {
-        await tidb.close();
-    }
+    return new MyJsonResp({ success: true });
 }

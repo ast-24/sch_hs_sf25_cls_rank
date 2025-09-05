@@ -1,18 +1,15 @@
-import { getTidbClient } from '../../../cmn/db/tidb_client.mjs';
+import { TidbClient } from "../../../cmn/db/tidb_client.mjs";
+import { MyJsonResp } from '../../../cmn/resp.mjs';
 
 /**
  * DELETE /progress/timemng
  * タイマーを中止
  */
 export default async function (request, env, ctx) {
-    const tidb = await getTidbClient(env);
+    const tidbCl = new TidbClient(env);
 
-    try {
-        // タイマー設定をクリア
-        await tidb.execute('DELETE FROM timer_management');
+    // タイマー設定をクリア
+    await tidbCl.query('DELETE FROM timer_management');
 
-        return { success: true };
-    } finally {
-        await tidb.close();
-    }
+    return new MyJsonResp({ success: true });
 }
