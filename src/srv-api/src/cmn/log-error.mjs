@@ -4,8 +4,7 @@ export async function logError(error, env) {
     // サーバエラー系のみロギング
     if (
         error instanceof MyFatalError ||
-        error instanceof MyTransientError ||
-        error instanceof MyConflictError
+        error instanceof MyTransientError
     ) {
         const lines = [
             `[SERVER ERROR]`,
