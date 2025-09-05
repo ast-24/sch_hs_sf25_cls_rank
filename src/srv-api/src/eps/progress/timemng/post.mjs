@@ -24,19 +24,9 @@ export default async function (request, env, ctx) {
         }
     }
 
-    // 現在時刻から次の10秒刻みの時刻を計算（+10秒後）
+    // 現在時刻から10秒後に設定
     const now = new Date();
-    const currentSeconds = now.getSeconds();
-    const nextTenSecondMark = Math.ceil((currentSeconds + 1) / 10) * 10;
-
-    const startTime = new Date(now);
-    startTime.setSeconds(nextTenSecondMark + 10, 0); // +10秒後の10秒刻みの時刻
-
-    // 60秒を超える場合は分を繰り上げ
-    if (startTime.getSeconds() >= 60) {
-        startTime.setMinutes(startTime.getMinutes() + 1);
-        startTime.setSeconds(0, 0);
-    }
+    const startTime = new Date(now.getTime() + 10000); // 10秒後
 
     const tidbCl = new TidbClient(env);
 

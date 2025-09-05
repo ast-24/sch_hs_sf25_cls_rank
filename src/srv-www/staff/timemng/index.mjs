@@ -190,16 +190,9 @@ class TimerManager {
 
     updatePredictedStart() {
         const now = new Date();
-        const currentSeconds = now.getSeconds();
-        const nextTenSecondMark = Math.ceil((currentSeconds + 1) / 10) * 10;
 
-        const startTime = new Date(now);
-        startTime.setSeconds(nextTenSecondMark + 10, 0);
-
-        if (startTime.getSeconds() >= 60) {
-            startTime.setMinutes(startTime.getMinutes() + 1);
-            startTime.setSeconds(0, 0);
-        }
+        // 送信の10秒後に設定
+        const startTime = new Date(now.getTime() + 10000); // 10秒後
 
         const timeStr = startTime.toLocaleTimeString('ja-JP', {
             hour: '2-digit',
@@ -256,14 +249,14 @@ class TimerManager {
         this.fetchRoomStatus();
         this.roomStatusInterval = setInterval(() => {
             this.fetchRoomStatus();
-        }, 10000); // 10秒ごと
+        }, 5000); // 5秒ごと
     }
 
     startTimerPolling() {
         this.fetchTimerStatus();
         this.timerPollingInterval = setInterval(() => {
             this.fetchTimerStatus();
-        }, 10000); // 10秒ごと
+        }, 5000); // 5秒ごと
     }
 
     startDisplayUpdate() {

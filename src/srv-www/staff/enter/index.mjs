@@ -152,7 +152,7 @@ class TimerManager {
         this.fetchTimerStatus();
         this.timerInterval = setInterval(() => {
             this.fetchTimerStatus();
-        }, 10000); // 10秒ごと
+        }, 5000); // 5秒ごと
     }
 
     startDisplayUpdate() {
@@ -167,7 +167,7 @@ class TimerManager {
         this.fetchReadyStatus();
         setInterval(() => {
             this.fetchReadyStatus();
-        }, 10000); // 10秒ごと
+        }, 5000); // 5秒ごと
     }
 
     destroy() {

@@ -84,7 +84,7 @@ class TimerManager {
         this.fetchTimerStatus();
         this.timerInterval = setInterval(() => {
             this.fetchTimerStatus();
-        }, 10000); // 10秒ごと
+        }, 5000); // 5秒ごと
     }
 
     startDisplayUpdate() {
