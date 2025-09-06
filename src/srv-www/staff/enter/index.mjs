@@ -974,6 +974,14 @@ async function onSubmit() {
     if (StateC.roundIdMode === 'create') {
         const roundId = (await ApiClientC.createRound(StateC.userId, StateC.roomId)).roundId;
         StateC.roundId = roundId;
+
+        // ラウンド開始時に自動で準備完了にする
+        try {
+            await ApiClientC.setRoomReady(StateC.roomId);
+        } catch (error) {
+            console.warn('準備完了の自動設定に失敗しました:', error);
+            // 準備完了の設定に失敗してもラウンド開始は続行
+        }
     } else {
         const roundId = (await hasActiveRound(StateC.userId)).roundId;
         StateC.roundId = roundId;
