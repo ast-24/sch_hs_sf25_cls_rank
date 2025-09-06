@@ -22,12 +22,12 @@ export function calcScore(initScore, ansAry) {
             // 正解
             consecutiveIncorrect = 0;
             consecutiveCorrect++;
-            score += SCORE_CORRECT * consecutiveCorrect;
+            score += SCORE_CORRECT * (consecutiveCorrect * 2);
         } else {
             // 不正解
             consecutiveCorrect = 0;
             consecutiveIncorrect++;
-            score += SCORE_INCORRECT * consecutiveIncorrect;
+            score += SCORE_INCORRECT * (consecutiveIncorrect * 2);
         }
     }
 

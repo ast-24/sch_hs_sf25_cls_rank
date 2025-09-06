@@ -493,7 +493,7 @@ class StateC {
             break;
         }
 
-        return isCorrect ? 100 * consecutiveCount : -100 * consecutiveCount;// !スコア変更時に変更
+        return isCorrect ? 100 * (consecutiveCount * 2) : -100 * (consecutiveCount * 2);// !スコア変更時に変更
     }
 
     static intoAfterroundQuery() {
@@ -807,7 +807,7 @@ function calculateAnswerScoreContribution(targetAnswerId, isCorrect) {
         }
     }
 
-    return isCorrect ? 100 * consecutiveCount : -100 * consecutiveCount;// !スコア変更時に変更
+    return isCorrect ? 100 * (consecutiveCount * 2) : -100 * (consecutiveCount * 2);// !スコア変更時に変更
 }
 
 // 回答送信処理
