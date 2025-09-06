@@ -42,10 +42,26 @@ export default async function (request, env) {
         roundMaxRank = roundMaxRankRows[0]?.round_max_rank ?? null;
     }
 
+    // 総ユーザー数を取得
+    const totalUsersRows = await tidbCl.query(`
+        SELECT COUNT(*) AS total_users
+        FROM users
+    `);
+    const totalUsers = totalUsersRows[0]?.total_users ?? 0;
+
+    // 総ラウンド数を取得（実施された一意のラウンド数）
+    const totalRoundsRows = await tidbCl.query(`
+        SELECT COUNT(DISTINCT round_id) AS total_rounds
+        FROM users_rounds
+    `);
+    const totalRounds = totalRoundsRows[0]?.total_rounds ?? 0;
+
     return new MyJsonResp({
         total_score: score_total,
         total_rank: Number(totalRank),
         round_max_score: score_round_max,
-        round_max_rank: Number(roundMaxRank)
+        round_max_rank: Number(roundMaxRank),
+        total_users: Number(totalUsers),
+        total_rounds: Number(totalRounds)
     });
 }
