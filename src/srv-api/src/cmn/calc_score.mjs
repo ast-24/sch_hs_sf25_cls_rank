@@ -1,5 +1,5 @@
 // スコア計算設定
-const SCORE_CORRECT = 100;
+const SCORE_CORRECT = 200;
 const SCORE_INCORRECT = -100;
 
 /**
