@@ -68,7 +68,7 @@ body {
 }
 
 .timer-display {
-    font-size: clamp(1rem, 9vw, 8rem);
+    font-size: clamp(1rem, 8vw, 7rem);
     font-weight: bold;
     text-align: center;
     line-height: 1.2;
