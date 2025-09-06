@@ -69,7 +69,7 @@ class ApiClientC {
         }
     }
 
-    /* -> { total_score: number, round_max_score: number, total_rank: number, round_max_rank: number } */
+    /* -> { total_score: number, round_max_score: number, total_rank: number, round_max_rank: number, total_users: number, total_rounds: number } */
     static async getUserStatus(userId) {
         let resp;
         try {
@@ -329,9 +329,9 @@ class StatisticsInfoC {
 
     static set(userStatus) {
         this.#totalScoreValue.textContent = userStatus.total_score < 0 ? 0 : userStatus.total_score ?? '-';
-        this.#totalRankValue.textContent = userStatus.total_rank ? `${userStatus.total_rank}位` : '-';
+        this.#totalRankValue.textContent = userStatus.total_rank ? `${userStatus.total_rank}位/${userStatus.total_users}位` : '-';
         this.#maxScoreValue.textContent = userStatus.round_max_score < 0 ? 0 : userStatus.round_max_score ?? '-';
-        this.#maxRankValue.textContent = userStatus.round_max_rank ? `${userStatus.round_max_rank}位` : '-';
+        this.#maxRankValue.textContent = userStatus.round_max_rank ? `${userStatus.round_max_rank}位/${userStatus.total_users}位` : '-';
     }
 }
 
@@ -342,7 +342,7 @@ class RoundHistoryC {
         this.#list = document.getElementById('round_history_list');
     }
 
-    static async setRounds(userId, rounds) {
+    static async setRounds(userId, rounds, totalUsers) {
         this.#list.innerHTML = '';
 
         // ラウンドIDでソート（降順）
@@ -361,7 +361,7 @@ class RoundHistoryC {
                 try {
                     const roundStatus = await ApiClientC.getRoundStatus(userId, roundId);
                     score = Math.max(0, roundStatus.score);
-                    rank = `${roundStatus.rank}位`;
+                    rank = `${roundStatus.rank}位/${totalUsers}位`;
                 } catch (error) {
                     console.warn(`Failed to get round status for round ${roundId}:`, error);
                     // エラーの場合はデフォルト値を保持
@@ -506,7 +506,7 @@ class AppC {
 
             // ラウンド履歴を取得・表示
             const rounds = await ApiClientC.getUserRounds(userId);
-            await RoundHistoryC.setRounds(userId, rounds);
+            await RoundHistoryC.setRounds(userId, rounds, userStatus.total_users);
 
         } catch (error) {
             console.error('Failed to initialize app:', error);
