@@ -4,12 +4,17 @@ import { MyFatalError } from '../errors.mjs';
 import { CONF } from '../../conf.mjs';
 
 export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
+    console.log(`[DEBUG updateUserScore] Starting for user ${userDbId} with rounds:`, tgtRoundIds);
+
     await tidbCl.execInTxOptional(async (tidbCl) => {
         if (tgtRoundIds.length === 0) {
+            console.log(`[DEBUG updateUserScore] No target rounds for user ${userDbId}, skipping`);
             return;
         }
 
         const placeholders = tgtRoundIds.map(() => '?').join(',');
+        console.log(`[DEBUG updateUserScore] Querying round answers for user ${userDbId}`);
+
         const roundAnswersRes = await tidbCl.query(`
             SELECT
                 ur.id, ur.round_id, ur.room_id, ur.finished_at, ur.score, ura.is_correct
@@ -19,6 +24,8 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
             ORDER BY ura.answer_id ASC
             `, [userDbId, ...tgtRoundIds]
         );
+
+        console.log(`[DEBUG updateUserScore] Found ${roundAnswersRes.length} round answer records for user ${userDbId}`);
 
         let roundAnswers = {};
         for (const row of roundAnswersRes) {
@@ -57,12 +64,16 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
         let newRoundMaxScore = null;
 
         if (CONF.RANKING.ENABLE.TOTAL || CONF.RANKING.ENABLE.ROUND_MAX) {
+            console.log(`[DEBUG updateUserScore] Checking user scores for user ${userDbId}`);
+
             const userScoreRes = await tidbCl.query(`
                 SELECT score_total, score_round_max
                 FROM users
                 WHERE id = ?
                 `, [userDbId]
             );
+
+            console.log(`[DEBUG updateUserScore] User score query returned ${userScoreRes.length} records for user ${userDbId}`);
 
             const scoreCalcRes = await tidbCl.query(`
                 SELECT SUM(score) as total_score, MAX(score) as max_score
@@ -71,7 +82,10 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
                 `, [userDbId]
             );
 
+            console.log(`[DEBUG updateUserScore] Score calculation query returned:`, scoreCalcRes);
+
             if (userScoreRes.length === 0) {
+                console.error(`[ERROR updateUserScore] User DBID ${userDbId} not found in users table`);
                 throw new MyFatalError(`User DBID ${userDbId} not found`);
             }
 
@@ -82,21 +96,27 @@ export async function updateUserScore(tidbCl, userDbId, tgtRoundIds = []) {
 
             // スコアが変更された場合のみ更新
             if (newTotalScore !== oldTotalScore || newRoundMaxScore !== oldRoundMaxScore) {
+                console.log(`[DEBUG updateUserScore] Updating user scores: total ${oldTotalScore} -> ${newTotalScore}, max ${oldRoundMaxScore} -> ${newRoundMaxScore}`);
                 await tidbCl.query(`
                     UPDATE users
                     SET score_total = ?, score_round_max = ?
                     WHERE id = ?
                     `, [newTotalScore, newRoundMaxScore, userDbId]
                 );
+            } else {
+                console.log(`[DEBUG updateUserScore] No score changes needed for user ${userDbId}`);
             }
         }
 
+        console.log(`[DEBUG updateUserScore] Calling updateRanking`);
         await updateRanking(tidbCl, {
             total: newTotalScore !== oldTotalScore,
             round: !!scoreUpdates.length,
             roundMax: newRoundMaxScore !== oldRoundMaxScore,
             roundLatest: !!scoreUpdates.length
         });
+
+        console.log(`[DEBUG updateUserScore] Completed successfully for user ${userDbId}`);
     });
 }
 
