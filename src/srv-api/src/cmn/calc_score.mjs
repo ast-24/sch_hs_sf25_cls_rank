@@ -13,6 +13,8 @@ export function calcScore(initScore, ansAry) {
     let consecutiveCorrect = 0;
     let consecutiveIncorrect = 0;
 
+    // !スコア変更時に変更
+
     for (const ans of ansAry) {
         if (ans === null) {
             // パス: スコアに影響しないが連続判定は切れる
