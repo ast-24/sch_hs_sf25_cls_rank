@@ -74,15 +74,13 @@ class TimeDisplayManager {
 
     updateDecorativeTime() {
         const now = new Date();
-        // 現在時刻 + 100年後の日時を表示
-        const future = new Date(now.getTime() + (100 * 365.25 * 24 * 60 * 60 * 1000));
 
-        const year = future.getFullYear();
-        const month = (future.getMonth() + 1).toString().padStart(2, '0');
-        const day = future.getDate().toString().padStart(2, '0');
-        const hours = future.getHours().toString().padStart(2, '0');
-        const minutes = future.getMinutes().toString().padStart(2, '0');
-        const seconds = future.getSeconds().toString().padStart(2, '0');
+        const year = '2125';
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
 
         this.decorativeTimeEl.textContent = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
     }
