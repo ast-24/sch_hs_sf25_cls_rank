@@ -1,29 +1,31 @@
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
 .section {
     margin-bottom: 30px;
-    padding: 20px;
+    padding: 25px;
     border: 1px solid #ddd;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: #f9f9f9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .room-status {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-    margin-top: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
 }
 
 .room-item {
-    padding: 10px;
-    border-radius: 4px;
+    padding: 12px;
+    border-radius: 6px;
     text-align: center;
     font-weight: bold;
+    font-size: 14px;
 }
 
 .room-ready {
@@ -39,49 +41,61 @@
 .timer-controls {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
 }
 
 .time-input {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .time-input label {
     font-weight: bold;
+    font-size: 16px;
+    min-width: 80px;
 }
 
 .time-input input {
-    width: 80px;
-    padding: 5px;
+    width: 100px;
+    padding: 8px;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 6px;
+    font-size: 16px;
 }
 
 .predicted-start {
-    font-size: 18px;
+    font-size: clamp(16px, 4vw, 20px);
     font-weight: bold;
     color: #007bff;
+    padding: 10px;
+    background-color: #f0f8ff;
+    border-radius: 6px;
+    text-align: center;
 }
 
 .buttons {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .btn-primary,
 .btn-danger,
 .btn-secondary,
 .btn-back {
-    padding: 10px 20px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
     text-decoration: none;
     display: inline-block;
     text-align: center;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 120px;
 }
 
 .btn-primary {
@@ -122,16 +136,17 @@
 }
 
 .timer-display {
-    font-size: 24px;
+    font-size: clamp(20px, 6vw, 32px);
     font-weight: bold;
     text-align: center;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 25px;
+    border-radius: 12px;
     background-color: white;
-    min-height: 100px;
+    min-height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .countdown {
@@ -166,4 +181,78 @@
 
 .navigation {
     text-align: center;
+    margin-top: 30px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .section {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .room-status {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .time-input {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .time-input label {
+        min-width: auto;
+    }
+
+    .time-input input {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn-primary,
+    .btn-danger,
+    .btn-secondary,
+    .btn-back {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .timer-display {
+        padding: 20px;
+        min-height: 100px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .container {
+        padding: 30px;
+    }
+
+    .section {
+        padding: 30px;
+    }
+
+    .room-status {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .timer-controls {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .buttons {
+        justify-content: center;
+    }
 }
