@@ -27,6 +27,7 @@ import EpsProgressReadyDelete from './eps/progress/ready/delete.mjs';
 import EpsProgressTimemngGet from './eps/progress/timemng/get.mjs';
 import EpsProgressTimemngPost from './eps/progress/timemng/post.mjs';
 import EpsProgressTimemngDelete from './eps/progress/timemng/delete.mjs';
+import EpsDevAdminUsersScoreCachePost from './eps/dev-admin/users-score-cache/post.mjs';
 
 const router = IttyRouter();
 
@@ -56,6 +57,7 @@ router.delete('/progress/ready', EpsProgressReadyDelete);
 router.get('/progress/timemng', EpsProgressTimemngGet);
 router.post('/progress/timemng', EpsProgressTimemngPost);
 router.delete('/progress/timemng', EpsProgressTimemngDelete);
+router.post('/dev-admin/users-score-cache', EpsDevAdminUsersScoreCachePost);
 
 router.options('*', () => new Response(null, { status: 204 }));
 

@@ -65,7 +65,45 @@ async function regenCache() {
     }
 }
 
+async function refreshAllScores() {
+    const btn = document.getElementById('refresh-all-scores');
+    const statusDiv = document.getElementById('score-update-status');
+
+    btn.disabled = true;
+    btn.textContent = '更新中...';
+    statusDiv.textContent = '';
+    statusDiv.className = '';
+
+    try {
+        const res = await fetch(API_BASE + '/dev-admin/users-score-cache', { method: 'POST' });
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        statusDiv.textContent = `完了: ${data.processedUsers}/${data.totalUsers} ユーザを処理しました`;
+        statusDiv.className = 'status-ok';
+        btn.textContent = '全ユーザスコアキャッシュ更新';
+
+        // ランキングキャッシュも更新
+        await fetchCacheTimes();
+    } catch (error) {
+        console.error('Score update failed:', error);
+        statusDiv.textContent = `失敗: ${error.message}`;
+        statusDiv.className = 'status-down';
+        btn.textContent = '失敗';
+        setTimeout(() => {
+            btn.textContent = '全ユーザスコアキャッシュ更新';
+            statusDiv.textContent = '';
+            statusDiv.className = '';
+        }, 5000);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
 document.getElementById('regen-cache').addEventListener('click', regenCache);
+document.getElementById('refresh-all-scores').addEventListener('click', refreshAllScores);
 
 window.addEventListener('DOMContentLoaded', () => {
     fetchHealth();
