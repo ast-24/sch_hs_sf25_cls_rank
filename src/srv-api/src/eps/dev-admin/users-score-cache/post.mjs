@@ -5,38 +5,58 @@ import { MyJsonResp } from '../../../cmn/resp.mjs';
 export default async function (request, env) {
     const tidbCl = new TidbClient(env);
 
-    // すべてのユーザとそのラウンドIDを取得
-    const usersWithRounds = await tidbCl.query(`
-        SELECT u.id as user_id, ur.round_id
-        FROM users u
-        LEFT JOIN users_rounds ur ON u.id = ur.user_id
-        WHERE u.id IS NOT NULL
-        ORDER BY u.id
+    // すべてのユーザを取得
+    const allUsers = await tidbCl.query(`
+        SELECT id as user_id
+        FROM users
+        ORDER BY id
     `);
 
-    // ユーザごとにラウンドIDをグループ化
+    // 各ユーザのラウンド番号（round_id）を取得
+    const usersWithRounds = await tidbCl.query(`
+        SELECT user_id, round_id
+        FROM users_rounds
+        ORDER BY user_id, round_id
+    `);
+
+    // ユーザごとにラウンド番号をグループ化
     const userRounds = {};
+    // まず全ユーザを空の配列で初期化
+    for (const user of allUsers) {
+        userRounds[user.user_id] = [];
+    }
+    // ラウンドデータがあるユーザの配列を埋める
     for (const row of usersWithRounds) {
-        if (!userRounds[row.user_id]) {
-            userRounds[row.user_id] = [];
-        }
-        if (row.round_id !== null) {
+        if (userRounds[row.user_id]) {
             userRounds[row.user_id].push(row.round_id);
         }
     }
 
     let processedUsers = 0;
-    let updatedUsers = 0;
+    let successfulUsers = 0;
+    let failedUsers = 0;
+    const errors = [];
 
     // 各ユーザのスコアキャッシュを更新
     for (const [userDbId, roundIds] of Object.entries(userRounds)) {
         try {
-            await updateUserScore(tidbCl, parseInt(userDbId), roundIds);
+            // ラウンドIDが存在する場合のみ更新処理を実行
+            if (roundIds.length > 0) {
+                await updateUserScore(tidbCl, parseInt(userDbId), roundIds);
+                successfulUsers++;
+            } else {
+                // ラウンドが存在しないユーザも成功とみなす
+                successfulUsers++;
+            }
             processedUsers++;
-            updatedUsers++; // updateUserScoreは変更があった場合のみ更新するが、ここでは処理したユーザ数としてカウント
         } catch (error) {
             console.error(`Failed to update user score for user ${userDbId}:`, error);
             processedUsers++;
+            failedUsers++;
+            errors.push({
+                userId: userDbId,
+                error: error.message || error.toString()
+            });
             // エラーが発生してもcontinueして他のユーザを処理
         }
     }
@@ -44,7 +64,9 @@ export default async function (request, env) {
     return new MyJsonResp({
         message: 'User score cache update completed',
         processedUsers,
-        updatedUsers,
-        totalUsers: Object.keys(userRounds).length
+        successfulUsers,
+        failedUsers,
+        totalUsers: Object.keys(userRounds).length,
+        errors: errors.slice(0, 10) // 最初の10個のエラーのみ返す
     });
 }

@@ -152,6 +152,12 @@ h1 {
     color: #ef5350;
 }
 
+.status-message.status-latency {
+    background: rgba(255, 213, 79, 0.1);
+    border: 1px solid #ffd54f;
+    color: #ffd54f;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     body {

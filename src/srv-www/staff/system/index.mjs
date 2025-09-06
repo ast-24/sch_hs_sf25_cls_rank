@@ -81,8 +81,13 @@ async function refreshAllScores() {
         }
 
         const data = await res.json();
-        statusDiv.textContent = `完了: ${data.processedUsers}/${data.totalUsers} ユーザを処理しました`;
-        statusDiv.className = 'status-ok';
+        if (data.failedUsers > 0) {
+            statusDiv.textContent = `完了（一部エラー）: 成功 ${data.successfulUsers}/${data.totalUsers} ユーザ、失敗 ${data.failedUsers} ユーザ`;
+            statusDiv.className = 'status-latency';
+        } else {
+            statusDiv.textContent = `完了: ${data.successfulUsers}/${data.totalUsers} ユーザを処理しました`;
+            statusDiv.className = 'status-ok';
+        }
         btn.textContent = '全ユーザスコアキャッシュ更新';
 
         // ランキングキャッシュも更新
