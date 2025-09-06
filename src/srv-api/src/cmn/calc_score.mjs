@@ -1,5 +1,5 @@
 // スコア計算設定
-const SCORE_CORRECT = 100;
+const SCORE_CORRECT = 500;
 const SCORE_INCORRECT = -100;
 
 /**
@@ -24,12 +24,12 @@ export function calcScore(initScore, ansAry) {
             // 正解
             consecutiveIncorrect = 0;
             consecutiveCorrect++;
-            score += SCORE_CORRECT * (consecutiveCorrect * 2);
+            score += SCORE_CORRECT * consecutiveCorrect;
         } else {
             // 不正解
             consecutiveCorrect = 0;
             consecutiveIncorrect++;
-            score += SCORE_INCORRECT * (consecutiveIncorrect * 2);
+            score += SCORE_INCORRECT * (consecutiveIncorrect * consecutiveIncorrect);
         }
     }
 
