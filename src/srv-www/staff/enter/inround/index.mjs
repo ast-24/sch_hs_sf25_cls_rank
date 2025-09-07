@@ -853,7 +853,22 @@ async function onFinish() {
 // 初期データ読み込み
 async function loadInitialData() {
     const userStatus = await ApiClientC.getUserStatus(StateC.userId);
-    const roundStatus = await ApiClientC.getRoundStatus(StateC.userId, StateC.roundId);
+
+    let roundStatus;
+    try {
+        roundStatus = await ApiClientC.getRoundStatus(StateC.userId, StateC.roundId);
+    } catch (error) {
+        // ラウンドが終了済みの場合はafterroundに遷移
+        if (isThisError(CMN_ERRORS.roundFinished, error)) {
+            const query = StateC.intoAfterroundQuery();
+            const url = new URL(window.location.href.replace('/inround', '/afterround'));
+            url.search = query.toString();
+            window.location.href = url.toString();
+            return;
+        }
+        // その他のエラーは再スロー
+        throw error;
+    }
 
     StateC.scoreTotal = (userStatus.score_total ?? 0) + (roundStatus.score ?? 0);
     StateC.scoreRoundMax = userStatus.score_round_max ?? 0;

@@ -98,6 +98,47 @@ body {
     text-align: left;
 }
 
+/* サマリー表示 */
+.round_results_summary {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(0, 255, 128, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 255, 128, 0.3);
+}
+
+.summary_title {
+    font-size: clamp(16px, 4vw, 20px);
+    font-weight: bold;
+    color: #66ff99;
+    margin-bottom: 10px;
+}
+
+.summary_stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.summary_item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    font-size: clamp(12px, 3vw, 14px);
+}
+
+.summary_label {
+    color: #cccccc;
+}
+
+.summary_value {
+    color: #66ff99;
+    font-weight: bold;
+}
+
 /* 回答リスト */
 .answer_list {
     margin-top: 15px;

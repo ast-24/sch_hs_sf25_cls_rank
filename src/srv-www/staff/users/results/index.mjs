@@ -212,6 +212,10 @@ class RoundResultsEditorC {
     }
 
     static #updateDisplay() {
+        // サマリーを計算・更新
+        const summary = this.#calculateSummary();
+        this.#updateSummary(summary);
+
         // 統計情報を更新
         const statsEl = document.getElementById('round_results_stats');
         if (statsEl) {
@@ -269,6 +273,38 @@ class RoundResultsEditorC {
                 answerList.appendChild(insertBtn);
             });
         }
+    }
+
+    static #calculateSummary() {
+        let correct = 0;
+        let incorrect = 0;
+        let pass = 0;
+        let total = 0;
+
+        Object.values(this.#currentResults).forEach(answer => {
+            total++;
+            if (answer.is_correct === true) {
+                correct++;
+            } else if (answer.is_correct === false) {
+                incorrect++;
+            } else {
+                pass++;
+            }
+        });
+
+        return { correct, incorrect, pass, total };
+    }
+
+    static #updateSummary(summary) {
+        const summaryTotalEl = document.getElementById('summary_total');
+        const summaryCorrectEl = document.getElementById('summary_correct');
+        const summaryIncorrectEl = document.getElementById('summary_incorrect');
+        const summaryPassEl = document.getElementById('summary_pass');
+
+        if (summaryTotalEl) summaryTotalEl.textContent = summary.total;
+        if (summaryCorrectEl) summaryCorrectEl.textContent = summary.correct;
+        if (summaryIncorrectEl) summaryIncorrectEl.textContent = summary.incorrect;
+        if (summaryPassEl) summaryPassEl.textContent = summary.pass;
     }
 
     static #handleInsert(insertPosition) {
