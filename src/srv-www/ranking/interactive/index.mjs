@@ -93,7 +93,7 @@ class InteractiveRankingC {
     static #currentPageIndex = 0;
     static #inactivityTimer = null;
     static #inactivityTimeout = 2 * 60 * 1000; // 2分
-    static #pollInterval = 10 * 1000; // 10秒
+    static #pollInterval = 5 * 1000; // 5秒
     static #pollTimeoutId = null;
     static #currentRankings = {
         total: [],
